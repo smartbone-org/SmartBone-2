@@ -84,7 +84,7 @@ function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone,
 	if HeirarchyLength > 0 then
 		local BoneLength = (ParentBone.Position - Bone.Position).Magnitude
 		Bone.FreeLength = BoneLength
-		Bone.Weight = BoneLength * 0.7
+		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
 		Bone.HeirarchyLength = HeirarchyLength
 	end
 

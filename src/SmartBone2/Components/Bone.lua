@@ -95,7 +95,70 @@ function Class:PreUpdate()
 	debug.profileend()
 end
 
-function Class:StepPhysics(BoneTree, Force, Delta)
+function Class:m_SolveWind(BoneTree)
+	local Settings = BoneTree.Settings
+
+	local TimeModifier = BoneTree.WindOffset
+		+ (
+			((os.clock() - (self.HeirarchyLength / 5)) + (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude / 5)
+			* Settings.WindInfluence
+		)
+
+	local WindMove
+
+	if Settings.WindType == "Sine" then
+		local sineWave = math.sin(TimeModifier * Settings.WindSpeed)
+		WindMove = Vector3.new(
+			Settings.WindDirection.X + (Settings.WindDirection.X * sineWave),
+			Settings.WindDirection.Y + (Settings.WindDirection.Y * sineWave),
+			Settings.WindDirection.Z + (Settings.WindDirection.Z * sineWave)
+		)
+	elseif Settings.WindType == "Noise" then
+		local frequency = TimeModifier * Settings.WindSpeed
+		local seed = BoneTree.WindOffset
+		local amp = Settings.WindStrength * 10
+
+		local X = math.noise(frequency, 0, seed) * amp
+		local Y = math.noise(frequency, 0, -seed) * amp
+		local Z = math.noise(frequency, 0, seed + seed) * amp
+
+		WindMove = Vector3.new(
+			Settings.WindDirection.X + (Settings.WindDirection.X * X),
+			Settings.WindDirection.Y + (Settings.WindDirection.Y * Y),
+			Settings.WindDirection.Z + (Settings.WindDirection.Z * Z)
+		)
+	elseif Settings.WindType == "Hybrid" then
+		local sineWave = math.sin(TimeModifier * Settings.WindSpeed)
+		WindMove = Vector3.new(
+			Settings.WindDirection.X + (Settings.WindDirection.X * sineWave),
+			Settings.WindDirection.Y + (Settings.WindDirection.Y * sineWave),
+			Settings.WindDirection.Z + (Settings.WindDirection.Z * sineWave)
+		)
+
+		local frequency = TimeModifier * Settings.WindSpeed
+		local seed = BoneTree.WindOffset
+		local amp = Settings.WindStrength * 10
+
+		local X = math.noise(frequency, 0, seed) * amp
+		local Y = math.noise(frequency, 0, -seed) * amp
+		local Z = math.noise(frequency, 0, seed + seed) * amp
+
+		WindMove += Vector3.new(
+			Settings.WindDirection.X + (Settings.WindDirection.X * X),
+			Settings.WindDirection.Y + (Settings.WindDirection.Y * Y),
+			Settings.WindDirection.Z + (Settings.WindDirection.Z * Z)
+		)
+		WindMove /= 2
+	end
+
+	WindMove /= self.FreeLength
+	WindMove *= (Settings.WindInfluence * (Settings.WindStrength / 100)) * (math.clamp(self.HeirarchyLength, 1, 10) / 10)
+	WindMove *= self.Weight
+
+	return WindMove
+end
+
+function Class:StepPhysics(BoneTree, Force)
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
 		self.LastPosition = self.TransformOffset.Position
@@ -109,27 +172,7 @@ function Class:StepPhysics(BoneTree, Force, Delta)
 
 	local Velocity = (self.Position - self.LastPosition)
 	local Move = (BoneTree.ObjectMove * Settings.Inertia)
-	local TimeModifier
-	local WindMove = Vector3.zero
-
-	if Settings.WindInfluence > 0 then
-		TimeModifier = BoneTree.WindOffset
-			+ (os.clock() - (self.HeirarchyLength / 5))
-			+ (((self.TransformOffset.Position - self.RootPart.Position).Magnitude / 5) * Settings.WindInfluence)
-
-		WindMove = Vector3.new(
-			Settings.WindDirection.X + (Settings.WindDirection.X * (math.sin(TimeModifier * Settings.WindSpeed))),
-			Settings.WindDirection.Y + (Settings.WindDirection.Y * (math.sin(TimeModifier * Settings.WindSpeed))),
-			Settings.WindDirection.Z + (Settings.WindDirection.Z * (math.sin(TimeModifier * Settings.WindSpeed)))
-		)
-
-		WindMove /= self.FreeLength
-		WindMove *= Settings.WindInfluence
-		WindMove *= (Settings.WindStrength / 100) * (math.clamp(self.HeirarchyLength, 1, 10) / 10)
-		WindMove *= self.Weight
-		WindMove *= (Delta * 25)
-		self.WindPreviousPosition = WindMove
-	end
+	local WindMove = self:m_SolveWind(BoneTree)
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
@@ -223,14 +266,16 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 	local function DistanceConstraint()
 		local ParentBone = BoneTree.Bones[self.ParentIndex]
 
-		local FreeLength = self.FreeLength
-		local Diff = (self.Position - ParentBone.Position)
-		local DiffUnit = Diff.Unit
-		local DiffMag = Diff.Magnitude
+		if ParentBone then
+			local RestLength = self.FreeLength
+			local BoneSub = (Position - ParentBone.Position)
+			local BoneDirection = BoneSub.Unit
+			local BoneDistance = math.min(BoneSub.Magnitude, RestLength)
 
-		local RestPosition = DiffUnit * math.min(DiffMag, FreeLength)
+			local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
 
-		Position = RestPosition
+			Position = RestPosition
+		end
 	end
 
 	local function SpringConstraint()

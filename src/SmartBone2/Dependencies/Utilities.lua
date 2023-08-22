@@ -14,23 +14,6 @@ function module.GetRotationBetween(U: Vector3, V: Vector3, Axis: Vector3)
 	return CFrame.new(0, 0, 0, UXV.X, UXV.Y, UXV.Z, 1 + Dot)
 end
 
-function module.GetHierarchyLength(Child: Instance, Root: Instance)
-	if Child == Root then
-		warn("Child and Root are the same Instance!")
-		return
-	elseif Child == nil then
-		warn("Child is nil!")
-		return
-	end
-	local Up = Child
-	local Count = 0
-	repeat
-		Count += 1
-		Up = Up.Parent
-	until Up == Root
-	return Count
-end
-
 function module.GatherObjectSettings(Object)
 	local Settings = {}
 
@@ -50,7 +33,7 @@ function module.GatherBoneSettings(Bone)
 	local YAxisLimits = Bone:GetAttribute("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
 	local ZAxisLimits = Bone:GetAttribute("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
 
-	local Radius = Bone:GetAttribute("Radius") or 0.25
+	local Radius = Bone:GetAttribute("Radius") or 0
 
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },

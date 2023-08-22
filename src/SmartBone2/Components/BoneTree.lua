@@ -84,7 +84,7 @@ function Class:StepPhysics(Delta)
 	Settings.WindSpeed = workspace.GlobalWind.Magnitude
 
 	for _, Bone in self.Bones do
-		Bone:StepPhysics(self, Force, Delta)
+		Bone:StepPhysics(self, Force)
 	end
 	debug.profileend()
 end
