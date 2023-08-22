@@ -4,7 +4,9 @@
     "$className": "DataModel",
 
     "ReplicatedStorage": {
-      "$path": "src/SmartBone2"
+      "SmartBone": {
+        "$path": "src/SmartBone2"
+      }
     },
 
     "StarterPlayer": {
