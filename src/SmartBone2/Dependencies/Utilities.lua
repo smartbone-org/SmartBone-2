@@ -6,12 +6,13 @@ function module.Lerp(A: any, B: any, C: any)
 	return A + (B - A) * C
 end
 
-function module.GetRotationBetween(U: Vector3, V: Vector3, Axis: Vector3)
-	local Dot, UXV = U:Dot(V), U:Cross(V)
-	if Dot < -0.99999 then
-		return CFrame.fromAxisAngle(Axis, math.pi)
-	end
-	return CFrame.new(0, 0, 0, UXV.X, UXV.Y, UXV.Z, 1 + Dot)
+function module.GetRotationBetween(U: Vector3, V: Vector3)
+	local Cos = U:Dot(V)
+	local Sin = U:Cross(V).Magnitude
+	local Angle = math.atan2(Sin, Cos)
+	local W = U:Cross(V).Unit
+
+	return CFrame.fromAxisAngle(W, Angle)
 end
 
 function module.GatherObjectSettings(Object)
@@ -34,12 +35,14 @@ function module.GatherBoneSettings(Bone)
 	local ZAxisLimits = Bone:GetAttribute("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
 
 	local Radius = Bone:GetAttribute("Radius") or 0
+	local Restitution = Bone:GetAttribute("Restitution") or 0
 
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },
 		XAxisLimits = XAxisLimits,
 		YAxisLimits = YAxisLimits,
 		ZAxisLimits = ZAxisLimits,
+		Restitution = Restitution,
 		Radius = Radius,
 	}
 

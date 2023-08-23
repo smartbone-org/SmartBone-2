@@ -35,67 +35,24 @@ export type IBone = {
 }
 
 local function ClipVector(LastPosition, Position, Vector)
-	LastPosition *= Vector3.one - Vector
-	LastPosition += Position * Vector
+	LastPosition *= (Vector3.one - Vector)
+	LastPosition += (Position * Vector)
 	return LastPosition
 end
 
-local Class = {}
-Class.__index = Class
-
-function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
-	return setmetatable({
-		Bone = Bone,
-		FreeLength = -1,
-		Weight = 1 * 0.7,
-		ParentIndex = -1,
-		HeirarchyLength = 0,
-		Transform = Bone.WorldCFrame:ToObjectSpace(RootBone.WorldCFrame):Inverse(),
-		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
-		RootTransform = RootBone.WorldCFrame:ToObjectSpace(RootPart.CFrame):Inverse(),
-		RootPart = RootPart,
-		RootBone = RootBone,
-		Radius = 0,
-
-		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
-		LastTransformOffset = CFrame.identity,
-		ParentTransformOffset = CFrame.identity,
-		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
-		RestPosition = Vector3.zero,
-		BoneTransform = CFrame.identity,
-		CalculatedWorldCFrame = Bone.WorldCFrame,
-		CalculatedWorldPosition = Bone.WorldPosition,
-
-		Position = Bone.WorldPosition,
-		LastPosition = Bone.WorldPosition,
-
-		Anchored = false,
-		AxisLocked = { false, false, false },
-		XAxisLimits = NumberRange.new(-math.huge, math.huge),
-		YAxisLimits = NumberRange.new(-math.huge, math.huge),
-		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
-
-		-- Debug
-		CollisionsData = {},
-	}, Class)
+local function ReflectVector(Direction, SurfaceNormal)
+	return (Direction - (2 * Direction:Dot(SurfaceNormal) * SurfaceNormal))
 end
 
-function Class:PreUpdate()
-	debug.profilebegin("Bone::PreUpdate")
-	local RootPart = self.RootPart
-	local Root = self.RootBone
+-- local function SafeUnit(Vector)
+-- 	if Vector.Magnitude == 0 then
+-- 		return Vector3.zero
+-- 	end
 
-	self.LastTransformOffset = self.TransformOffset
-	if self.Bone == self.RootBone then
-		self.TransformOffset = RootPart.CFrame * self.RootTransform
-	else
-		self.TransformOffset = Root.WorldCFrame * self.Transform
-	end
-	self.LocalTransformOffset = Root.CFrame * self.LocalTransform
-	debug.profileend()
-end
+-- 	return Vector.Unit
+-- end
 
-function Class:m_SolveWind(BoneTree)
+local function SolveWind(self, BoneTree)
 	local Settings = BoneTree.Settings
 
 	local TimeModifier = BoneTree.WindOffset
@@ -158,6 +115,73 @@ function Class:m_SolveWind(BoneTree)
 	return WindMove
 end
 
+local Class = {}
+Class.__index = Class
+
+function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
+	return setmetatable({
+		Bone = Bone,
+		FreeLength = -1,
+		Weight = 1 * 0.7,
+		ParentIndex = -1,
+		HeirarchyLength = 0,
+		Transform = Bone.WorldCFrame:ToObjectSpace(RootBone.WorldCFrame):Inverse(),
+		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
+		RootTransform = RootBone.WorldCFrame:ToObjectSpace(RootPart.CFrame):Inverse(),
+		RootPart = RootPart,
+		RootBone = RootBone,
+		Radius = 0,
+		Restitution = 0,
+
+		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
+		LastTransformOffset = CFrame.identity,
+		ParentTransformOffset = CFrame.identity,
+		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
+		RestPosition = Vector3.zero,
+		BoneTransform = CFrame.identity,
+		CalculatedWorldCFrame = Bone.WorldCFrame,
+		CalculatedWorldPosition = Bone.WorldPosition,
+
+		Position = Bone.WorldPosition,
+		LastPosition = Bone.WorldPosition,
+
+		Anchored = false,
+		AxisLocked = { false, false, false },
+		XAxisLimits = NumberRange.new(-math.huge, math.huge),
+		YAxisLimits = NumberRange.new(-math.huge, math.huge),
+		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
+
+		PreviousVelocity = Vector3.zero,
+		NextVelocity = Vector3.zero,
+
+		-- Debug
+		CollisionsData = {},
+	}, Class)
+end
+
+function Class:ImpulseVelocity(Velocity)
+	self.NextVelocity += Velocity
+end
+
+function Class:ClipVelocity(Position, Vector)
+	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
+end
+
+function Class:PreUpdate()
+	debug.profilebegin("Bone::PreUpdate")
+	local RootPart = self.RootPart
+	local Root = self.RootBone
+
+	self.LastTransformOffset = self.TransformOffset
+	if self.Bone == self.RootBone then
+		self.TransformOffset = RootPart.CFrame * self.RootTransform
+	else
+		self.TransformOffset = Root.WorldCFrame * self.Transform
+	end
+	self.LocalTransformOffset = Root.CFrame * self.LocalTransform
+	debug.profileend()
+end
+
 function Class:StepPhysics(BoneTree, Force)
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
@@ -170,12 +194,15 @@ function Class:StepPhysics(BoneTree, Force)
 
 	local Settings = BoneTree.Settings
 
-	local Velocity = (self.Position - self.LastPosition)
+	local Velocity = (self.Position - self.LastPosition) + self.NextVelocity
 	local Move = (BoneTree.ObjectMove * Settings.Inertia)
-	local WindMove = self:m_SolveWind(BoneTree)
+	local WindMove = SolveWind(self, BoneTree)
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
+
+	self.PreviousVelocity = Velocity
+	self.NextVelocity = Vector3.zero
 	debug.profileend()
 end
 
@@ -188,10 +215,11 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 
 	local Position = self.Position
 	local RootPart = self.RootPart
+	local RootCFrame: CFrame = RootPart.CFrame
 
 	local function AxisConstraint()
 		debug.profilebegin("Axis Constraint")
-		local RootOffset = RootPart.CFrame:PointToObjectSpace(Position)
+		local RootOffset = RootCFrame:PointToObjectSpace(Position)
 
 		local X = RootOffset.X
 		local Y = RootOffset.Y
@@ -224,21 +252,40 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 		Y *= YLock
 		Z *= ZLock
 
-		local WorldSpace = RootPart.CFrame:PointToWorldSpace(Vector3.new(X, Y, Z))
+		local WorldSpace = RootCFrame:PointToWorldSpace(Vector3.new(X, Y, Z))
 
 		Position = WorldSpace
 
+		local XAxis = RootCFrame.XVector
+		local YAxis = RootCFrame.YVector
+		local ZAxis = -RootCFrame.ZVector
+
 		-- Remove our velocity on the vectors we collided with, stops any weird jittering.
 		if X ~= RootOffset.X then
-			self.LastPosition = ClipVector(self.LastPosition, Position, Vector3.xAxis)
+			self:ClipVelocity(Position, XAxis)
+
+			local XVelocity = (self.PreviousVelocity * XAxis).Magnitude * self.Restitution
+			local Impulse = ReflectVector(-XAxis, XAxis) * XVelocity
+
+			self:ImpulseVelocity(Impulse)
 		end
 
 		if Y ~= RootOffset.Y then
-			self.LastPosition = ClipVector(self.LastPosition, Position, Vector3.yAxis)
+			self:ClipVelocity(Position, YAxis)
+
+			local YVelocity = (self.PreviousVelocity * YAxis).Magnitude * self.Restitution
+			local Impulse = ReflectVector(-YAxis, YAxis) * YVelocity
+
+			self:ImpulseVelocity(Impulse)
 		end
 
 		if Z ~= RootOffset.Z then
-			self.LastPosition = ClipVector(self.LastPosition, Position, Vector3.zAxis)
+			self:ClipVelocity(Position, ZAxis)
+
+			local ZVelocity = (self.PreviousVelocity * ZAxis).Magnitude * self.Restitution
+			local Impulse = ReflectVector(-ZAxis, ZAxis) * ZVelocity
+
+			self:ImpulseVelocity(Impulse)
 		end
 		debug.profileend()
 	end
@@ -256,7 +303,12 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 
 		for _, Collision in Collisions do
 			Position = Collision.ClosestPoint + (Collision.Normal * self.Radius)
-			-- self.LastPosition = ClipVector(self.LastPosition, Position, Collision.Normal)
+			-- self:ClipVelocity(Position, Collision.Normal) -- This causes some weird glitching issues, not sure why tbh
+
+			local NormalVelocity = (self.PreviousVelocity * Collision.Normal).Magnitude * self.Restitution
+			local Impulse = ReflectVector(-Collision.Normal, Collision.Normal) * NormalVelocity
+
+			self:ImpulseVelocity(Impulse)
 		end
 
 		self.CollisionsData = Collisions
@@ -339,11 +391,9 @@ function Class:SolveTransform(BoneTree, Delta)
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent and BoneParent:IsA("Bone") and BoneParent ~= BoneTree.RootBone then
-		local LocalPosiion = ParentBone.LocalTransformOffset.Position
 		local ReferenceCFrame = ParentBone.TransformOffset
-		local v0 = ReferenceCFrame:PointToObjectSpace(LocalPosiion)
 		local v1 = self.Position - ParentBone.Position
-		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1, v0).Rotation * ReferenceCFrame.Rotation
+		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
 
 		local Alpha = 0.99999 ^ Delta
 		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, Alpha)
@@ -418,7 +468,7 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 
 	-- Draw our axis Limits
 
-	if DRAW_AXIS_LIMITS then
+	if DRAW_AXIS_LIMITS and not self.Anchored then
 		local XLock = self.AxisLocked[1]
 		local YLock = self.AxisLocked[2]
 		local ZLock = self.AxisLocked[3]
@@ -484,7 +534,7 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 
 	-- Draw our collision contacts
 
-	if DRAW_CONTACTS then
+	if DRAW_CONTACTS and not self.Anchored then
 		for _, Collision in self.CollisionsData do
 			Gizmo.PushProperty("Color3", COLLISION_CONTACT_SPHERE_COLOR)
 			Gizmo.Sphere:Draw(CFrame.new(Collision.ClosestPoint), COLLISION_CONTACT_SPHERE_RADIUS, 20, 360)

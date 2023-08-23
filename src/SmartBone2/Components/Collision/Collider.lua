@@ -5,7 +5,6 @@ local CollisionSolvers = script.Parent:WaitForChild("Colliders")
 local BoxSolver = require(CollisionSolvers:WaitForChild("Box"))
 local CapsuleSolver = require(CollisionSolvers:WaitForChild("Capsule"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
-local WedgeSolver = require(CollisionSolvers:WaitForChild("Wedge"))
 
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
@@ -68,13 +67,11 @@ function Class:GetClosestPoint(Point, Radius)
 		return CapsuleSolver(self.Transform, self.Size, Point, Radius)
 	end
 
-	if Type == "Wedge" then
-		return WedgeSolver(self.Transform, self.Size, Point, Radius)
-	end
-
 	if Type == "Sphere" then
 		return SphereSolver(self.Transform, self.Size, Point, Radius)
 	end
+
+	warn(`Invalid collider shape: {Type}`)
 end
 
 function Class:DrawDebug()
@@ -89,6 +86,8 @@ function Class:DrawDebug()
 	if Type == "Box" then
 		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
 		Gizmo.Box:Draw(Transform, Size)
+
+		return
 	end
 
 	if Type == "Capsule" then
@@ -97,11 +96,8 @@ function Class:DrawDebug()
 
 		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
 		Gizmo.Capsule:Draw(Transform, CapsuleRadius, CapsuleLength, 15)
-	end
 
-	if Type == "Wedge" then
-		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
-		Gizmo.Wedge:Draw(Transform, Size)
+		return
 	end
 
 	if Type == "Sphere" then
@@ -109,6 +105,8 @@ function Class:DrawDebug()
 
 		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
 		Gizmo.Sphere:Draw(Transform, Radius, 15, 360)
+
+		return
 	end
 end
 

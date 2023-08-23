@@ -25,6 +25,12 @@ local function BoneEditor(Iris, BoneObject)
 	Iris.End()
 
 	Iris.SameLine()
+	Iris.Text("Restitution:")
+	local Restitution = Iris.InputNum({ "", 0.1, 0, math.huge, "%.3f" }, { number = BoneObject.Restitution })
+	BoneObject.Restitution = Restitution.number.value
+	Iris.End()
+
+	Iris.SameLine()
 	Iris.Text("Anchored:")
 	local IsAnchored = Iris.Checkbox({ "" }, { isChecked = BoneObject.Anchored })
 	BoneObject.Anchored = IsAnchored.isChecked.value
