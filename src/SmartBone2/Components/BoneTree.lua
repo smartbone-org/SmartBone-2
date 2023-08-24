@@ -80,6 +80,7 @@ function Class:StepPhysics(Delta)
 	Force -= ProjectedForce
 	Force = (Force + Settings.Force) * Delta
 
+	-- Remove
 	Settings.WindDirection = SafeUnit(workspace.GlobalWind)
 	Settings.WindSpeed = workspace.GlobalWind.Magnitude
 

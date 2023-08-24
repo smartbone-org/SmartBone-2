@@ -13,7 +13,7 @@ local Class = {}
 Class.__index = Class
 
 function Class.new()
-	return setmetatable({
+	local self = setmetatable({
 		Type = "Box",
 		Scale = Vector3.zero,
 		Offset = Vector3.zero,
@@ -26,6 +26,10 @@ function Class.new()
 
 		GUID = HttpService:GenerateGUID(),
 	}, Class)
+
+	-- Add in a connection for on property changed to reduce how many calls we do to :UpdateTransform()
+
+	return self
 end
 
 function Class:UpdateTransform()
@@ -35,7 +39,7 @@ function Class:UpdateTransform()
 
 	local Object = self.Object
 	local ObjectCFrame = Object.CFrame
-	local ObjectPosition = Object.Position
+	local ObjectPosition = ObjectCFrame.Position
 	local ObjectSize = Object.Size
 
 	local Scale = self.Scale

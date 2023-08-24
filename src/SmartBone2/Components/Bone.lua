@@ -4,6 +4,12 @@ local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 Gizmo.Init()
 
+local Constraints = script.Parent:WaitForChild("Constraints")
+local AxisConstraint = require(Constraints:WaitForChild("AxisConstraint"))
+local CollisionConstraint = require(Constraints:WaitForChild("CollisionConstraint"))
+local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"))
+local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
+
 export type IBone = {
 	Bone: Bone,
 	FreeLength: number,
@@ -39,18 +45,6 @@ local function ClipVector(LastPosition, Position, Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
 end
-
-local function ReflectVector(Direction, SurfaceNormal)
-	return (Direction - (2 * Direction:Dot(SurfaceNormal) * SurfaceNormal))
-end
-
--- local function SafeUnit(Vector)
--- 	if Vector.Magnitude == 0 then
--- 		return Vector3.zero
--- 	end
-
--- 	return Vector.Unit
--- end
 
 local function SolveWind(self, BoneTree)
 	local Settings = BoneTree.Settings
@@ -217,163 +211,13 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
 
-	local function AxisConstraint()
-		debug.profilebegin("Axis Constraint")
-		local RootOffset = RootCFrame:PointToObjectSpace(Position)
-
-		local X = RootOffset.X
-		local Y = RootOffset.Y
-		local Z = RootOffset.Z
-
-		local XLimit = self.XAxisLimits
-		local YLimit = self.YAxisLimits
-		local ZLimit = self.ZAxisLimits
-
-		local XLock = self.AxisLocked[1] and 0 or 1
-		local YLock = self.AxisLocked[2] and 0 or 1
-		local ZLock = self.AxisLocked[3] and 0 or 1
-
-		-- If our radius is > than the diff between min and max
-
-		local XMin = XLimit.Min + self.Radius
-		local XMax = math.max(XMin, XLimit.Max - self.Radius)
-
-		local YMin = YLimit.Min + self.Radius
-		local YMax = math.max(YMin, YLimit.Max - self.Radius)
-
-		local ZMin = ZLimit.Min + self.Radius
-		local ZMax = math.max(ZMin, ZLimit.Max - self.Radius)
-
-		X = math.clamp(X, XMin, XMax)
-		Y = math.clamp(Y, YMin, YMax)
-		Z = math.clamp(Z, ZMin, ZMax)
-
-		X *= XLock
-		Y *= YLock
-		Z *= ZLock
-
-		local WorldSpace = RootCFrame:PointToWorldSpace(Vector3.new(X, Y, Z))
-
-		Position = WorldSpace
-
-		local XAxis = RootCFrame.XVector
-		local YAxis = RootCFrame.YVector
-		local ZAxis = -RootCFrame.ZVector
-
-		-- Remove our velocity on the vectors we collided with, stops any weird jittering.
-		if X ~= RootOffset.X then
-			self:ClipVelocity(Position, XAxis)
-
-			local XVelocity = (self.PreviousVelocity * XAxis).Magnitude * self.Restitution
-			local Impulse = ReflectVector(-XAxis, XAxis) * XVelocity
-
-			self:ImpulseVelocity(Impulse)
-		end
-
-		if Y ~= RootOffset.Y then
-			self:ClipVelocity(Position, YAxis)
-
-			local YVelocity = (self.PreviousVelocity * YAxis).Magnitude * self.Restitution
-			local Impulse = ReflectVector(-YAxis, YAxis) * YVelocity
-
-			self:ImpulseVelocity(Impulse)
-		end
-
-		if Z ~= RootOffset.Z then
-			self:ClipVelocity(Position, ZAxis)
-
-			local ZVelocity = (self.PreviousVelocity * ZAxis).Magnitude * self.Restitution
-			local Impulse = ReflectVector(-ZAxis, ZAxis) * ZVelocity
-
-			self:ImpulseVelocity(Impulse)
-		end
-		debug.profileend()
-	end
-
-	local function CollisionConstraint()
-		debug.profilebegin("Collision Constraint")
-		local Collisions = {}
-
-		for _, Collider in Colliders do
-			local ColliderCollisions = Collider:GetCollisions(Position, self.Radius)
-			for _, Collision in ColliderCollisions do
-				table.insert(Collisions, Collision)
-			end
-		end
-
-		for _, Collision in Collisions do
-			Position = Collision.ClosestPoint + (Collision.Normal * self.Radius)
-			-- self:ClipVelocity(Position, Collision.Normal) -- This causes some weird glitching issues, not sure why tbh
-
-			local NormalVelocity = (self.PreviousVelocity * Collision.Normal).Magnitude * self.Restitution
-			local Impulse = ReflectVector(-Collision.Normal, Collision.Normal) * NormalVelocity
-
-			self:ImpulseVelocity(Impulse)
-		end
-
-		self.CollisionsData = Collisions
-		debug.profileend()
-	end
-
-	local function DistanceConstraint()
-		local ParentBone = BoneTree.Bones[self.ParentIndex]
-
-		if ParentBone then
-			local RestLength = self.FreeLength
-			local BoneSub = (Position - ParentBone.Position)
-			local BoneDirection = BoneSub.Unit
-			local BoneDistance = math.min(BoneSub.Magnitude, RestLength)
-
-			local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
-
-			Position = RestPosition
-		end
-	end
-
-	local function SpringConstraint()
-		debug.profilebegin("Spring Constraint")
-		local Settings = BoneTree.Settings
-		local Stiffness = Settings.Stiffness
-		local Elasticity = Settings.Elasticity
-
-		local ParentBone = BoneTree.Bones[self.ParentIndex]
-
-		if ParentBone then
-			local RestLength = self.FreeLength
-
-			if Stiffness > 0 or Elasticity > 0 then
-				local ParentBoneCFrame = CFrame.new(ParentBone.Position) * ParentBone.TransformOffset.Rotation
-				local RestPosition = (ParentBoneCFrame * CFrame.new(self.LocalTransformOffset.Position)).Position
-
-				local ElasticDifference = RestPosition - Position
-				Position += ElasticDifference * (Elasticity * Delta)
-
-				if Stiffness > 0 then
-					local StiffDifference = RestPosition - Position
-					local Length = StiffDifference.Magnitude
-					local MaxLength = RestLength * (1 - Stiffness) * 2
-					if Length > MaxLength then
-						Position += StiffDifference * ((Length - MaxLength) / Length)
-					end
-				end
-			end
-
-			local Difference = ParentBone.Position - Position
-			local Length = Difference.Magnitude
-			if Length > 0 then
-				Position += Difference * ((Length - RestLength) / Length)
-			end
-		end
-		debug.profileend()
-	end
-
-	AxisConstraint()
-	CollisionConstraint()
+	Position = AxisConstraint(self, Position, RootCFrame)
+	Position = CollisionConstraint(self, Position, Colliders)
 
 	if BoneTree.Settings.Constraint == "Spring" then
-		SpringConstraint()
+		Position = SpringConstraint(self, Position, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
-		DistanceConstraint()
+		Position = DistanceConstraint(self, Position, BoneTree)
 	end
 
 	self.Position = Position
