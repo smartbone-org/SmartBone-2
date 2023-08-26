@@ -161,7 +161,7 @@ function Class:ClipVelocity(Position, Vector)
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
-function Class:PreUpdate()
+function Class:PreUpdate() -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local RootPart = self.RootPart
 	local Root = self.RootBone
@@ -176,7 +176,7 @@ function Class:PreUpdate()
 	debug.profileend()
 end
 
-function Class:StepPhysics(BoneTree, Force)
+function Class:StepPhysics(BoneTree, Force) -- Parallel safe
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
 		self.LastPosition = self.TransformOffset.Position
@@ -200,7 +200,7 @@ function Class:StepPhysics(BoneTree, Force)
 	debug.profileend()
 end
 
-function Class:Constrain(BoneTree, Colliders, Delta)
+function Class:Constrain(BoneTree, Colliders, Delta) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
 	if self.Anchored then
 		debug.profileend()
@@ -224,7 +224,7 @@ function Class:Constrain(BoneTree, Colliders, Delta)
 	debug.profileend()
 end
 
-function Class:SolveTransform(BoneTree, Delta)
+function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 	debug.profilebegin("Bone::SolveTransform")
 	if self.ParentIndex < 1 then
 		debug.profileend()

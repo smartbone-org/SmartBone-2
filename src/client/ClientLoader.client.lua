@@ -41,13 +41,12 @@ game:GetService("RunService").RenderStepped:Connect(function(dt)
 
 	local UpdateHz = 1 / DebugState.UpdateRate
 
-	debug.profilebegin("RenderStepped::FrameUpdate")
 	while AccumulatedTime > 0 do
 		AccumulatedTime -= UpdateHz
 
-		BonePhysics:UpdateBoneTrees(UpdateHz)
+		BonePhysics:StepBoneTrees(UpdateHz)
 	end
-	debug.profileend()
+	BonePhysics:UpdateBoneTrees()
 
 	BonePhysics:DrawDebug(
 		DebugState.DRAW_COLLIDERS,

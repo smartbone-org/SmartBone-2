@@ -54,7 +54,7 @@ function module.WaitForChildOfClass(parent: Instance, className: string, timeOut
 	timeOut = timeOut or 10
 	repeat
 		task.wait()
-	until parent:FindFirstChildOfClass(className) or os.clock - start > timeOut
+	until parent:FindFirstChildOfClass(className) or os.clock() - start > timeOut
 	return parent:FindFirstChildOfClass(className)
 end
 

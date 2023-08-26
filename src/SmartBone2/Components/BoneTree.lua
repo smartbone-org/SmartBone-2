@@ -52,7 +52,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		Force = Vector3.zero,
 		RestGravity = Vector3.zero,
 		ObjectMove = Vector3.zero,
-		ObjectPreviousPosition = Vector3.zero,
+		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 end
 

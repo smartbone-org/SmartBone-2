@@ -206,14 +206,19 @@ function Class:LoadCollider(ColliderModule: ModuleScript, Object: BasePart)
 	table.insert(self.Colliders, Collider)
 end
 
-function Class:UpdateBoneTrees(Delta)
+function Class:StepBoneTrees(Delta)
+	-- task.desynchronize()
 	debug.profilebegin("BonePhysics::UpdateBoneTrees")
 	self:m_PreUpdate()
 	self:m_StepPhysics(Delta)
 	self:m_Constrain(Delta)
 	self:m_SolveTransform(Delta)
-	self:m_ApplyTransform()
 	debug.profileend()
+	-- task.synchronize()
+end
+
+function Class:UpdateBoneTrees()
+	self:m_ApplyTransform()
 end
 
 function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
