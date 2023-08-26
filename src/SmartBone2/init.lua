@@ -70,7 +70,7 @@ end
 
 -- Private Functions
 
-function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone, HeirarchyLength: number)
+function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
 	local Settings = Utilities.GatherBoneSettings(BoneObject)
 	local Bone: BoneClass.IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
@@ -78,10 +78,9 @@ function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone,
 		Bone[k] = v
 	end
 
-	local ParentIndex = HeirarchyLength
 	local ParentBone = BoneTree.Bones[ParentIndex]
 
-	if HeirarchyLength > 0 then
+	if ParentIndex > 0 then
 		local BoneLength = (ParentBone.Position - Bone.Position).Magnitude
 		Bone.FreeLength = BoneLength
 		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
@@ -103,14 +102,14 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 
 	BoneTree.Settings = Settings
 
-	local function AddChildren(Bone, HeirarchyLength)
+	local function AddChildren(Bone, ParentIndex, HeirarchyLength)
 		local Children = Bone:GetChildren()
 
 		for _, Child in Children do
 			if Child:IsA("Bone") then
-				self:m_AppendBone(BoneTree, Child, HeirarchyLength)
+				self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
 
-				AddChildren(Child, HeirarchyLength + 1)
+				AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
 			end
 		end
 
@@ -123,13 +122,13 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 
 			CopyPasteAttributes(Bone, tailBone)
 
-			self:m_AppendBone(BoneTree, tailBone, HeirarchyLength)
+			self:m_AppendBone(BoneTree, tailBone, #BoneTree.Bones, HeirarchyLength)
 		end
 	end
 
-	self:m_AppendBone(BoneTree, RootBone, 0)
+	self:m_AppendBone(BoneTree, RootBone, 0, 0)
 
-	AddChildren(RootBone, 1)
+	AddChildren(RootBone, 1, 1)
 
 	table.insert(self.BoneTrees, BoneTree)
 end
