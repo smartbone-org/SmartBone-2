@@ -46,6 +46,7 @@ local function ClosestPointFunc(cframe, size, point)
 end
 
 return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
+	debug.profilebegin("BoxTesting")
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(BoxCFrame, BoxSize, Point)
 
 	if IsInside then
@@ -55,6 +56,6 @@ return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
 	local DistanceToCp = (ClosestPoint - Point).Magnitude
 
 	IsInside = (DistanceToCp < Radius)
-
+	debug.profileend()
 	return IsInside, ClosestPoint, Normal
 end

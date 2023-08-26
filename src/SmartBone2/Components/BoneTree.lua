@@ -11,7 +11,6 @@ export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
 	RootPart: BasePart,
-	RootWorldToLocal: CFrame, -- Why does this exist?
 	BoneTotalLength: number,
 	DistanceFromCamera: number,
 	Bones: { [number]: BoneClass.IBone },
@@ -33,6 +32,22 @@ local function SafeUnit(v3)
 	return v3.Unit
 end
 
+local function map(n, start, stop, newStart, newStop, withinBounds)
+	local value = ((n - start) / (stop - start)) * (newStop - newStart) + newStart
+
+	--// Returns basic value
+	if not withinBounds then
+		return value
+	end
+
+	--// Returns values constrained to exact range
+	if newStart < newStop then
+		return math.max(math.min(value, newStop), newStart)
+	else
+		return math.max(math.min(value, newStart), newStop)
+	end
+end
+
 local Class = {}
 Class.__index = Class
 
@@ -41,11 +56,10 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		WindOffset = WIND_RNG:NextNumber(0, 1000000),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
-		RootWorldToLocal = RootBone.WorldCFrame:ToObjectSpace(RootBone.CFrame), -- Why does this exist?
 		BoneTotalLength = 0,
-		DistanceFromCamera = 100,
 		Bones = {},
 		Settings = {},
+		UpdateRate = 0,
 
 		LocalCFrame = RootBone.WorldCFrame,
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
@@ -56,12 +70,31 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 	}, Class)
 end
 
+function Class:UpdateThrottling(RootPosition)
+	local Settings = self.Settings
+
+	local Camera = workspace.CurrentCamera
+	local Distance = (RootPosition - Camera.CFrame.Position).Magnitude
+
+	if Distance > Settings.ActivationDistance then
+		self.UpdateRate = 0
+		return
+	end
+
+	local UpdateRate = 1 - map(Distance, Settings.ThrottleDistance, Settings.ActivationDistance, 0, 1, true)
+	self.UpdateRate = Settings.UpdateRate * UpdateRate
+end
+
 function Class:PreUpdate()
 	debug.profilebegin("BoneTree::PreUpdate")
-	self.ObjectMove = (self.RootPart.Position - self.ObjectPreviousPosition)
-	self.ObjectPreviousPosition = self.RootPart.Position
+	local RootPartCFrame = self.RootPart.CFrame
+	local RootPartPosition = RootPartCFrame.Position
 
-	self.RestGravity = self.Root.CFrame:PointToWorldSpace(self.LocalGravity)
+	self.ObjectMove = (RootPartPosition - self.ObjectPreviousPosition)
+	self.ObjectPreviousPosition = RootPartPosition
+
+	self.RestGravity = RootPartCFrame * self.LocalGravity
+	self:UpdateThrottling(RootPartPosition)
 
 	for _, Bone in self.Bones do
 		Bone:PreUpdate()

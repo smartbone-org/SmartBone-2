@@ -39,7 +39,7 @@ function Class:m_LoadCollider(Collider: IRawCollider)
 	ColliderSolver.Offset = FormattedOffset
 	ColliderSolver.Rotation = FormattedRotation
 	ColliderSolver.Type = Collider.Type
-	ColliderSolver.Object = self.m_Object
+	ColliderSolver:SetObject(self.m_Object)
 
 	table.insert(self.Colliders, ColliderSolver)
 end

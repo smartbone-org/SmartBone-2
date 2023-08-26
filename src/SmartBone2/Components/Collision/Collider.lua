@@ -19,7 +19,12 @@ function Class.new()
 		Offset = Vector3.zero,
 		Rotation = Vector3.zero,
 
-		Object = nil,
+		PreviousScale = Vector3.zero,
+		PreviousOffset = Vector3.zero,
+		PreviousRotation = Vector3.zero,
+
+		m_Object = nil,
+		ObjectConnection = nil,
 
 		Transform = CFrame.identity,
 		Size = Vector3.zero,
@@ -27,17 +32,31 @@ function Class.new()
 		GUID = HttpService:GenerateGUID(),
 	}, Class)
 
-	-- Add in a connection for on property changed to reduce how many calls we do to :UpdateTransform()
-
 	return self
 end
 
+function Class:SetObject(Object: BasePart)
+	if self.ObjectConnection then
+		self.ObjectConnection:Disconnect()
+	end
+
+	self.m_Object = Object
+
+	self:UpdateTransform()
+
+	self.ObjectConnection = Object.Changed:Connect(function(Prop)
+		if Prop == "CFrame" or Prop == "Size" then
+			self:UpdateTransform()
+		end
+	end)
+end
+
 function Class:UpdateTransform()
-	if self.Object == nil then
+	if self.m_Object == nil then
 		return
 	end
 
-	local Object = self.Object
+	local Object = self.m_Object
 	local ObjectCFrame = Object.CFrame
 	local ObjectPosition = ObjectCFrame.Position
 	local ObjectSize = Object.Size
@@ -57,9 +76,23 @@ function Class:UpdateTransform()
 end
 
 function Class:GetClosestPoint(Point, Radius)
-	self:UpdateTransform()
-
 	-- Determine which collision solver we should send this off to
+	debug.profilebegin("Determine Diff")
+	if self.Scale ~= self.PreviousScale then
+		self:UpdateTransform()
+		self.PreviousScale = self.Scale
+	end
+
+	if self.Offset ~= self.PreviousOffset then
+		self:UpdateTransform()
+		self.PreviousOffset = self.Offset
+	end
+
+	if self.Rotation ~= self.PreviousRotation then
+		self:UpdateTransform()
+		self.PreviousRotation = self.Rotation
+	end
+	debug.profileend()
 
 	local Type = self.Type
 

@@ -241,6 +241,10 @@ return function(Iris, BoneObject, DebugState)
 		Iris.Tree({ `{RootPart.Name} - Root Part` })
 
 		for _, BoneTree in BoneTable do
+			Iris.PushConfig({ TextColor = Iris._config.TextDisabledColor })
+			Iris.Text({ `Throttled Update Rate: {string.format("%0.3f", BoneTree.UpdateRate)}fps` })
+			Iris.PopConfig()
+
 			Iris.Table({ 4, false, false, false })
 
 			Iris.NextColumn()
