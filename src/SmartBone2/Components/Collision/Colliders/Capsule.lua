@@ -16,6 +16,7 @@ local function ClosestPointFunc(cframe, length, radius, point)
 end
 
 return function(CapsuleCFrame, CapsuleSize, Point, Radius)
+	debug.profilebegin("Capsule Testing")
 	local CapsuleRadius = math.min(CapsuleSize.Y, CapsuleSize.Z) / 2
 	local CapsuleLength = CapsuleSize.X
 
@@ -28,6 +29,6 @@ return function(CapsuleCFrame, CapsuleSize, Point, Radius)
 	local DistanceToCp = (ClosestPoint - Point).Magnitude
 
 	IsInside = (DistanceToCp < Radius)
-
+	debug.profileend()
 	return IsInside, ClosestPoint, Normal
 end

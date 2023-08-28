@@ -19,7 +19,7 @@ return function(self, Position, RootCFrame)
 	local ZLock = self.AxisLocked[3] and 0 or 1
 
 	-- If our radius is > than the diff between min and max
-
+	-- math.max is painfully slow :( its the biggest bottleneck of this constraint!
 	local XMin = XLimit.Min + self.Radius
 	local XMax = math.max(XMin, XLimit.Max - self.Radius)
 

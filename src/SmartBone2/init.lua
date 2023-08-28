@@ -37,6 +37,7 @@ local HttpService = game:GetService("HttpService")
 local Components = script:WaitForChild("Components")
 local Dependencies = script:WaitForChild("Dependencies")
 
+local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 
 local BoneClass = require(Components:WaitForChild("Bone"))
@@ -133,6 +134,18 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 	table.insert(self.BoneTrees, BoneTree)
 end
 
+function Class:m_UpdateViewFrustum()
+	debug.profilebegin("BonePhysics::m_UpdateViewFrustum")
+	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, 500) -- Hard coded 500 stud limit on any object
+
+	for _, BoneTree in self.BoneTrees do
+		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
+		BoneTree.InView = Frustum.ObjectInFrustum(BoneTree.RootPart, a, b, c, d, e, f, g, h, i)
+		debug.profileend()
+	end
+	debug.profileend()
+end
+
 function Class:m_PreUpdate()
 	debug.profilebegin("BonePhysics::m_PreUpdate")
 	for _, BoneTree in self.BoneTrees do
@@ -150,7 +163,15 @@ function Class:m_StepPhysics(Delta: number)
 end
 
 function Class:m_Constrain(Delta: number)
-	debug.profilebegin("BonePhysics::m_PreUpdate")
+	debug.profilebegin("BonePhysics::m_Constrain")
+	-- Check if any colliders should be removed
+	for i, Collider in self.Colliders do
+		if #Collider.Colliders == 0 or Collider.m_Object.Parent == nil then
+			Collider:Destroy()
+			table.remove(self.Colliders, i)
+		end
+	end
+
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:Constrain(self.Colliders, Delta)
 	end
@@ -158,7 +179,7 @@ function Class:m_Constrain(Delta: number)
 end
 
 function Class:m_SolveTransform(Delta: number)
-	debug.profilebegin("BonePhysics::m_PreUpdate")
+	debug.profilebegin("BonePhysics::m_SolveTransform")
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:SolveTransform(Delta)
 	end
@@ -208,6 +229,7 @@ end
 function Class:StepBoneTrees(Delta)
 	-- task.desynchronize()
 	debug.profilebegin("BonePhysics::UpdateBoneTrees")
+	self:m_UpdateViewFrustum()
 	self:m_PreUpdate()
 	self:m_StepPhysics(Delta)
 	self:m_Constrain(Delta)

@@ -53,6 +53,10 @@ end
 -- Public
 
 function Class:GetCollisions(Point, Radius)
+	if #self.Colliders == 0 then
+		return {}
+	end
+
 	local Collisions = {}
 
 	for _, Collider in self.Colliders do
@@ -70,6 +74,16 @@ function Class:DrawDebug()
 	for _, Collider in self.Colliders do
 		Collider:DrawDebug()
 	end
+end
+
+function Class:Destroy()
+	if #self.Colliders ~= 0 then
+		for _, Collider in self.Colliders do
+			Collider:Destroy()
+		end
+	end
+
+	setmetatable(self, nil)
 end
 
 return Class

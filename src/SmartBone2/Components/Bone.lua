@@ -212,7 +212,10 @@ function Class:Constrain(BoneTree, Colliders, Delta) -- Parallel safe
 	local RootCFrame: CFrame = RootPart.CFrame
 
 	Position = AxisConstraint(self, Position, RootCFrame)
-	Position = CollisionConstraint(self, Position, Colliders)
+
+	if #Colliders ~= 0 then
+		Position = CollisionConstraint(self, Position, Colliders)
+	end
 
 	if BoneTree.Settings.Constraint == "Spring" then
 		Position = SpringConstraint(self, Position, BoneTree, Delta)

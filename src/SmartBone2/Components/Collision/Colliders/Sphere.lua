@@ -7,11 +7,11 @@ local function ClosestPointFunc(position, radius, point)
 end
 
 return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
+	debug.profilebegin("Sphere Testing")
 	Sphere0Point = Sphere0Point.Position
 	Sphere0Radius = math.min(Sphere0Radius.X, Sphere0Radius.Y, Sphere0Radius.Z) / 2
 
-	local IsInside, ClosestPoint, Normal =
-		ClosestPointFunc(Sphere0Point, Sphere0Radius, Sphere1Point)
+	local IsInside, ClosestPoint, Normal = ClosestPointFunc(Sphere0Point, Sphere0Radius, Sphere1Point)
 
 	if IsInside then
 		return IsInside, ClosestPoint, Normal
@@ -20,6 +20,6 @@ return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
 	local DistanceToCp = (ClosestPoint - Sphere1Point).Magnitude
 
 	IsInside = (DistanceToCp < Sphere1Radius)
-
+	debug.profileend()
 	return IsInside, ClosestPoint, Normal
 end

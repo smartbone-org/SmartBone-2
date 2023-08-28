@@ -245,6 +245,10 @@ return function(Iris, BoneObject, DebugState)
 			Iris.Text({ `Throttled Update Rate: {string.format("%0.3f", BoneTree.UpdateRate)}fps` })
 			Iris.PopConfig()
 
+			Iris.PushConfig({ TextColor = Iris._config.TextDisabledColor })
+			Iris.Text({ `In View: {BoneTree.InView}` })
+			Iris.PopConfig()
+
 			Iris.Table({ 4, false, false, false })
 
 			Iris.NextColumn()

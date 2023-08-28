@@ -12,9 +12,10 @@ export type IBoneTree = {
 	Root: Bone,
 	RootPart: BasePart,
 	BoneTotalLength: number,
-	DistanceFromCamera: number,
 	Bones: { [number]: BoneClass.IBone },
 	Settings: { [string]: any },
+	UpdateRate: number,
+	InView: boolean,
 
 	LocalCFrame: CFrame,
 	LocalGravity: Vector3,
@@ -60,6 +61,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		Bones = {},
 		Settings = {},
 		UpdateRate = 0,
+		InView = true,
 
 		LocalCFrame = RootBone.WorldCFrame,
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,

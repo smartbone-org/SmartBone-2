@@ -76,8 +76,6 @@ function Class:UpdateTransform()
 end
 
 function Class:GetClosestPoint(Point, Radius)
-	-- Determine which collision solver we should send this off to
-	debug.profilebegin("Determine Diff")
 	if self.Scale ~= self.PreviousScale then
 		self:UpdateTransform()
 		self.PreviousScale = self.Scale
@@ -92,10 +90,10 @@ function Class:GetClosestPoint(Point, Radius)
 		self:UpdateTransform()
 		self.PreviousRotation = self.Rotation
 	end
-	debug.profileend()
 
 	local Type = self.Type
 
+	-- Determine which collision solver we should send this off to
 	if Type == "Box" then
 		return BoxSolver(self.Transform, self.Size, Point, Radius)
 	end
@@ -145,6 +143,14 @@ function Class:DrawDebug()
 
 		return
 	end
+end
+
+function Class:Destroy()
+	if self.ObjectConnection then
+		self.ObjectConnection:Disconnect()
+	end
+
+	setmetatable(self, nil)
 end
 
 return Class

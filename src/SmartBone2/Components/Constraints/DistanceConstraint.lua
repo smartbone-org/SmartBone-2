@@ -1,4 +1,5 @@
 return function(self, Position, BoneTree)
+	debug.profilebegin("Distance Constraint")
 	local ParentBone = BoneTree.Bones[self.ParentIndex]
 
 	if ParentBone then
@@ -9,6 +10,9 @@ return function(self, Position, BoneTree)
 
 		local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
 
+		debug.profileend()
 		return RestPosition
 	end
+
+	debug.profileend()
 end
