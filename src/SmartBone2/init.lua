@@ -58,7 +58,7 @@ function Class.new()
 		ID = HttpService:GenerateGUID(false),
 		Time = 0,
 		BoneTrees = {},
-		Colliders = {},
+		ColliderObjects = {},
 		Connections = {},
 		WindPreviousPosition = Vector3.zero,
 		Removed = false,
@@ -164,16 +164,21 @@ end
 
 function Class:m_Constrain(Delta: number)
 	debug.profilebegin("BonePhysics::m_Constrain")
+
 	-- Check if any colliders should be removed
-	for i, Collider in self.Colliders do
-		if #Collider.Colliders == 0 or Collider.m_Object.Parent == nil then
-			Collider:Destroy()
-			table.remove(self.Colliders, i)
+	debug.profilebegin("Clean Colliders")
+	if #self.ColliderObjects ~= 0 then -- Micro optomizations
+		for i, ColliderObject in self.ColliderObjects do
+			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
+				ColliderObject:Destroy()
+				table.remove(self.ColliderObjects, i)
+			end
 		end
 	end
+	debug.profileend()
 
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:Constrain(self.Colliders, Delta)
+		BoneTree:Constrain(self.ColliderObjects, Delta)
 	end
 	debug.profileend()
 end
@@ -209,7 +214,7 @@ function Class:LoadObject(Object: BasePart)
 	for _, Name in RootNames do
 		local RootBone = Object:FindFirstChild(Name)
 		if not RootBone then
-			print("no root bone name", Name)
+			warn(`[BonePhysics::LoadObject] Couldn't find Root Bone of name: {Name}`)
 			continue
 		end
 
@@ -221,9 +226,9 @@ function Class:LoadCollider(ColliderModule: ModuleScript, Object: BasePart)
 	local RawColliderData = require(ColliderModule)
 	local ColliderData = HttpService:JSONDecode(RawColliderData)
 
-	local Collider = ColliderObjectClass.new(ColliderData, Object)
+	local ColliderObject = ColliderObjectClass.new(ColliderData, Object)
 
-	table.insert(self.Colliders, Collider)
+	table.insert(self.ColliderObjects, ColliderObject)
 end
 
 function Class:StepBoneTrees(Delta)
@@ -248,8 +253,8 @@ function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW
 	end
 
 	if DRAW_COLLIDERS then
-		for _, Collider in self.Colliders do
-			Collider:DrawDebug()
+		for _, ColliderObject in self.ColliderObjects do
+			ColliderObject:DrawDebug()
 		end
 	end
 end

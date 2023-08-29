@@ -291,7 +291,7 @@ return function(Iris, BoneObject, DebugState)
 	Iris.Tree({ "Collider Objects" })
 	Iris.PopConfig()
 
-	for _, ColliderObject in BoneObject.Colliders do
+	for _, ColliderObject in BoneObject.ColliderObjects do
 		Iris.Tree({ ColliderObject.m_Object.Name })
 
 		Iris.Table({ 5, false, false, false })

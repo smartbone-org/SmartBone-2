@@ -21,10 +21,15 @@ Class.__index = Class
 function Class.new(ColliderTable, Object)
 	local self = setmetatable({
 		m_Object = Object,
+		Destroyed = false,
 		Colliders = {},
 	}, Class)
 
 	self:m_LoadColliderTable(ColliderTable)
+
+	self.DestroyConnection = Object.Destroying:Connect(function()
+		self.Destroyed = true
+	end)
 
 	return self
 end
@@ -77,6 +82,8 @@ function Class:DrawDebug()
 end
 
 function Class:Destroy()
+	self.DestroyConnection:Disconnect()
+
 	if #self.Colliders ~= 0 then
 		for _, Collider in self.Colliders do
 			Collider:Destroy()

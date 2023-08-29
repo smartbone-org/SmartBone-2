@@ -73,6 +73,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 end
 
 function Class:UpdateThrottling(RootPosition)
+	debug.profilebegin("Throttling")
 	local Settings = self.Settings
 
 	local Camera = workspace.CurrentCamera
@@ -80,11 +81,13 @@ function Class:UpdateThrottling(RootPosition)
 
 	if Distance > Settings.ActivationDistance then
 		self.UpdateRate = 0
+		debug.profileend()
 		return
 	end
 
 	local UpdateRate = 1 - map(Distance, Settings.ThrottleDistance, Settings.ActivationDistance, 0, 1, true)
 	self.UpdateRate = Settings.UpdateRate * UpdateRate
+	debug.profileend()
 end
 
 function Class:PreUpdate()
@@ -110,14 +113,20 @@ function Class:StepPhysics(Delta)
 	local Force = Settings.Gravity
 	local ForceDirection = Settings.Gravity.Unit
 
-	local ProjectedForce = ForceDirection * math.max(self.RestGravity:Dot(ForceDirection), 0)
+	debug.profilebegin("p0")
+	local DGrav = self.RestGravity:Dot(ForceDirection)
+	local ProjectedForce = ForceDirection * (DGrav < 0 and 0 or DGrav)
+	debug.profileend()
 
+	debug.profilebegin("p1")
 	Force -= ProjectedForce
 	Force = (Force + Settings.Force) * Delta
+	debug.profileend()
 
 	-- Remove
-	Settings.WindDirection = SafeUnit(workspace.GlobalWind)
-	Settings.WindSpeed = workspace.GlobalWind.Magnitude
+	local GW = workspace.GlobalWind
+	Settings.WindDirection = SafeUnit(GW)
+	Settings.WindSpeed = GW.Magnitude
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force)
@@ -125,10 +134,10 @@ function Class:StepPhysics(Delta)
 	debug.profileend()
 end
 
-function Class:Constrain(Colliders, Delta)
+function Class:Constrain(ColliderObjects, Delta)
 	debug.profilebegin("BoneTree::Constrain")
 	for _, Bone in self.Bones do
-		Bone:Constrain(self, Colliders, Delta)
+		Bone:Constrain(self, ColliderObjects, Delta)
 	end
 	debug.profileend()
 end

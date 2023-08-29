@@ -1,6 +1,7 @@
 local Class = {}
 
 function Class.GetCFrames(camera, distance)
+	debug.profilebegin("Frustum::GetCFrames")
 	local cameraCFrame = camera.CFrame
 	local cameraPos = cameraCFrame.Position
 	local rightVec, upVec = cameraCFrame.RightVector, cameraCFrame.UpVector
@@ -19,7 +20,7 @@ function Class.GetCFrames(camera, distance)
 	local leftNormal = upVec:Cross(farPlaneBottomLeft - cameraPos).Unit
 	local topNormal = rightVec:Cross(cameraPos - farPlaneTopRight).Unit
 	local bottomNormal = rightVec:Cross(cameraPos - farPlaneBottomRight).Unit
-
+	debug.profileend()
 	return frustumCFrameInverse, farPlaneWidth2, farPlaneHeight2, distance2, rightNormal, leftNormal, topNormal, bottomNormal, cameraPos
 end
 
@@ -35,6 +36,7 @@ function Class.InViewFrustum(
 	bottomNormal,
 	cameraPos
 )
+	debug.profilebegin("Frustum::InViewFrustum")
 	-- Check if point lies outside frustum OBB
 	local relativeToOBB = frustumCFrameInverse * point
 	if
@@ -45,15 +47,18 @@ function Class.InViewFrustum(
 		or relativeToOBB.Z > distance2
 		or relativeToOBB.Z < -distance2
 	then
+		debug.profileend()
 		return false
 	end
 
 	-- Check if point lies outside a frustum plane
 	local lookToCell = point - cameraPos
 	if rightNormal:Dot(lookToCell) < 0 or leftNormal:Dot(lookToCell) > 0 or topNormal:Dot(lookToCell) < 0 or bottomNormal:Dot(lookToCell) > 0 then
+		debug.profileend()
 		return false
 	end
 
+	debug.profileend()
 	return true
 end
 

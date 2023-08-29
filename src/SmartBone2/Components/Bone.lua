@@ -200,7 +200,7 @@ function Class:StepPhysics(BoneTree, Force) -- Parallel safe
 	debug.profileend()
 end
 
-function Class:Constrain(BoneTree, Colliders, Delta) -- Parallel safe
+function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
 	if self.Anchored then
 		debug.profileend()
@@ -213,8 +213,8 @@ function Class:Constrain(BoneTree, Colliders, Delta) -- Parallel safe
 
 	Position = AxisConstraint(self, Position, RootCFrame)
 
-	if #Colliders ~= 0 then
-		Position = CollisionConstraint(self, Position, Colliders)
+	if #ColliderObjects ~= 0 then
+		Position = CollisionConstraint(self, Position, ColliderObjects)
 	end
 
 	if BoneTree.Settings.Constraint == "Spring" then

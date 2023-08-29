@@ -19,15 +19,14 @@ return function(self, Position, RootCFrame)
 	local ZLock = self.AxisLocked[3] and 0 or 1
 
 	-- If our radius is > than the diff between min and max
-	-- math.max is painfully slow :( its the biggest bottleneck of this constraint!
 	local XMin = XLimit.Min + self.Radius
-	local XMax = math.max(XMin, XLimit.Max - self.Radius)
+	local XMax = XMin <= (XLimit.Max - self.Radius) and XLimit.Max - self.Radius or XMin
 
 	local YMin = YLimit.Min + self.Radius
-	local YMax = math.max(YMin, YLimit.Max - self.Radius)
+	local YMax = YMin <= (YLimit.Max - self.Radius) and YLimit.Max - self.Radius or YMin
 
 	local ZMin = ZLimit.Min + self.Radius
-	local ZMax = math.max(ZMin, ZLimit.Max - self.Radius)
+	local ZMax = ZMin <= (ZLimit.Max - self.Radius) and ZLimit.Max - self.Radius or ZMin
 
 	X = math.clamp(X, XMin, XMax)
 	Y = math.clamp(Y, YMin, YMax)
@@ -52,7 +51,7 @@ return function(self, Position, RootCFrame)
 		local XVelocity = (self.PreviousVelocity * XAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-XAxis, XAxis) * XVelocity
 
-		self:ImpulseVelocity(Impulse)
+		self:ImpulseVelocity(Impulse * 2)
 	end
 
 	if Y ~= RootOffset.Y then
@@ -61,7 +60,7 @@ return function(self, Position, RootCFrame)
 		local YVelocity = (self.PreviousVelocity * YAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-YAxis, YAxis) * YVelocity
 
-		self:ImpulseVelocity(Impulse)
+		self:ImpulseVelocity(Impulse * 2)
 	end
 
 	if Z ~= RootOffset.Z then
@@ -70,7 +69,7 @@ return function(self, Position, RootCFrame)
 		local ZVelocity = (self.PreviousVelocity * ZAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-ZAxis, ZAxis) * ZVelocity
 
-		self:ImpulseVelocity(Impulse)
+		self:ImpulseVelocity(Impulse * 2)
 	end
 	debug.profileend()
 
