@@ -51,7 +51,7 @@ return function(self, Position, RootCFrame)
 		local XVelocity = (self.PreviousVelocity * XAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-XAxis, XAxis) * XVelocity
 
-		self:ImpulseVelocity(Impulse * 2)
+		self:ImpulseVelocity(Impulse)
 	end
 
 	if Y ~= RootOffset.Y then
@@ -60,7 +60,7 @@ return function(self, Position, RootCFrame)
 		local YVelocity = (self.PreviousVelocity * YAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-YAxis, YAxis) * YVelocity
 
-		self:ImpulseVelocity(Impulse * 2)
+		self:ImpulseVelocity(Impulse)
 	end
 
 	if Z ~= RootOffset.Z then
@@ -69,7 +69,7 @@ return function(self, Position, RootCFrame)
 		local ZVelocity = (self.PreviousVelocity * ZAxis).Magnitude * self.Restitution
 		local Impulse = ReflectVector(-ZAxis, ZAxis) * ZVelocity
 
-		self:ImpulseVelocity(Impulse * 2)
+		self:ImpulseVelocity(Impulse)
 	end
 	debug.profileend()
 

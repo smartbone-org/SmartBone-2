@@ -113,15 +113,11 @@ function Class:StepPhysics(Delta)
 	local Force = Settings.Gravity
 	local ForceDirection = Settings.Gravity.Unit
 
-	debug.profilebegin("p0")
 	local DGrav = self.RestGravity:Dot(ForceDirection)
 	local ProjectedForce = ForceDirection * (DGrav < 0 and 0 or DGrav)
-	debug.profileend()
 
-	debug.profilebegin("p1")
 	Force -= ProjectedForce
 	Force = (Force + Settings.Force) * Delta
-	debug.profileend()
 
 	-- Remove
 	local GW = workspace.GlobalWind
