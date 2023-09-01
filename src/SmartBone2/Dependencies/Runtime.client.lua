@@ -9,7 +9,7 @@ local Bind
 Bind = Actor:BindToMessage("Setup", function(m_Object, m_ColliderDescriptions, m_SmartBone)
 	Object = m_Object
 	ColliderDescriptions = m_ColliderDescriptions
-	Smartbone = m_SmartBone
+	Smartbone = require(m_SmartBone)
 
 	Setup = true
 
@@ -21,7 +21,7 @@ repeat
 until Setup
 
 local RunService = game:GetService("RunService")
-local BonePhysics = require(Smartbone).new()
+local BonePhysics = Smartbone.new()
 
 Actor.Name = `{Object.Name} - {BonePhysics.ID}`
 
