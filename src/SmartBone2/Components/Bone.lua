@@ -227,6 +227,11 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	debug.profileend()
 end
 
+function Class:SkipUpdate()
+	self.Position = self.Bone.WorldPosition
+	self.LastPosition = self.Position
+end
+
 function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 	debug.profilebegin("Bone::SolveTransform")
 	if self.ParentIndex < 1 then

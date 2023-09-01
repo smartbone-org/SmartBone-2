@@ -33,7 +33,10 @@
     ObjectPhysics:Destroy()
 ]]
 
+local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local Components = script:WaitForChild("Components")
 local Dependencies = script:WaitForChild("Dependencies")
 
@@ -43,6 +46,13 @@ local Utilities = require(Dependencies:WaitForChild("Utilities"))
 local BoneClass = require(Components:WaitForChild("Bone"))
 local BoneTreeClass = require(Components:WaitForChild("BoneTree"))
 local ColliderObjectClass = require(Components:WaitForChild("Collision"):WaitForChild("ColliderObject"))
+
+local ActorRuntime = Dependencies:WaitForChild("Runtime")
+
+local ColliderTranslations = {
+	Block = "Box",
+	Ball = "Sphere",
+}
 
 local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 	for k, v in Object1:GetAttributes() do
@@ -146,47 +156,31 @@ function Class:m_UpdateViewFrustum()
 	debug.profileend()
 end
 
-function Class:m_PreUpdate()
-	debug.profilebegin("BonePhysics::m_PreUpdate")
-	for _, BoneTree in self.BoneTrees do
+function Class:m_UpdateBoneTree(BoneTree, Delta)
+	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
+	BoneTree:PreUpdate()
+
+	if not BoneTree.InView then
+		BoneTree:SkipUpdate()
+		debug.profileend()
+		return
+	end
+
+	if BoneTree.UpdateRate == 0 then
+		debug.profileend()
+		return
+	end
+
+	local UpdateHz = 1 / BoneTree.UpdateRate
+
+	BoneTree.AccumulatedDelta += Delta
+	while BoneTree.AccumulatedDelta > 0 do
+		BoneTree.AccumulatedDelta -= UpdateHz
+
 		BoneTree:PreUpdate()
-	end
-	debug.profileend()
-end
-
-function Class:m_StepPhysics(Delta: number)
-	debug.profilebegin("BonePhysics::m_StepPhysics")
-	for _, BoneTree in self.BoneTrees do
-		BoneTree:StepPhysics(Delta)
-	end
-	debug.profileend()
-end
-
-function Class:m_Constrain(Delta: number)
-	debug.profilebegin("BonePhysics::m_Constrain")
-
-	-- Check if any colliders should be removed
-	debug.profilebegin("Clean Colliders")
-	if #self.ColliderObjects ~= 0 then -- Micro optomizations
-		for i, ColliderObject in self.ColliderObjects do
-			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
-				ColliderObject:Destroy()
-				table.remove(self.ColliderObjects, i)
-			end
-		end
-	end
-	debug.profileend()
-
-	for _, BoneTree in self.BoneTrees do
-		BoneTree:Constrain(self.ColliderObjects, Delta)
-	end
-	debug.profileend()
-end
-
-function Class:m_SolveTransform(Delta: number)
-	debug.profilebegin("BonePhysics::m_SolveTransform")
-	for _, BoneTree in self.BoneTrees do
-		BoneTree:SolveTransform(Delta)
+		BoneTree:StepPhysics(UpdateHz)
+		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
+		BoneTree:SolveTransform(UpdateHz)
 	end
 	debug.profileend()
 end
@@ -222,7 +216,7 @@ function Class:LoadObject(Object: BasePart)
 	end
 end
 
-function Class:LoadCollider(ColliderModule: ModuleScript, Object: BasePart)
+function Class:LoadColliderModule(ColliderModule: ModuleScript, Object: BasePart)
 	local RawColliderData = require(ColliderModule)
 	local ColliderData = HttpService:JSONDecode(RawColliderData)
 
@@ -231,16 +225,27 @@ function Class:LoadCollider(ColliderModule: ModuleScript, Object: BasePart)
 	table.insert(self.ColliderObjects, ColliderObject)
 end
 
-function Class:StepBoneTrees(Delta)
-	-- task.desynchronize()
-	debug.profilebegin("BonePhysics::UpdateBoneTrees")
-	self:m_UpdateViewFrustum()
-	self:m_PreUpdate()
-	self:m_StepPhysics(Delta)
-	self:m_Constrain(Delta)
-	self:m_SolveTransform(Delta)
+function Class:LoadRawCollider(ColliderData: {}, Object: BasePart)
+	local ColliderObject = ColliderObjectClass.new(ColliderData, Object)
+
+	table.insert(self.ColliderObjects, ColliderObject)
+end
+
+function Class:SkipUpdate()
+	debug.profilebegin("BonePhysics::SkipUpdate")
+	for _, BoneTree in self.BoneTrees do
+		BoneTree:SkipUpdate()
+	end
 	debug.profileend()
-	-- task.synchronize()
+end
+
+function Class:StepBoneTrees(Delta)
+	task.desynchronize()
+	self:m_UpdateViewFrustum()
+	for _, BoneTree in self.BoneTrees do
+		self:m_UpdateBoneTree(BoneTree, Delta)
+	end
+	task.synchronize()
 end
 
 function Class:UpdateBoneTrees()
@@ -256,6 +261,126 @@ function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW
 		for _, ColliderObject in self.ColliderObjects do
 			ColliderObject:DrawDebug()
 		end
+	end
+end
+
+function Class.Start()
+	if not RunService:IsClient() then
+		warn("Smartbone.Start() can only be called in client context.")
+		return
+	end
+
+	if Class.Running then
+		warn("Cannot call Smartbone.Start() multiple times")
+		return
+	end
+
+	Class.Running = true
+
+	local Player = Players.LocalPlayer
+	local PlayerScripts = Player:WaitForChild("PlayerScripts")
+
+	local ActorFolder = Instance.new("Folder")
+	ActorFolder.Name = "SmartBone-Actors"
+	ActorFolder.Parent = PlayerScripts
+
+	local function GatherColliders()
+		local ColliderObjects = {
+			Key = {},
+			Raw = {},
+		}
+
+		for _, Object in CollectionService:GetTagged("SmartCollider") do
+			if not Object:IsA("BasePart") then
+				continue
+			end
+
+			local ColliderKey = Object:GetAttribute("ColliderKey")
+
+			if ColliderKey then
+				ColliderKey = tostring(ColliderKey)
+
+				if not ColliderObjects.Key[ColliderKey] then
+					ColliderObjects.Key[ColliderKey] = {}
+				end
+
+				table.insert(ColliderObjects.Key[ColliderKey], Object)
+			end
+
+			table.insert(ColliderObjects.Raw, Object)
+		end
+
+		return ColliderObjects
+	end
+
+	local function GetCollider(Object: BasePart)
+		-- Any shapes which arent defined in the translation table are defaulted to box
+
+		local ColliderModule = Object:FindFirstChild("self.Collider")
+		local ColliderDescription
+
+		if ColliderModule then
+			local RawColliderData = require(ColliderModule)
+			local ColliderData
+			pcall(function()
+				ColliderData = HttpService:JSONDecode(RawColliderData)
+			end)
+
+			ColliderDescription = ColliderData
+		end
+
+		if ColliderDescription then
+			return ColliderDescription
+		end
+
+		local ColliderType = ColliderTranslations[Object.Shape.Name] or "Box"
+
+		ColliderDescription = {
+			Type = ColliderType,
+			ScaleX = 1,
+			ScaleY = 1,
+			ScaleZ = 1,
+			OffsetX = 0,
+			OffsetY = 0,
+			OffsetZ = 0,
+			RotationX = 0,
+			RotationY = 0,
+			RotationZ = 0,
+		}
+
+		return ColliderDescription
+	end
+
+	local function SetupObject(Object: BasePart)
+		if not Object:IsA("BasePart") then
+			return
+		end
+
+		local GlobalColliders = GatherColliders()
+		local ColliderKey = Object:GetAttribute("ColliderKey")
+
+		local ColliderObjects = ColliderKey and GlobalColliders.Key[tostring(ColliderKey)] or GlobalColliders.Raw
+		local ColliderDescriptions = {} -- {Description, Object}
+
+		for _, ColliderObject in ColliderObjects do
+			table.insert(ColliderDescriptions, { GetCollider(ColliderObject), ColliderObject })
+		end
+
+		local Actor = Instance.new("Actor")
+		local Runtime = ActorRuntime:Clone()
+
+		Runtime.Parent = Actor
+		Runtime.Enabled = true
+
+		Actor.Parent = ActorFolder
+
+		Actor:SendMessage("Setup", Object, ColliderDescriptions, script)
+	end
+
+	CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)
+
+	for _, Object in CollectionService:GetTagged("SmartBone") do
+		SetupObject(Object)
 	end
 end
 

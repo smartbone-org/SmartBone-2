@@ -62,6 +62,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		Settings = {},
 		UpdateRate = 0,
 		InView = true,
+		AccumulatedDelta = 0,
 
 		LocalCFrame = RootBone.WorldCFrame,
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
@@ -134,6 +135,16 @@ function Class:Constrain(ColliderObjects, Delta)
 	debug.profilebegin("BoneTree::Constrain")
 	for _, Bone in self.Bones do
 		Bone:Constrain(self, ColliderObjects, Delta)
+	end
+	debug.profileend()
+end
+
+function Class:SkipUpdate()
+	debug.profilebegin("BoneTree::SkipUpdate")
+	self:PreUpdate()
+
+	for _, Bone in self.Bones do
+		Bone:PreUpdate()
 	end
 	debug.profileend()
 end
