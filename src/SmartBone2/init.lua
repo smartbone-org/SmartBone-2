@@ -162,20 +162,22 @@ function Class:m_UpdateBoneTree(BoneTree, Delta)
 
 	if not BoneTree.InView then
 		BoneTree:SkipUpdate()
-		debug.profileend()
 		return
 	end
 
 	if BoneTree.UpdateRate == 0 then
-		debug.profileend()
+		BoneTree:SkipUpdate()
 		return
 	end
 
 	local UpdateHz = 1 / BoneTree.UpdateRate
+	local DidUpdate = false
 
 	BoneTree.AccumulatedDelta += Delta
 	while BoneTree.AccumulatedDelta > 0 do
 		BoneTree.AccumulatedDelta -= UpdateHz
+
+		DidUpdate = true
 
 		BoneTree:PreUpdate()
 		BoneTree:StepPhysics(UpdateHz)
@@ -183,14 +185,11 @@ function Class:m_UpdateBoneTree(BoneTree, Delta)
 		BoneTree:SolveTransform(UpdateHz)
 	end
 	debug.profileend()
-end
 
-function Class:m_ApplyTransform()
-	debug.profilebegin("BonePhysics::m_ApplyTransform")
-	for _, BoneTree in self.BoneTrees do
+	if DidUpdate then
+		task.synchronize()
 		BoneTree:ApplyTransform()
 	end
-	debug.profileend()
 end
 
 -- Public Functions
@@ -249,7 +248,7 @@ function Class:StepBoneTrees(Delta)
 end
 
 function Class:UpdateBoneTrees()
-	self:m_ApplyTransform()
+	-- self:m_ApplyTransform()
 end
 
 function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
