@@ -18,7 +18,7 @@ type IColliderTable = { [number]: IRawCollider }
 local Class = {}
 Class.__index = Class
 
-function Class.new(ColliderTable, Object)
+function Class.new(ColliderTable, Object: BasePart)
 	local self = setmetatable({
 		m_Object = Object,
 		Destroyed = false,
@@ -27,8 +27,10 @@ function Class.new(ColliderTable, Object)
 
 	self:m_LoadColliderTable(ColliderTable)
 
-	self.DestroyConnection = Object.Destroying:Connect(function()
-		self.Destroyed = true
+	self.DestroyConnection = Object:GetPropertyChangedSignal("Parent"):Connect(function()
+		if Object.Parent == nil then
+			self.Destroyed = true
+		end
 	end)
 
 	return self

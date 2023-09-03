@@ -53,7 +53,7 @@ local Class = {}
 Class.__index = Class
 
 function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneTree
-	return setmetatable({
+	local self = setmetatable({
 		WindOffset = WIND_RNG:NextNumber(0, 1000000),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
@@ -64,6 +64,8 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		InView = true,
 		AccumulatedDelta = 0,
 
+		Destroyed = false,
+
 		LocalCFrame = RootBone.WorldCFrame,
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
 		Force = Vector3.zero,
@@ -71,6 +73,14 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		ObjectMove = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
+
+	self.DestroyConnection = RootPart:GetPropertyChangedSignal("Parent"):Connect(function()
+		if RootPart.Parent == nil then
+			self.Destroyed = true
+		end
+	end)
+
+	return self
 end
 
 function Class:UpdateThrottling(RootPosition)
@@ -120,10 +130,11 @@ function Class:StepPhysics(Delta)
 	Force -= ProjectedForce
 	Force = (Force + Settings.Force) * Delta
 
-	-- Remove
-	local GW = workspace.GlobalWind
-	Settings.WindDirection = SafeUnit(GW)
-	Settings.WindSpeed = GW.Magnitude
+	if Settings.MatchWorkspaceWind == true then
+		local GW = workspace.GlobalWind
+		Settings.WindDirection = SafeUnit(GW)
+		Settings.WindSpeed = GW.Magnitude
+	end
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force)
@@ -144,7 +155,7 @@ function Class:SkipUpdate()
 	self:PreUpdate()
 
 	for _, Bone in self.Bones do
-		Bone:PreUpdate()
+		Bone:SkipUpdate()
 	end
 	debug.profileend()
 end
@@ -187,6 +198,16 @@ function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW
 		end
 	end
 	debug.profileend()
+end
+
+function Class:Destroy()
+	self.DestroyConnection:Disconnect()
+
+	for _, Bone in self.Bones do
+		Bone:Destroy()
+	end
+
+	setmetatable(self, nil)
 end
 
 return Class

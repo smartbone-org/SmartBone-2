@@ -148,6 +148,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		PreviousVelocity = Vector3.zero,
 		NextVelocity = Vector3.zero,
 
+		FirstSkipUpdate = false,
+
 		-- Debug
 		CollisionsData = {},
 	}, Class)
@@ -228,6 +230,11 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 end
 
 function Class:SkipUpdate()
+	if self.FirstSkipUpdate == false then
+		self.Bone.WorldCFrame = self.TransformOffset
+		self.FirstSkipUpdate = true
+	end
+
 	self.Position = self.Bone.WorldPosition
 	self.LastPosition = self.Position
 end
@@ -267,6 +274,8 @@ function Class:ApplyTransform(BoneTree)
 		debug.profileend()
 		return
 	end
+
+	self.FirstSkipUpdate = false
 
 	local ParentBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
@@ -410,6 +419,10 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 		end
 	end
 	debug.profileend()
+end
+
+function Class:Destroy()
+	setmetatable(self, nil)
 end
 
 return Class

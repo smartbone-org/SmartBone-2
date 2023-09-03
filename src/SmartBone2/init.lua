@@ -71,9 +71,7 @@ function Class.new()
 		ColliderObjects = {},
 		Connections = {},
 		WindPreviousPosition = Vector3.zero,
-		Removed = false,
-		RemovedEvent = Instance.new("BindableEvent"),
-		InRange = false,
+		Destroyed = false,
 	}, Class)
 
 	return self
@@ -156,16 +154,48 @@ function Class:m_UpdateViewFrustum()
 	debug.profileend()
 end
 
-function Class:m_UpdateBoneTree(BoneTree, Delta)
+function Class:m_ConstrainBoneTree(BoneTree, Delta)
+	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
+
+	debug.profilebegin("Clean Colliders")
+	if #self.ColliderObjects ~= 0 then -- Micro optomizations
+		for i, ColliderObject in self.ColliderObjects do
+			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
+				task.synchronize()
+				ColliderObject:Destroy()
+				task.desynchronize()
+				table.remove(self.ColliderObjects, i)
+			end
+		end
+	end
+	debug.profileend()
+
+	BoneTree:Constrain(self.ColliderObjects, Delta)
+
+	debug.profileend()
+end
+
+function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
+
+	if BoneTree.Destroyed then
+		task.synchronize()
+		BoneTree:Destroy()
+		task.desynchronize()
+		table.remove(self.BoneTrees, Index)
+		return
+	end
+
 	BoneTree:PreUpdate()
 
 	if not BoneTree.InView then
+		task.synchronize()
 		BoneTree:SkipUpdate()
 		return
 	end
 
 	if BoneTree.UpdateRate == 0 then
+		task.synchronize()
 		BoneTree:SkipUpdate()
 		return
 	end
@@ -181,7 +211,7 @@ function Class:m_UpdateBoneTree(BoneTree, Delta)
 
 		BoneTree:PreUpdate()
 		BoneTree:StepPhysics(UpdateHz)
-		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
+		self:m_ConstrainBoneTree(BoneTree, Delta)
 		BoneTree:SolveTransform(UpdateHz)
 	end
 	debug.profileend()
@@ -190,6 +220,19 @@ function Class:m_UpdateBoneTree(BoneTree, Delta)
 		task.synchronize()
 		BoneTree:ApplyTransform()
 	end
+end
+
+function Class:m_CheckDestroy()
+	if self.Destroyed then
+		return true
+	end
+
+	if #self.BoneTrees == 0 then
+		self:Destroy()
+		return true
+	end
+
+	return false
 end
 
 -- Public Functions
@@ -239,16 +282,16 @@ function Class:SkipUpdate()
 end
 
 function Class:StepBoneTrees(Delta)
+	if self:m_CheckDestroy() then
+		return
+	end
+
 	task.desynchronize()
 	self:m_UpdateViewFrustum()
-	for _, BoneTree in self.BoneTrees do
-		self:m_UpdateBoneTree(BoneTree, Delta)
+	for i, BoneTree in self.BoneTrees do
+		self:m_UpdateBoneTree(BoneTree, i, Delta)
 	end
 	task.synchronize()
-end
-
-function Class:UpdateBoneTrees()
-	-- self:m_ApplyTransform()
 end
 
 function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
@@ -261,6 +304,20 @@ function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW
 			ColliderObject:DrawDebug()
 		end
 	end
+end
+
+function Class:Destroy()
+	self.Destroyed = true
+
+	for _, BoneTree in self.BoneTrees do
+		BoneTree:Destroy()
+	end
+
+	for _, ColliderObject in self.ColliderObjects do
+		ColliderObject:Destroy()
+	end
+
+	setmetatable(self, nil)
 end
 
 function Class.Start()

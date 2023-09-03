@@ -7,13 +7,20 @@ return {
 	Elasticity = 3,
 	BlendWeight = 1,
 	AnchorDepth = 0,
+
+	AnchorsRotate = false,
+
 	Constraint = "Distance",
-	WindType = "Hybrid",
 	Force = Vector3.yAxis * FORCE_MULTIPLIER,
 	Gravity = -Vector3.yAxis,
+
+	WindType = "Hybrid",
+	MatchWorkspaceWind = true,
 	WindInfluence = 1,
 	WindStrength = 2,
-	AnchorsRotate = false,
+	WindSpeed = 1,
+	WindDirection = Vector3.xAxis,
+
 	UpdateRate = 60,
 	ActivationDistance = 45,
 	ThrottleDistance = 15,
