@@ -2,8 +2,6 @@ local function Map(n, start, stop, newStart, newStop)
 	return ((n - start) / (stop - start)) * (newStop - newStart) + newStart
 end
 
---- @class Mesh
---- Renders a wireframe mesh.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -19,12 +17,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Mesh
---- @function Draw
---- @param Transform CFrame
---- @param Size Vector3
---- @param Vertices table
---- @param Faces table
 function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 	local Ceive = self.Ceive
 
@@ -84,13 +76,6 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 	end
 end
 
---- @within Mesh
---- @function Create
---- @param Transform CFrame
---- @param Size Vector3
---- @param Vertices table
---- @param Faces table
---- @return {Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Size: Vector3, Vertices, Faces)
 	local PropertyTable = {
 		Transform = Transform,

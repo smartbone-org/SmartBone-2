@@ -34,7 +34,8 @@ end
 RunService.RenderStepped:Connect(function(deltaTime)
 	BonePhysics:StepBoneTrees(deltaTime)
 
-	if BonePhysics.Destroyed then
+	if BonePhysics.ShouldDestroy then
+		BonePhysics:Destroy()
 		Actor:Destroy()
 		return
 	end

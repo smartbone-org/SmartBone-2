@@ -1,7 +1,5 @@
 local Terrain = workspace.Terrain
 
---- @class VolumeSphere
---- Renders a SphereHandleAdornment.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -18,10 +16,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain, Register)
 	return self
 end
 
---- @within VolumeSphere
---- @function Draw
---- @param Transform CFrame
---- @param Radius number
 function Gizmo:Draw(Transform: CFrame, Radius: number)
 	local Ceive = self.Ceive
 
@@ -45,11 +39,6 @@ function Gizmo:Draw(Transform: CFrame, Radius: number)
 	self.Register(Sphere)
 end
 
---- @within VolumeSphere
---- @function Create
---- @param Transform CFrame
---- @param Radius number
---- @return {Transform: CFrame, Radius: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Radius: number)
 	local PropertyTable = {
 		Transform = Transform,

@@ -1,7 +1,5 @@
 local Rad90D = math.rad(90)
 
---- @class Cone
---- Renders a wireframe cone.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -17,12 +15,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Cone
---- @function Draw
---- @param Transform CFrame
---- @param Radius number
---- @param Length number
---- @param Subdivisions number
 function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisions: number)
 	local Ceive = self.Ceive
 
@@ -68,13 +60,6 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisi
 	Ceive.Ray:Draw(Last, First)
 end
 
---- @within Cone
---- @function Create
---- @param Transform CFrame
---- @param Radius number
---- @param Length number
---- @param Subdivisions number
---- @return {Transform: CFrame, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Radius: number, Length: number, Subdivisions: number)
 	local PropertyTable = {
 		Transform = Transform,

@@ -1,5 +1,3 @@
---- @class Plane
---- Renders a wireframe plane.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -15,11 +13,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Plane
---- @function Draw
---- @param Position Vector3
---- @param Normal Vector3
---- @param Size Vector3
 function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
 	local Ceive = self.Ceive
 
@@ -27,9 +20,9 @@ function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
 		return
 	end
 
-    Size *= Vector3.new(1, 1, 0)
+	Size *= Vector3.new(1, 1, 0)
 
-    local Transform = CFrame.lookAt(Position, Position + Normal)
+	local Transform = CFrame.lookAt(Position, Position + Normal)
 
 	local Uv = Transform.UpVector
 	local Rv = Transform.RightVector
@@ -57,17 +50,11 @@ function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
 	CalculateZFace(sUv, sRv, sLv)
 end
 
---- @within Plane
---- @function Create
---- @param Position Vector3
---- @param Normal Vector3
---- @param Size Vector3
---- @return {Position: Vector3, Normal: Vector3, Size: Vector3, DrawTriangles: boolean, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Position: Vector3, Normal: Vector3, Size: Vector3)
 	local PropertyTable = {
 		Position = Position,
 		Normal = Normal,
-        Size = Size,
+		Size = Size,
 		AlwaysOnTop = self.Propertys.AlwaysOnTop,
 		Transparency = self.Propertys.Transparency,
 		Color3 = self.Propertys.Color3,
