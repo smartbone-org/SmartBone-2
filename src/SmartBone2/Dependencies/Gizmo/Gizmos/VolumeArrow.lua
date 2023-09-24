@@ -24,7 +24,6 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeR
 	local ArrowCFrame = CFrame.lookAt(End - (End - Origin).Unit * (Length / 2), End)
 
 	if UseCylinder == true then
-		local Direction = (End - Origin).Unit
 		local BottomCone = ArrowCFrame.Position
 		local CylinderLength = (BottomCone - Origin).Magnitude
 		local CylinderCFrame = CFrame.lookAt((Origin + BottomCone) / 2, End)

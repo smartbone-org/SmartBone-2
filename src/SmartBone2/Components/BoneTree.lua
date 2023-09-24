@@ -10,14 +10,11 @@ Gizmo.Init()
 export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
-	RootPart: BasePart,
-	BoneTotalLength: number,
 	Bones: { [number]: BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
 	InView: boolean,
 
-	LocalCFrame: CFrame,
 	LocalGravity: Vector3,
 	Force: Vector3,
 	RestGravity: Vector3,
@@ -49,15 +46,84 @@ local function map(n, start, stop, newStart, newStop, withinBounds)
 	end
 end
 
+--- @class BoneTree
+--- Internal class for all bone trees
+--- :::caution Caution: Warning
+--- Changes to the syntax in this class will not count to the major version in semver.
+--- :::
+
+--- @within BoneTree
+--- @readonly
+--- @prop WindOffset number
+--- Used in wind calculations so each bone tree has a different solution.
+
+--- @within BoneTree
+--- @readonly
+--- @prop Root Bone
+--- Root bone of the bone tree
+
+--- @within BoneTree
+--- @readonly
+--- @prop RootPart BasePart
+
+--- @within BoneTree
+--- @prop Bones table
+
+--- @within BoneTree
+--- @prop Settings {}
+
+--- @within BoneTree
+--- @readonly
+--- @prop UpdateRate number
+--- Throttled update rate
+
+--- @within BoneTree
+--- @readonly
+--- @prop InView boolean
+
+--- @within BoneTree
+--- @readonly
+--- @prop AccumulatedDelta number
+--- Used in the runtime
+
+--- @within BoneTree
+--- @readonly
+--- @prop Destroyed boolean
+--- True if the root part has been destroyed
+
+--- @within BoneTree
+--- @readonly
+--- @prop LocalGravity CFrame
+
+--- @within BoneTree
+--- @readonly
+--- @prop Force Vector3
+
+--- @within BoneTree
+--- @readonly
+--- @prop RestGravity Vector3
+
+--- @within BoneTree
+--- @prop ObjectMove Vector3
+--- Difference between root parts last position and current position
+
+--- @within BoneTree
+--- @prop ObjectPreviousPosition Vector3
+--- Root parts previous position
+
 local Class = {}
 Class.__index = Class
 
+--- @within BoneTree
+--- @param RootBone Bone
+--- @param RootPart BasePart
+--- @param Gravity Vector3
+--- @return BoneTree
 function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneTree
 	local self = setmetatable({
 		WindOffset = WIND_RNG:NextNumber(0, 1000000),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
-		BoneTotalLength = 0,
 		Bones = {},
 		Settings = {},
 		UpdateRate = 0,
@@ -66,7 +132,6 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 
 		Destroyed = false,
 
-		LocalCFrame = RootBone.WorldCFrame,
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
 		Force = Vector3.zero,
 		RestGravity = Vector3.zero,
@@ -83,8 +148,11 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 	return self
 end
 
+--- @within BoneTree
+--- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
+--- Called in BoneTree:PreUpdate()
 function Class:UpdateThrottling(RootPosition)
-	debug.profilebegin("Throttling")
+	debug.profilebegin("BoneTree::UpdateThrottling")
 	local Settings = self.Settings
 
 	local Camera = workspace.CurrentCamera
@@ -101,6 +169,8 @@ function Class:UpdateThrottling(RootPosition)
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- Calculates object move, gravity and throttled update rate. Also calls Bone:PreUpdate()
 function Class:PreUpdate()
 	debug.profilebegin("BoneTree::PreUpdate")
 	local RootPartCFrame = self.RootPart.CFrame
@@ -113,11 +183,14 @@ function Class:PreUpdate()
 	self:UpdateThrottling(RootPartPosition)
 
 	for _, Bone in self.Bones do
-		Bone:PreUpdate()
+		Bone:PreUpdate(self)
 	end
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- @param Delta number -- Δt
+--- Calculates forces and updates workspace wind. Also calls Bone:StepPhysics()
 function Class:StepPhysics(Delta)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
@@ -142,6 +215,9 @@ function Class:StepPhysics(Delta)
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- @param ColliderObjects table
+--- @param Delta number -- Δt
 function Class:Constrain(ColliderObjects, Delta)
 	debug.profilebegin("BoneTree::Constrain")
 	for _, Bone in self.Bones do
@@ -150,6 +226,8 @@ function Class:Constrain(ColliderObjects, Delta)
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- Resets all bones to their rest positions.
 function Class:SkipUpdate()
 	debug.profilebegin("BoneTree::SkipUpdate")
 	self:PreUpdate()
@@ -160,6 +238,8 @@ function Class:SkipUpdate()
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- @param Delta number -- Δt
 function Class:SolveTransform(Delta)
 	debug.profilebegin("BoneTree::SolveTransform")
 	for _, Bone in self.Bones do
@@ -168,6 +248,8 @@ function Class:SolveTransform(Delta)
 	debug.profileend()
 end
 
+--- @within BoneTree
+--- Applys all the transforms to bones in serial context.
 function Class:ApplyTransform()
 	debug.profilebegin("BoneTree::ApplyTransform")
 	for _, Bone in self.Bones do
@@ -176,25 +258,39 @@ function Class:ApplyTransform()
 	debug.profileend()
 end
 
-function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+--- @within BoneTree
+--- @param DRAW_CONTACTS boolean
+--- @param DRAW_PHYSICAL_BONE boolean
+--- @param DRAW_BONE boolean
+--- @param DRAW_AXIS_LIMITS boolean
+--- @param DRAW_ROOT_PART boolean
+function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
+	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
+	local ROOT_PART_FILL_COLOR = Color3.fromRGB(255, 89, 89)
 
 	Gizmo.PushProperty("AlwaysOnTop", false)
 
+	if DRAW_ROOT_PART then
+		Gizmo.PushProperty("Color3", ROOT_PART_BOUNDING_BOX_COLOR)
+		Gizmo.Box:Draw(self.RootPart.CFrame, self.RootPart.Size, true)
+
+		Gizmo.SetStyle(ROOT_PART_FILL_COLOR, 0.75, false)
+		Gizmo.VolumeBox:Draw(self.RootPart.CFrame, self.RootPart.Size)
+
+		Gizmo.PushProperty("Transparency", 0)
+	end
+
 	for i, Bone in self.Bones do
-		local BonePosition = Bone.Bone.WorldPosition
+		local BonePosition = Bone.Bone.TransformedWorldCFrame.Position
 		local ParentBone = self.Bones[Bone.ParentIndex]
 
-		if i == 1 then
-			continue -- Skip if we are on our root bone
-		end
+		Bone:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
 
-		Bone:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
-
-		if DRAW_PHYSICAL_BONE and i ~= 2 then
+		if DRAW_PHYSICAL_BONE and i ~= 1 then
 			Gizmo.PushProperty("Color3", LINE_CONNECTING_COLOR)
-			Gizmo.Ray:Draw(ParentBone.Bone.WorldPosition, BonePosition)
+			Gizmo.Ray:Draw(ParentBone.Bone.TransformedWorldCFrame.Position, BonePosition)
 		end
 	end
 	debug.profileend()

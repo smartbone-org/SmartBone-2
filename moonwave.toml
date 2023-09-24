@@ -1,5 +1,9 @@
 gitSourceBranch = "jakey"
 
 classOrder = [
-    "SmartBone"
+    "SmartBone",
+    "BoneTree",
+    "Bone",
+    "ColliderObject",
+    "Collider"
 ]

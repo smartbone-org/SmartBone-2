@@ -1,7 +1,3 @@
-local function ReflectVector(Direction, SurfaceNormal)
-	return (Direction - (2 * Direction:Dot(SurfaceNormal) * SurfaceNormal))
-end
-
 return function(self, Position, RootCFrame)
 	debug.profilebegin("Axis Constraint")
 	local RootOffset = RootCFrame:PointToObjectSpace(Position)
@@ -47,29 +43,14 @@ return function(self, Position, RootCFrame)
 	-- Remove our velocity on the vectors we collided with, stops any weird jittering.
 	if X ~= RootOffset.X then
 		self:ClipVelocity(Position, XAxis)
-
-		local XVelocity = (self.PreviousVelocity * XAxis).Magnitude * self.Restitution
-		local Impulse = ReflectVector(-XAxis, XAxis) * XVelocity
-
-		self:ImpulseVelocity(Impulse)
 	end
 
 	if Y ~= RootOffset.Y then
 		self:ClipVelocity(Position, YAxis)
-
-		local YVelocity = (self.PreviousVelocity * YAxis).Magnitude * self.Restitution
-		local Impulse = ReflectVector(-YAxis, YAxis) * YVelocity
-
-		self:ImpulseVelocity(Impulse)
 	end
 
 	if Z ~= RootOffset.Z then
 		self:ClipVelocity(Position, ZAxis)
-
-		local ZVelocity = (self.PreviousVelocity * ZAxis).Magnitude * self.Restitution
-		local Impulse = ReflectVector(-ZAxis, ZAxis) * ZVelocity
-
-		self:ImpulseVelocity(Impulse)
 	end
 	debug.profileend()
 

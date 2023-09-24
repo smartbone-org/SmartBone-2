@@ -17,5 +17,3 @@
 - \[*NumberRange*\] ZAxisLimits - The limit on which the bone can travel on the z axis relative to the root part, default is -inf, inf.
 
 - \[*Number*\] Radius - The radius of the bone, default is 0.
-
-- \[*Number*\] Restitution - How bouncy the bone will be when it contacts with a surface, default is 0,

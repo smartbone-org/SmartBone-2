@@ -21,14 +21,11 @@ export type IBone = {
 	RootTransform: CFrame,
 	Radius: number,
 
+	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
-	LastTransformOffset: CFrame,
-	ParentTransformOffset: CFrame,
 	LocalTransformOffset: CFrame,
 	RestPosition: Vector3,
-	BoneTransform: CFrame,
 	CalculatedWorldCFrame: CFrame,
-	CalculatedWorldPosition: Vector3,
 
 	Position: Vector3,
 	LastPosition: Vector3,
@@ -39,6 +36,19 @@ export type IBone = {
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
 }
+
+local function QueryTransformedWorldCFrame(Bone: Bone)
+	local Parent = Bone.Parent
+	local ParentCFrame
+
+	if Parent:IsA("Bone") then
+		ParentCFrame = QueryTransformedWorldCFrame(Parent)
+	else
+		ParentCFrame = Parent.CFrame
+	end
+
+	return ParentCFrame:ToWorldSpace(Bone.TransformedCFrame)
+end
 
 local function ClipVector(LastPosition, Position, Vector)
 	LastPosition *= (Vector3.one - Vector)
@@ -109,6 +119,97 @@ local function SolveWind(self, BoneTree)
 	return WindMove
 end
 
+--- @class Bone
+--- Internal class for all bones
+--- :::caution Caution: Warning
+--- Changes to the syntax in this class will not count to the major version in semver.
+--- :::
+
+--- @within Bone
+--- @readonly
+--- @prop Bone Bone
+
+--- @within Bone
+--- @prop FreeLength number
+
+--- @within Bone
+--- @prop Weight number
+
+--- @within Bone
+--- @readonly
+--- @prop ParentIndex number
+
+--- @within Bone
+--- @readonly
+--- @prop HeirarchyLength number
+
+--- @within Bone
+--- @prop Transform CFrame
+
+--- @within Bone
+--- @prop LocalTransform CFrame
+
+--- @within Bone
+--- @prop RootTransform CFrame
+
+--- @within Bone
+--- @readonly
+--- @prop RootPart BasePart
+
+--- @within Bone
+--- @readonly
+--- @prop RootBone Bone
+
+--- @within Bone
+--- @prop Radius number
+
+--- @within Bone
+--- @readonly
+--- @prop AnimatedWorldCFrame CFrame
+--- Bone.TransformedWorldCFrame
+
+--- @within Bone
+--- @readonly
+--- @prop TransformOffset CFrame
+
+--- @within Bone
+--- @readonly
+--- @prop LocalTransformOffset CFrame
+
+--- @within Bone
+--- @readonly
+--- @prop RestPosition Vector3
+
+--- @within Bone
+--- @readonly
+--- @prop CalculatedWorldCFrame CFrame
+
+--- @within Bone
+--- @prop Position Vector3
+--- Internal representation of the bone
+
+--- @within Bone
+--- @prop Anchored boolean
+
+--- @within Bone
+--- @prop AxisLocked { boolean, boolean, boolean }
+--- XYZ order
+
+--- @within Bone
+--- @prop XAxisLimits NumberRange
+
+--- @within Bone
+--- @prop YAxisLimits NumberRange
+
+--- @within Bone
+--- @prop ZAxisLimits NumberRange
+
+--- @within Bone
+--- @prop FirstSkipUpdate boolean
+
+--- @within Bone
+--- @prop CollisionData {}
+
 local Class = {}
 Class.__index = Class
 
@@ -119,34 +220,27 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		Weight = 1 * 0.7,
 		ParentIndex = -1,
 		HeirarchyLength = 0,
-		Transform = Bone.WorldCFrame:ToObjectSpace(RootBone.WorldCFrame):Inverse(),
+		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(RootBone.TransformedWorldCFrame):Inverse(),
 		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
 		RootTransform = RootBone.WorldCFrame:ToObjectSpace(RootPart.CFrame):Inverse(),
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
-		Restitution = 0,
 
+		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
-		LastTransformOffset = CFrame.identity,
-		ParentTransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
 		RestPosition = Vector3.zero,
-		BoneTransform = CFrame.identity,
-		CalculatedWorldCFrame = Bone.WorldCFrame,
-		CalculatedWorldPosition = Bone.WorldPosition,
+		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
-		Position = Bone.WorldPosition,
-		LastPosition = Bone.WorldPosition,
+		Position = Bone.TransformedWorldCFrame.Position,
+		LastPosition = Bone.TransformedWorldCFrame.Position,
 
 		Anchored = false,
 		AxisLocked = { false, false, false },
 		XAxisLimits = NumberRange.new(-math.huge, math.huge),
 		YAxisLimits = NumberRange.new(-math.huge, math.huge),
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
-
-		PreviousVelocity = Vector3.zero,
-		NextVelocity = Vector3.zero,
 
 		FirstSkipUpdate = false,
 
@@ -155,34 +249,41 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 	}, Class)
 end
 
-function Class:ImpulseVelocity(Velocity)
-	self.NextVelocity += Velocity
-end
-
+--- @within Bone
+--- @param Position Vector3
+--- @param Vector Vector3
+--- Clips velocity on specified vector, Position is where we are at our current physics step (Before we set self.Position)
 function Class:ClipVelocity(Position, Vector)
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
-function Class:PreUpdate() -- Parallel safe
+--- @within Bone
+--- @param BoneTree BoneTree
+function Class:PreUpdate(BoneTree) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local RootPart = self.RootPart
-	local Root = self.RootBone
+	local Root = BoneTree.Bones[1]
 
-	self.LastTransformOffset = self.TransformOffset
+	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(self.Bone)
+
 	if self.Bone == self.RootBone then
 		self.TransformOffset = RootPart.CFrame * self.RootTransform
 	else
-		self.TransformOffset = Root.WorldCFrame * self.Transform
+		self.TransformOffset = Root.AnimatedWorldCFrame * self.Transform
 	end
-	self.LocalTransformOffset = Root.CFrame * self.LocalTransform
+	self.LocalTransformOffset = Root.Bone.CFrame * self.LocalTransform
 	debug.profileend()
 end
 
+--- @within Bone
+--- @param BoneTree BoneTree
+--- @param Force Vector3
+--- Force passed in via BoneTree:StepPhysics()
 function Class:StepPhysics(BoneTree, Force) -- Parallel safe
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
-		self.LastPosition = self.TransformOffset.Position
-		self.Position = self.TransformOffset.Position
+		self.LastPosition = self.AnimatedWorldCFrame.Position
+		self.Position = self.AnimatedWorldCFrame.Position
 
 		debug.profileend()
 		return
@@ -190,18 +291,20 @@ function Class:StepPhysics(BoneTree, Force) -- Parallel safe
 
 	local Settings = BoneTree.Settings
 
-	local Velocity = (self.Position - self.LastPosition) + self.NextVelocity
+	local Velocity = (self.Position - self.LastPosition)
 	local Move = (BoneTree.ObjectMove * Settings.Inertia)
 	local WindMove = SolveWind(self, BoneTree)
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
 
-	self.PreviousVelocity = Velocity
-	self.NextVelocity = Vector3.zero
 	debug.profileend()
 end
 
+--- @within Bone
+--- @param BoneTree BoneTree
+--- @param ColliderObjects Vector3
+--- @param Delta number -- Δt
 function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
 	if self.Anchored then
@@ -229,16 +332,23 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	debug.profileend()
 end
 
+--- @within Bone
+--- Returns bone to rest position
 function Class:SkipUpdate()
 	if self.FirstSkipUpdate == false then
 		self.Bone.WorldCFrame = self.TransformOffset
 		self.FirstSkipUpdate = true
 	end
 
+	self.AnimatedWorldCFrame = self.Bone.TransformedWorldCFrame
 	self.Position = self.Bone.WorldPosition
 	self.LastPosition = self.Position
 end
 
+--- @within Bone
+--- @param BoneTree BoneTree
+--- @param Delta number -- Δt
+--- Solves the cframe of the bones
 function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 	debug.profilebegin("Bone::SolveTransform")
 	if self.ParentIndex < 1 then
@@ -250,7 +360,7 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent and BoneParent:IsA("Bone") and BoneParent ~= BoneTree.RootBone then
-		local X = Utilities.GetCFrameAxis(BoneParent.WorldCFrame, "X")
+		local X = Utilities.GetCFrameAxis(ParentBone.AnimatedWorldCFrame, "X")
 		local _, Y, Z = ParentBone.TransformOffset:ToEulerAnglesXYZ()
 
 		local RefrenceRotation = CFrame.fromEulerAnglesXYZ(X, Y, Z).Rotation
@@ -263,13 +373,19 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 
 		local Alpha = 0.99999 ^ Delta
 
-		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, Alpha)
+		ParentBone.CalculatedWorldCFrame = ParentBone.AnimatedWorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, Alpha)
 	end
 	debug.profileend()
 end
 
+--- @within Bone
+--- @param BoneTree BoneTree
+--- Sets the world cframes of the bones to the calculated world cframe (solved in Bone:SolveTransform())
 function Class:ApplyTransform(BoneTree)
 	debug.profilebegin("Bone::ApplyTransform")
+
+	-- self.AnimatedWorldCFrame = self.Bone.TransformedWorldCFrame
+
 	if self.ParentIndex < 1 then
 		debug.profileend()
 		return
@@ -284,13 +400,24 @@ function Class:ApplyTransform(BoneTree)
 		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
 		else
+			if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == true then
+				BoneParent.WorldCFrame = ParentBone.TransformOffset * ParentBone.CalculatedWorldCFrame.Rotation
+				debug.profileend()
+				return
+			end
+
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
 	end
 	debug.profileend()
 end
 
-function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+--- @within Bone
+--- @param DRAW_CONTACTS any
+--- @param DRAW_PHYSICAL_BONE any
+--- @param DRAW_BONE any
+--- @param DRAW_AXIS_LIMITS any
+function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
 	debug.profilebegin("Bone::DrawDebug")
 	local BONE_POSITION_COLOR = Color3.fromRGB(255, 1, 1)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 1)
@@ -315,8 +442,8 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 	local BONE_ARROW_EXPANSION = 0.5
 	local BONE_RADIUS = 0.08
 
-	local BonePosition = self.Bone.WorldPosition
-	local BoneCFrame = self.Bone.WorldCFrame
+	local BoneCFrame = self.AnimatedWorldCFrame
+	local BonePosition = BoneCFrame.Position
 	local BonePositionCFrame = CFrame.new(self.Position)
 	local BoneLastPositionCFrame = CFrame.new(self.LastPosition)
 
@@ -326,10 +453,10 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 		Gizmo.PushProperty("AlwaysOnTop", false)
 
 		Gizmo.PushProperty("Color3", BONE_POSITION_COLOR)
-		Gizmo.Sphere:Draw(BonePositionCFrame, self.Radius, 20, 360)
+		Gizmo.Sphere:Draw(BonePositionCFrame, self.Radius, 10, 360)
 
 		Gizmo.PushProperty("Color3", BONE_LAST_POSITION_COLOR)
-		Gizmo.Sphere:Draw(BoneLastPositionCFrame, self.Radius, 20, 360)
+		Gizmo.Sphere:Draw(BoneLastPositionCFrame, self.Radius, 10, 360)
 
 		Gizmo.PushProperty("Color3", BONE_POSITION_RAY_COLOR)
 		Gizmo.Ray:Draw(self.Position, self.LastPosition)
@@ -389,16 +516,16 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 
 	if DRAW_PHYSICAL_BONE then
 		Gizmo.PushProperty("Color3", BONE_SPHERE_COLOR)
-		Gizmo.Sphere:Draw(BoneCFrame, BONE_RADIUS, 20, 360)
+		Gizmo.Sphere:Draw(BoneCFrame, BONE_RADIUS, 5, 360)
 
 		Gizmo.PushProperty("Color3", BONE_FRONT_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.LookVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 9)
+		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.LookVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
 
 		Gizmo.PushProperty("Color3", BONE_UP_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.UpVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 9)
+		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.UpVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
 
 		Gizmo.PushProperty("Color3", BONE_RIGHT_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.RightVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 9)
+		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.RightVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
 	end
 
 	-- Draw our collision contacts
@@ -406,7 +533,7 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 	if DRAW_CONTACTS and not self.Anchored then
 		for _, Collision in self.CollisionsData do
 			Gizmo.PushProperty("Color3", COLLISION_CONTACT_SPHERE_COLOR)
-			Gizmo.Sphere:Draw(CFrame.new(Collision.ClosestPoint), COLLISION_CONTACT_SPHERE_RADIUS, 20, 360)
+			Gizmo.Sphere:Draw(CFrame.new(Collision.ClosestPoint), COLLISION_CONTACT_SPHERE_RADIUS, 5, 360)
 
 			Gizmo.PushProperty("Color3", COLLISION_CONTACT_NORMAL_COLOR)
 			Gizmo.Arrow:Draw(
@@ -418,6 +545,7 @@ function Class:DrawDebug(_, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_A
 			)
 		end
 	end
+
 	debug.profileend()
 end
 

@@ -15,9 +15,32 @@ type IRawCollider = {
 
 type IColliderTable = { [number]: IRawCollider }
 
+--- @class ColliderObject
+--- Internal class for collider
+--- :::caution Caution: Warning
+--- Changes to the syntax in this class will not count to the major version in semver.
+--- :::
+
+--- @within ColliderObject
+--- @private
+--- @readonly
+--- @prop m_Object BasePart
+
+--- @within ColliderObject
+--- @readonly
+--- @prop Destroyed boolean
+
+--- @within ColliderObject
+--- @readonly
+--- @prop Colliders {}
+
 local Class = {}
 Class.__index = Class
 
+--- @within ColliderObject
+--- @param ColliderTable {[number] = {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
+--- @param Object BasePart
+--- @return ColliderObject
 function Class.new(ColliderTable, Object: BasePart)
 	local self = setmetatable({
 		m_Object = Object,
@@ -36,6 +59,9 @@ function Class.new(ColliderTable, Object: BasePart)
 	return self
 end
 
+--- @within ColliderObject
+--- @private
+--- @param Collider {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}
 function Class:m_LoadCollider(Collider: IRawCollider)
 	local FormattedScale = Vector3.new(Collider.ScaleX, Collider.ScaleY, Collider.ScaleZ)
 	local FormattedOffset = Vector3.new(Collider.OffsetX, Collider.OffsetY, Collider.OffsetZ)
@@ -51,6 +77,9 @@ function Class:m_LoadCollider(Collider: IRawCollider)
 	table.insert(self.Colliders, ColliderSolver)
 end
 
+--- @within ColliderObject
+--- @private
+--- @param ColliderTable {[number] = {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 function Class:m_LoadColliderTable(ColliderTable: IColliderTable)
 	for _, Collider in ColliderTable do
 		self:m_LoadCollider(Collider)
@@ -59,6 +88,10 @@ end
 
 -- Public
 
+--- @within ColliderObject
+--- @param Point Vector3
+--- @param Radius number -- Radius of bone
+--- @return {[number] = {ClosestPoint: Vector3, Normal: Vector3}}
 function Class:GetCollisions(Point, Radius)
 	if #self.Colliders == 0 then
 		return {}
@@ -77,12 +110,15 @@ function Class:GetCollisions(Point, Radius)
 	return Collisions
 end
 
-function Class:DrawDebug()
+--- @within ColliderObject
+--- @param FILL_COLLIDERS boolean
+function Class:DrawDebug(FILL_COLLIDERS)
 	for _, Collider in self.Colliders do
-		Collider:DrawDebug()
+		Collider:DrawDebug(FILL_COLLIDERS)
 	end
 end
 
+--- @within ColliderObject
 function Class:Destroy()
 	self.DestroyConnection:Disconnect()
 

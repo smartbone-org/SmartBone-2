@@ -19,6 +19,8 @@
 
 **All attributes listed here are optional and not required to get a SmartBone object working.**
 
+- \[*Boolean*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
+
 - \[*Number*\] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
 
 - \[*Number*\] Stiffness – How much of the bone(s) original CFrame is preserved.

@@ -83,6 +83,8 @@ end
 local Class = {}
 Class.__index = Class
 
+--- @within SmartBone
+--- @return SmartBone
 function Class.new()
 	local self = setmetatable({
 		ID = HttpService:GenerateGUID(false),
@@ -237,22 +239,14 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
 
 	if BoneTree.Destroyed then
-		task.synchronize()
 		BoneTree:Destroy()
-		task.desynchronize()
 		table.remove(self.BoneTrees, Index)
 		return
 	end
 
 	BoneTree:PreUpdate()
 
-	if not BoneTree.InView then
-		task.synchronize()
-		BoneTree:SkipUpdate()
-		return
-	end
-
-	if BoneTree.UpdateRate == 0 then
+	if not BoneTree.InView or BoneTree.UpdateRate == 0 then
 		task.synchronize()
 		BoneTree:SkipUpdate()
 		return
@@ -380,15 +374,17 @@ end
 --- @param DRAW_PHYSICAL_BONE boolean
 --- @param DRAW_BONE boolean
 --- @param DRAW_AXIS_LIMITS boolean
+--- @param DRAW_ROOT_PART boolean
+--- @param DRAW_FILL_COLLIDERS boolean
 --- Draws the debug gizmos
-function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_FILL_COLLIDERS)
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART)
 	end
 
 	if DRAW_COLLIDERS then
 		for _, ColliderObject in self.ColliderObjects do
-			ColliderObject:DrawDebug()
+			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS)
 		end
 	end
 end
