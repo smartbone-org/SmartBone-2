@@ -254,9 +254,9 @@ return function(Iris, RootObject, DebugState)
 			Iris.Table({ 4 })
 
 			for Index, Bone in BoneTree.Bones do
-				if Index == #BoneTree.Bones then
-					break
-				end
+				-- if Index == #BoneTree.Bones then
+				-- 	break
+				-- end
 
 				Iris.NextColumn()
 				Iris.Text(tostring(Index))

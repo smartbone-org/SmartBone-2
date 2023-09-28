@@ -36,21 +36,24 @@ return function(self, Position, RootCFrame)
 
 	Position = WorldSpace
 
-	local XAxis = RootCFrame.XVector
-	local YAxis = RootCFrame.YVector
-	local ZAxis = -RootCFrame.ZVector
+	local XAxis = RootCFrame.RightVector
+	local YAxis = RootCFrame.UpVector
+	local ZAxis = RootCFrame.LookVector
 
 	-- Remove our velocity on the vectors we collided with, stops any weird jittering.
 	if X ~= RootOffset.X then
-		self:ClipVelocity(Position, XAxis)
+		local Normal = X == XMin and XAxis or -XAxis -- If we are colliding with the XMin limit then use the XAxis if we collide with XMax then use -XAxis
+		self:ClipVelocity(Position, Normal)
 	end
 
 	if Y ~= RootOffset.Y then
-		self:ClipVelocity(Position, YAxis)
+		local Normal = Y == YMin and YAxis or -YAxis
+		self:ClipVelocity(Position, Normal)
 	end
 
 	if Z ~= RootOffset.Z then
-		self:ClipVelocity(Position, ZAxis)
+		local Normal = Z == ZMin and ZAxis or -ZAxis
+		self:ClipVelocity(Position, Normal)
 	end
 	debug.profileend()
 
