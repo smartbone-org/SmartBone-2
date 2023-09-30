@@ -1,7 +1,6 @@
 --!nocheck
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
-local Quaternion = require(Dependencies:WaitForChild("Quaternion"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 Gizmo.Init()
 
@@ -361,19 +360,12 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent and BoneParent:IsA("Bone") and BoneParent ~= BoneTree.RootBone then
-		local v0 = (ParentBone.TransformOffset :: CFrame):VectorToWorldSpace(self.TransformOffset.Position)
+		local ReferenceCFrame = ParentBone.TransformOffset
 		local v1 = self.Position - ParentBone.Position
-
-		local Rotation = Quaternion.lookAt(v0, v1):ToCFrame().Rotation * ParentBone.TransformOffset.Rotation
-
-		-- local ReferenceCFrame = ParentBone.TransformOffset
-		-- local v1 = self.Position - ParentBone.Position
-		-- local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
+		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
 
 		local factor = 0.00001
 		local alpha = (1 - factor ^ Delta)
-
-		-- Rotation = Quaternion.fromCFrame(Rotation):ToCFrame().Rotation
 
 		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 	end
