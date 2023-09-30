@@ -15,6 +15,7 @@ return function(self, Position, RootCFrame)
 	local ZLock = self.AxisLocked[3] and 0 or 1
 
 	-- If our radius is > than the diff between min and max
+	-- We do this because its faster than math.min() ¯\_(ツ)_/¯
 	local XMin = XLimit.Min + self.Radius
 	local XMax = XMin <= (XLimit.Max - self.Radius) and XLimit.Max - self.Radius or XMin
 

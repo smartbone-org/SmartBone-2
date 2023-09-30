@@ -316,8 +316,6 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
 
-	Position = AxisConstraint(self, Position, RootCFrame)
-
 	if #ColliderObjects ~= 0 then
 		Position = CollisionConstraint(self, Position, ColliderObjects)
 	end
@@ -327,6 +325,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
 	end
+
+	Position = AxisConstraint(self, Position, RootCFrame)
 
 	self.Position = Position
 	debug.profileend()

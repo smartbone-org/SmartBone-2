@@ -55,6 +55,9 @@ Colliders can be setup via a tag with the name "SmartCollider", you can optomise
 
 You can also manually change the shape of a collider using a string attribute called "ColliderShape" with an option of "Box", "Capsule" and "Sphere".
 
+## Update Flow Chart
+![](assets/flowchart.png)
+
 ## Related Documentation
 
 [API](/SmartBone-2/api/)
