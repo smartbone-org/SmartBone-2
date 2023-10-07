@@ -1,3 +1,5 @@
+--!nocheck
+
 local HttpService = game:GetService("HttpService")
 
 local Dependencies = script.Parent.Parent.Parent:WaitForChild("Dependencies")
@@ -5,6 +7,9 @@ local CollisionSolvers = script.Parent:WaitForChild("Colliders")
 local BoxSolver = require(CollisionSolvers:WaitForChild("Box"))
 local CapsuleSolver = require(CollisionSolvers:WaitForChild("Capsule"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
+local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
+
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
@@ -126,6 +131,7 @@ end
 --- @within Collider
 --- @param Point Vector3
 --- @param Radius number
+--- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
 function Class:GetClosestPoint(Point, Radius)
 	if self.Scale ~= self.PreviousScale then
 		self:UpdateTransform()
@@ -158,6 +164,8 @@ function Class:GetClosestPoint(Point, Radius)
 	end
 
 	warn(`Invalid collider shape: {Type}`)
+
+	return
 end
 
 --- @within Collider
@@ -226,6 +234,8 @@ end
 
 --- @within Collider
 function Class:Destroy()
+	SB_VERBOSE_LOG(`Collider destroying, object: {self.m_Object}`)
+
 	if self.ObjectConnection then
 		self.ObjectConnection:Disconnect()
 	end

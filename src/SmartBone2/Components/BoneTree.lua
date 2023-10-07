@@ -10,10 +10,14 @@ Gizmo.Init()
 export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
+	RootPart: BasePart,
 	Bones: { [number]: BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
 	InView: boolean,
+	AccumulatedDelta: number,
+
+	Destroyed: boolean,
 
 	LocalGravity: Vector3,
 	Force: Vector3,

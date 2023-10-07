@@ -1,10 +1,8 @@
 local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
 
 local module = {}
-
-function module.Lerp(A: any, B: any, C: any)
-	return A + (B - A) * C
-end
+module.LogVerbose = true
+module.LogIndent = 0
 
 function module.GetRotationBetween(U: Vector3, V: Vector3)
 	local Cos = U:Dot(V)
@@ -58,13 +56,49 @@ function module.GatherBoneSettings(Bone)
 	return Settings
 end
 
-function module.WaitForChildOfClass(parent: Instance, className: string, timeOut: number)
-	local start = os.clock()
-	timeOut = timeOut or 10
-	repeat
-		task.wait()
-	until parent:FindFirstChildOfClass(className) or os.clock() - start > timeOut
-	return parent:FindFirstChildOfClass(className)
+function module.SB_INDENT_LOG()
+	module.LogIndent += 1
+end
+
+function module.SB_UNINDENT_LOG()
+	module.LogIndent -= 1
+	module.LogIndent = math.max(module.LogIndent, 0)
+end
+
+function module.SB_ASSERT_CB(condition, callback, ...)
+	if condition == false or condition == nil then
+		callback(...)
+	end
+end
+
+function module.SB_VERBOSE_LOG(message: string)
+	if not module.LogVerbose then
+		return
+	end
+
+	local Indent = string.rep("    ", module.LogIndent)
+
+	print(`{Indent}[SmartBone][Log]: {message}`)
+end
+
+function module.SB_VERBOSE_WARN(message: string)
+	if not module.LogVerbose then
+		return
+	end
+
+	local Indent = string.rep("    ", module.LogIndent)
+
+	warn(`{Indent}[SmartBone][Warn]: {message}`)
+end
+
+function module.SB_VERBOSE_ERROR(message: string)
+	if not module.LogVerbose then
+		return
+	end
+
+	local Indent = string.rep("    ", module.LogIndent)
+
+	error(`{Indent}[SmartBone][Error]: {message}`)
 end
 
 return module

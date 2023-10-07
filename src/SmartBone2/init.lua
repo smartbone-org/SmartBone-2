@@ -1,37 +1,4 @@
---[[
-
-    How do we define colliders?
-
-    Colliders need to be under an object, their scale and cframe will be relative to
-    that object, now how do we define the colliders which each mesh should interact with
-    
-    We could define the objects and their collider module through code,
-    but that would go against the simplicity with the current smart bone module.
-
-    However making colliders is an involved process which would involve a plugin.
-    Code defining the objects which we use for colliders isnt out of the question.
-
-    Other ideas:
-
-    Using InstanceValues to reference objects which we search for modules
-    that end with .collider?
-
-    --
-
-    I think this module is going to be you have to use code to interface with it anyway,
-    thats what I'd like it to be same with smartbone. The idea that you just add a tag and it
-    finds objects to use just seems prone to issues and edge cases.
-
-    Possible api:
-
-    local ObjectPhysics = BonePhysics.new()
-    ObjectPhysics:LoadObject(Object0)
-    ObjectPhysics:LoadObject(Object1)
-
-    ObjectPhysics:LoadCollider(Object2, ColliderModule)
-
-    ObjectPhysics:Destroy()
-]]
+--!nocheck
 
 local CollectionService = game:GetService("CollectionService")
 local HttpService = game:GetService("HttpService")
@@ -59,6 +26,13 @@ local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 		Object2:SetAttribute(k, v)
 	end
 end
+
+local SB_INDENT_LOG = Utilities.SB_INDENT_LOG
+local SB_UNINDENT_LOG = Utilities.SB_UNINDENT_LOG
+local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+local SB_VERBOSE_WARN = Utilities.SB_VERBOSE_WARN
+local SB_VERBOSE_ERROR = Utilities.SB_VERBOSE_ERROR
 
 --- @class SmartBone
 --- Root for all SmartBone objects.
@@ -126,6 +100,7 @@ function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone,
 	end
 
 	if HeirarchyLength <= BoneTree.Settings.AnchorDepth then
+		SB_VERBOSE_LOG("Anchoring bone")
 		Bone.Anchored = true
 	end
 
@@ -148,7 +123,12 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 
 	BoneTree.Settings = Settings
 
+	SB_VERBOSE_LOG(`Creating bone tree {RootPart.Name}; {RootBone.Name}`)
+	SB_INDENT_LOG()
+
 	local function AddChildren(Bone, ParentIndex, HeirarchyLength)
+		SB_VERBOSE_LOG(`Adding bone: {Bone.Name}; {ParentIndex}; {HeirarchyLength}`)
+		SB_INDENT_LOG()
 		local Children = Bone:GetChildren()
 
 		for _, Child in Children do
@@ -160,6 +140,7 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 		end
 
 		if #Children == 0 then -- Add tail bone for transform calculations
+			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - Bone.Parent.WorldPosition).Magnitude)
 			local tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
@@ -170,6 +151,8 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 
 			self:m_AppendBone(BoneTree, tailBone, #BoneTree.Bones, HeirarchyLength)
 		end
+
+		SB_UNINDENT_LOG()
 	end
 
 	self:m_AppendBone(BoneTree, RootBone, 0, 0)
@@ -177,6 +160,8 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 	AddChildren(RootBone, 1, 1)
 
 	table.insert(self.BoneTrees, BoneTree)
+
+	SB_UNINDENT_LOG()
 end
 
 --- @private
@@ -197,6 +182,22 @@ function Class:m_UpdateViewFrustum()
 	debug.profileend()
 end
 
+function Class:m_CleanColliders()
+	debug.profilebegin("Clean Colliders")
+	if #self.ColliderObjects ~= 0 then -- Micro optomizations
+		for i, ColliderObject in self.ColliderObjects do
+			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
+				SB_VERBOSE_WARN(`Deleting Collider Object`)
+				SB_INDENT_LOG()
+				ColliderObject:Destroy()
+				SB_UNINDENT_LOG()
+				table.remove(self.ColliderObjects, i)
+			end
+		end
+	end
+	debug.profileend()
+end
+
 --- @private
 --- @within SmartBone
 --- @param BoneTree table
@@ -207,19 +208,6 @@ end
 --- Constrains each bone in the provided bone tree and cleans up colliders
 function Class:m_ConstrainBoneTree(BoneTree: BoneTreeClass.IBoneTree, Delta: number)
 	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
-
-	debug.profilebegin("Clean Colliders")
-	if #self.ColliderObjects ~= 0 then -- Micro optomizations
-		for i, ColliderObject in self.ColliderObjects do
-			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
-				task.synchronize()
-				ColliderObject:Destroy()
-				task.desynchronize()
-				table.remove(self.ColliderObjects, i)
-			end
-		end
-	end
-	debug.profileend()
 
 	BoneTree:Constrain(self.ColliderObjects, Delta)
 
@@ -323,6 +311,8 @@ end
 --- @param Object BasePart
 --- Loads the provided collider module onto the provided object
 function Class:LoadColliderModule(ColliderModule: ModuleScript, Object: BasePart)
+	assert(ColliderModule, "[BonePhysics::LoadColliderModule] No collider module passed in")
+
 	local RawColliderData = require(ColliderModule)
 	local ColliderData = HttpService:JSONDecode(RawColliderData)
 
@@ -358,6 +348,8 @@ function Class:StepBoneTrees(Delta)
 	if self:m_CheckDestroy() then
 		return
 	end
+
+	self:m_CleanColliders()
 
 	task.desynchronize()
 	self:m_UpdateViewFrustum()
@@ -417,6 +409,8 @@ function Class.Start()
 		return
 	end
 
+	SB_VERBOSE_LOG(".Start()")
+
 	Class.Running = true
 
 	local Player = Players.LocalPlayer
@@ -449,6 +443,7 @@ function Class.Start()
 				table.insert(ColliderObjects.Key[ColliderKey], Object)
 			end
 
+			SB_VERBOSE_LOG(`Adding collider: {Object.Name}, Collider Key: {ColliderKey}`)
 			table.insert(ColliderObjects.Raw, Object)
 		end
 
@@ -514,6 +509,9 @@ function Class.Start()
 			return
 		end
 
+		SB_VERBOSE_LOG(`Setup Object: {Object.Name}`)
+		SB_INDENT_LOG()
+
 		local GlobalColliders = GatherColliders()
 		local ColliderKey = Object:GetAttribute("ColliderKey")
 
@@ -533,6 +531,9 @@ function Class.Start()
 		Actor.Parent = ActorFolder
 
 		Actor:SendMessage("Setup", Object, ColliderDescriptions, script)
+
+		SB_VERBOSE_LOG(`Runtime Started`)
+		SB_UNINDENT_LOG()
 	end
 
 	CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)

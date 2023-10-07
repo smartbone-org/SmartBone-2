@@ -20,7 +20,7 @@ local function helpMarker(Iris, helpText)
 end
 
 local function BoneEditor(Iris, BoneObject)
-	local Window = Iris.Window({ `Editing: {BoneObject.Bone.Name} (Bone)` })
+	local Window = Iris.Window({ `Editing bone: {BoneObject.Bone.Name}` })
 	Window.isOpened.value = true
 
 	local Radius = Iris.InputNum({ "Radius", 0.1, 0, math.huge, "%.3f" }, { number = BoneObject.Radius })
@@ -75,7 +75,7 @@ local function BoneEditor(Iris, BoneObject)
 end
 
 local function ColliderEditor(Iris, Collider)
-	local Window = Iris.Window({ `{Collider.Type} - Collider Editor` })
+	local Window = Iris.Window({ `Editing collider of type: {Collider.Type}` })
 	Window.isOpened.value = true
 
 	local ColliderType = Iris.State(Collider.Type)
@@ -137,7 +137,13 @@ return function(Iris, RootObject, DebugState)
 		Iris.PopId()
 	end
 
-	Iris.Window({ `SmartBone Runtime Editor`, [Iris.Args.Window.NoClose] = true })
+	local BoneTreeCount = #RootObject.BoneTrees
+	local ColliderCount = #RootObject.ColliderObjects
+
+	local BoneTreeText = `{BoneTreeCount} BoneTree{BoneTreeCount == 1 and "" or "s"}`
+	local ColliderText = `{ColliderCount} Collider{ColliderCount == 1 and "" or "s"}`
+
+	Iris.Window({ `SmartBone Runtime Editor. {BoneTreeText}, {ColliderText}`, [Iris.Args.Window.NoClose] = true })
 
 	Iris.Tree({ "Debug Gizmos", true }, { isUncollapsed = true })
 

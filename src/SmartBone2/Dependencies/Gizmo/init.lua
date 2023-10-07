@@ -1,3 +1,5 @@
+--!nocheck
+
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Terrain = workspace.Terrain
@@ -84,12 +86,12 @@ end
 -- Types
 
 type IRay = {
-	Draw: (self, Origin: Vector3, End: Vector3) -> (),
-	Create: (self, Origin: Vector3, End: Vector3) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
+	Draw: (Origin: Vector3, End: Vector3) -> (),
+	Create: (Origin: Vector3, End: Vector3) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
 }
 
 type IBox = {
-	Draw: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Draw: (Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -108,7 +110,7 @@ type IBox = {
 }
 
 type IPlane = {
-	Draw: (self, Position: Vector3, Normal: Vector3, Size: Vector3) -> (),
+	Draw: (Position: Vector3, Normal: Vector3, Size: Vector3) -> (),
 	Create: (
 		self,
 		Position: Vector3,
@@ -128,7 +130,7 @@ type IPlane = {
 }
 
 type IWedge = {
-	Draw: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Draw: (Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -147,7 +149,7 @@ type IWedge = {
 }
 
 type ICircle = {
-	Draw: (self, Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> (),
+	Draw: (Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -168,7 +170,7 @@ type ICircle = {
 }
 
 type ISphere = {
-	Draw: (self, Transform: CFrame, Radius: number, Subdivisions: number, Angle: number) -> (),
+	Draw: (Transform: CFrame, Radius: number, Subdivisions: number, Angle: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -189,7 +191,7 @@ type ISphere = {
 }
 
 type ICylinder = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Draw: (Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -210,7 +212,7 @@ type ICylinder = {
 }
 
 type ICapsule = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Draw: (Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -231,7 +233,7 @@ type ICapsule = {
 }
 
 type ICone = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Draw: (Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -252,7 +254,7 @@ type ICone = {
 }
 
 type IArrow = {
-	Draw: (self, Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> (),
+	Draw: (Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> (),
 	Create: (
 		self,
 		Origin: Vector3,
@@ -275,7 +277,7 @@ type IArrow = {
 }
 
 type IMesh = {
-	Draw: (self, Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> (),
+	Draw: (Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -296,7 +298,7 @@ type IMesh = {
 }
 
 type ILine = {
-	Draw: (self, Transform: CFrame, Length: number) -> (),
+	Draw: (Transform: CFrame, Length: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -305,7 +307,7 @@ type ILine = {
 }
 
 type IVolumeCone = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number) -> (),
+	Draw: (Transform: CFrame, Radius: number, Length: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -324,7 +326,7 @@ type IVolumeCone = {
 }
 
 type IVolumeBox = {
-	Draw: (self, Transform: CFrame, Size: Vector3) -> (),
+	Draw: (Transform: CFrame, Size: Vector3) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -333,7 +335,7 @@ type IVolumeBox = {
 }
 
 type IVolumeSphere = {
-	Draw: (self, Transform: CFrame, Radius: number) -> (),
+	Draw: (Transform: CFrame, Radius: number) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -342,7 +344,7 @@ type IVolumeSphere = {
 }
 
 type IVolumeCylinder = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?) -> (),
+	Draw: (Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?) -> (),
 	Create: (
 		self,
 		Transform: CFrame,
@@ -365,7 +367,7 @@ type IVolumeCylinder = {
 }
 
 type IVolumeArrow = {
-	Draw: (self, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
+	Draw: (Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
 	Create: (
 		self,
 		Origin: Vector3,

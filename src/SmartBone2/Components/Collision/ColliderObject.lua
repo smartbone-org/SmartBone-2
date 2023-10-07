@@ -1,4 +1,7 @@
 local ColliderClass = require(script.Parent:WaitForChild("Collider"))
+local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
+
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 type IRawCollider = {
 	Type: string,
@@ -38,7 +41,7 @@ local Class = {}
 Class.__index = Class
 
 --- @within ColliderObject
---- @param ColliderTable {[number] = {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
+--- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 --- @param Object BasePart
 --- @return ColliderObject
 function Class.new(ColliderTable, Object: BasePart)
@@ -79,7 +82,7 @@ end
 
 --- @within ColliderObject
 --- @private
---- @param ColliderTable {[number] = {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
+--- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 function Class:m_LoadColliderTable(ColliderTable: IColliderTable)
 	for _, Collider in ColliderTable do
 		self:m_LoadCollider(Collider)
@@ -91,7 +94,7 @@ end
 --- @within ColliderObject
 --- @param Point Vector3
 --- @param Radius number -- Radius of bone
---- @return {[number] = {ClosestPoint: Vector3, Normal: Vector3}}
+--- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
 function Class:GetCollisions(Point, Radius)
 	if #self.Colliders == 0 then
 		return {}
@@ -120,6 +123,8 @@ end
 
 --- @within ColliderObject
 function Class:Destroy()
+	SB_VERBOSE_LOG(`Collider object destroying, object: {self.m_Object}`)
+
 	self.DestroyConnection:Disconnect()
 
 	if #self.Colliders ~= 0 then

@@ -43,6 +43,8 @@ local function ClosestPointFunc(cframe, size, point)
 		local closestPoint = cframe * Vector3.new(rx, ry, -sz / 2)
 		return true, closestPoint, -cframe.ZVector
 	end
+
+	return
 end
 
 return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box

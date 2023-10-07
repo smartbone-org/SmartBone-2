@@ -326,7 +326,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = DistanceConstraint(self, Position, BoneTree)
 	end
 
-	Position = AxisConstraint(self, Position, RootCFrame)
+	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
 
 	self.Position = Position
 	debug.profileend()
@@ -413,8 +413,8 @@ end
 --- @param DRAW_AXIS_LIMITS any
 function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
 	debug.profilebegin("Bone::DrawDebug")
-	local BONE_POSITION_COLOR = Color3.fromRGB(255, 1, 1)
-	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 1)
+	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
+	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
 	local BONE_POSITION_RAY_COLOR = Color3.fromRGB(234, 1, 255)
 	local BONE_SPHERE_COLOR = Color3.fromRGB(0, 255, 255)
 	local BONE_FRONT_ARROW_COLOR = Color3.fromRGB(255, 0, 0)
@@ -423,6 +423,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local AXIS_X_COLOR = Color3.fromRGB(255, 0, 0)
 	local AXIS_Y_COLOR = Color3.fromRGB(0, 255, 0)
 	local AXIS_Z_COLOR = Color3.fromRGB(0, 0, 255)
+	local AXIS_ARROW_RADIUS = 0.05
+	local AXIS_ARROW_LENGTH = 0.15
 
 	local COLLISION_CONTACT_SPHERE_COLOR = Color3.fromRGB(28, 41, 224)
 	local COLLISION_CONTACT_NORMAL_COLOR = Color3.fromRGB(255, 27, 27)
@@ -431,9 +433,10 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local COLLISION_CONTACT_ARROW_RADIUS = 0.05
 	local COLLISION_CONTACT_ARROW_EXPANSION = 0.5
 
-	local BONE_ARROW_LENGTH = 0.15
-	local BONE_ARROW_RADIUS = 0.05
-	local BONE_ARROW_EXPANSION = 0.5
+	local BONE_ARROW_LENGTH = 0.05
+	local BONE_ARROW_RADIUS = 0.015
+	local BONE_CYLINDER_RADIUS = 0.005
+	local BONE_ARROW_EXPANSION = 0.25
 	local BONE_RADIUS = 0.08
 
 	local BoneCFrame = self.AnimatedWorldCFrame
@@ -474,7 +477,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 
 		if not XLock then
 			Gizmo.PushProperty("Color3", AXIS_X_COLOR)
-			Gizmo.Ray:Draw(BonePosition - XVector * 2, BonePosition + XVector * 2)
+			Gizmo.Arrow:Draw(BonePosition - XVector * 2, BonePosition + XVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
 			local MinXLimit = self.XAxisLimits.Min - Offset.X
 			local MaxXLimit = self.XAxisLimits.Max - Offset.X
@@ -485,7 +488,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 
 		if not YLock then
 			Gizmo.PushProperty("Color3", AXIS_Y_COLOR)
-			Gizmo.Ray:Draw(BonePosition - YVector * 2, BonePosition + YVector * 2)
+			Gizmo.Arrow:Draw(BonePosition - YVector * 2, BonePosition + YVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
 			local MinYLimit = self.YAxisLimits.Min - Offset.Y
 			local MaxYLimit = self.YAxisLimits.Max - Offset.Y
@@ -496,7 +499,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 
 		if not ZLock then
 			Gizmo.PushProperty("Color3", AXIS_Z_COLOR)
-			Gizmo.Ray:Draw(BonePosition - ZVector * 2, BonePosition + ZVector * 2)
+			Gizmo.Arrow:Draw(BonePosition - ZVector * 2, BonePosition + ZVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
 			local MinZLimit = self.ZAxisLimits.Min - Offset.Z
 			local MaxZLimit = self.ZAxisLimits.Max - Offset.Z
@@ -513,13 +516,34 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 		Gizmo.Sphere:Draw(BoneCFrame, BONE_RADIUS, 5, 360)
 
 		Gizmo.PushProperty("Color3", BONE_FRONT_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.LookVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
+		Gizmo.VolumeArrow:Draw(
+			BonePosition,
+			BonePosition + BoneCFrame.LookVector * BONE_ARROW_EXPANSION,
+			BONE_CYLINDER_RADIUS,
+			BONE_ARROW_RADIUS,
+			BONE_ARROW_LENGTH,
+			true
+		)
 
 		Gizmo.PushProperty("Color3", BONE_UP_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.UpVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
+		Gizmo.VolumeArrow:Draw(
+			BonePosition,
+			BonePosition + BoneCFrame.UpVector * BONE_ARROW_EXPANSION,
+			BONE_CYLINDER_RADIUS,
+			BONE_ARROW_RADIUS,
+			BONE_ARROW_LENGTH,
+			true
+		)
 
 		Gizmo.PushProperty("Color3", BONE_RIGHT_ARROW_COLOR)
-		Gizmo.Arrow:Draw(BonePosition, BonePosition + BoneCFrame.RightVector * BONE_ARROW_EXPANSION, BONE_ARROW_RADIUS, BONE_ARROW_LENGTH, 5)
+		Gizmo.VolumeArrow:Draw(
+			BonePosition,
+			BonePosition + BoneCFrame.RightVector * BONE_ARROW_EXPANSION,
+			BONE_CYLINDER_RADIUS,
+			BONE_ARROW_RADIUS,
+			BONE_ARROW_LENGTH,
+			true
+		)
 	end
 
 	-- Draw our collision contacts

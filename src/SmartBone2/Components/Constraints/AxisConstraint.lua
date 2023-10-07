@@ -1,4 +1,4 @@
-return function(self, Position, RootCFrame)
+return function(self, Position, LastPosition, RootCFrame)
 	debug.profilebegin("Axis Constraint")
 	local RootOffset = RootCFrame:PointToObjectSpace(Position)
 
@@ -41,19 +41,21 @@ return function(self, Position, RootCFrame)
 	local YAxis = RootCFrame.UpVector
 	local ZAxis = RootCFrame.LookVector
 
+	local DifferenceDirection = (Position - LastPosition).Unit
+
 	-- Remove our velocity on the vectors we collided with, stops any weird jittering.
 	if X ~= RootOffset.X then
-		local Normal = X == XMin and XAxis or -XAxis -- If we are colliding with the XMin limit then use the XAxis if we collide with XMax then use -XAxis
+		local Normal = XAxis:Dot(DifferenceDirection) < 0 and -XAxis or XAxis
 		self:ClipVelocity(Position, Normal)
 	end
 
 	if Y ~= RootOffset.Y then
-		local Normal = Y == YMin and YAxis or -YAxis
+		local Normal = YAxis:Dot(DifferenceDirection) < 0 and -YAxis or YAxis
 		self:ClipVelocity(Position, Normal)
 	end
 
 	if Z ~= RootOffset.Z then
-		local Normal = Z == ZMin and ZAxis or -ZAxis
+		local Normal = ZAxis:Dot(DifferenceDirection) > 0 and -ZAxis or ZAxis
 		self:ClipVelocity(Position, Normal)
 	end
 	debug.profileend()
