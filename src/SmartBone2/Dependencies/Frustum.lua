@@ -6,8 +6,8 @@ function Class.GetCFrames(camera, distance)
 	local cameraPos = cameraCFrame.Position
 	local rightVec, upVec = cameraCFrame.RightVector, cameraCFrame.UpVector
 
-	local distance2 = distance / 2
-	local farPlaneHeight2 = math.tan(math.rad((camera.FieldOfView + 5) / 2)) * distance
+	local distance2 = distance * 0.5
+	local farPlaneHeight2 = math.tan(((camera.FieldOfView + 5) * 0.5) * 0.017453) * distance
 	local farPlaneWidth2 = farPlaneHeight2 * (camera.ViewportSize.X / camera.ViewportSize.Y)
 	local farPlaneCFrame = cameraCFrame * CFrame.new(0, 0, -distance)
 	local farPlaneTopRight = farPlaneCFrame * Vector3.new(farPlaneWidth2, farPlaneHeight2, 0)

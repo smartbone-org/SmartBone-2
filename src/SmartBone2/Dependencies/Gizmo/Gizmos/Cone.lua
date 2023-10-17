@@ -24,8 +24,8 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisi
 
 	Transform *= CFrame.Angles(-Rad90D, 0, 0)
 
-	local TopOfCone = Transform.Position + Transform.UpVector * (Length / 2)
-	local BottomOfCone = Transform.Position + -Transform.UpVector * (Length / 2)
+	local TopOfCone = Transform.Position + Transform.UpVector * (Length * 0.5)
+	local BottomOfCone = Transform.Position + -Transform.UpVector * (Length * 0.5)
 
 	TopOfCone = CFrame.lookAt(TopOfCone, TopOfCone + Transform.UpVector)
 	BottomOfCone = CFrame.lookAt(BottomOfCone, BottomOfCone - Transform.UpVector)

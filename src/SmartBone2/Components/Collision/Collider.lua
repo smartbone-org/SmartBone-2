@@ -11,6 +11,7 @@ local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies
 
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
+local Radians = 0.017453
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
 
@@ -121,7 +122,7 @@ function Class:UpdateTransform()
 	local ScaledOffset = ObjectSize * Offset
 	local ScaledSize = ObjectSize * Scale
 
-	local RotationCFrame = CFrame.Angles(math.rad(Rotation.X), math.rad(Rotation.Y), math.rad(Rotation.Z))
+	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
 	local TransformCFrame = CFrame.new(ObjectPosition + ScaledOffset) * ObjectCFrame.Rotation * RotationCFrame
 
 	self.Transform = TransformCFrame
@@ -194,7 +195,7 @@ function Class:DrawDebug(FILL_COLLIDER)
 	end
 
 	if Type == "Capsule" then
-		local CapsuleRadius = math.min(Size.Y, Size.Z) / 2
+		local CapsuleRadius = math.min(Size.Y, Size.Z) * 0.5
 		local CapsuleLength = Size.X
 
 		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
@@ -203,8 +204,8 @@ function Class:DrawDebug(FILL_COLLIDER)
 		if FILL_COLLIDER then
 			local TransformedTransform = Transform * CFrame.Angles(math.rad(90), -math.rad(90), 0)
 
-			local Top = TransformedTransform.Position + TransformedTransform.UpVector * (CapsuleLength / 2)
-			local Bottom = TransformedTransform.Position - TransformedTransform.UpVector * (CapsuleLength / 2)
+			local Top = TransformedTransform.Position + TransformedTransform.UpVector * (CapsuleLength * 0.5)
+			local Bottom = TransformedTransform.Position - TransformedTransform.UpVector * (CapsuleLength * 0.5)
 
 			Gizmo.SetStyle(FILL_COLOR, 0.75, false)
 			Gizmo.VolumeCylinder:Draw(Transform, CapsuleRadius, CapsuleLength)
@@ -217,7 +218,7 @@ function Class:DrawDebug(FILL_COLLIDER)
 	end
 
 	if Type == "Sphere" then
-		local Radius = math.min(Size.X, Size.Y, Size.Z) / 2
+		local Radius = math.min(Size.X, Size.Y, Size.Z) * 0.5
 
 		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
 		Gizmo.Sphere:Draw(Transform, Radius, 15, 360)

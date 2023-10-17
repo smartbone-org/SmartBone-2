@@ -21,8 +21,8 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisi
 	end
 
 	-- Draw top and bottom of cylinder
-	local TopOfCylinder = Transform.Position + (Transform.UpVector * (Length / 2))
-	local BottomOfCylinder = Transform.Position - (Transform.UpVector * (Length / 2))
+	local TopOfCylinder = Transform.Position + (Transform.UpVector * (Length * 0.5))
+	local BottomOfCylinder = Transform.Position - (Transform.UpVector * (Length * 0.5))
 
 	TopOfCylinder = CFrame.lookAt(TopOfCylinder, TopOfCylinder + Transform.UpVector)
 	BottomOfCylinder = CFrame.lookAt(BottomOfCylinder, BottomOfCylinder - Transform.UpVector)

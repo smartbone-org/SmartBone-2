@@ -229,7 +229,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 
 		if input.UserInputType == Enum.UserInputType.MouseButton1 then
 			if isInsideResize and not isInsideWindow and anyFocusedWindow and focusedWindow then
-				local midWindow: Vector2 = focusedWindow.state.position.value + (focusedWindow.state.size.value / 2)
+				local midWindow: Vector2 = focusedWindow.state.position.value + (focusedWindow.state.size.value * 0.5)
 				local cursorPosition: Vector2 = widgets.getMouseLocation() - midWindow
 
 				-- check which axis its closest to, then check which side is closest with math.sign

@@ -24,7 +24,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	local Uv = Transform.UpVector
 	local Rv = Transform.RightVector
 	local Lv = Transform.LookVector
-	local sO2 = Size / 2
+	local sO2 = Size * 0.5
 	local sUv = Uv * sO2.Y
 	local sRv = Rv * sO2.X
 	local sLv = Lv * sO2.Z

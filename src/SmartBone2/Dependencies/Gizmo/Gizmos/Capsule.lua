@@ -25,8 +25,8 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisi
 	Transform *= CFrame.Angles(math.rad(90), -math.rad(90), 0)
 
 	-- Draw top and bottom of cylinder
-	local TopOfCylinder = Transform.Position + (Transform.UpVector * (Length / 2))
-	local BottomOfCylinder = Transform.Position - (Transform.UpVector * (Length / 2))
+	local TopOfCylinder = Transform.Position + (Transform.UpVector * (Length * 0.5))
+	local BottomOfCylinder = Transform.Position - (Transform.UpVector * (Length * 0.5))
 
 	TopOfCylinder = CFrame.lookAt(TopOfCylinder, TopOfCylinder + Transform.UpVector)
 	BottomOfCylinder = CFrame.lookAt(BottomOfCylinder, BottomOfCylinder - Transform.UpVector)
@@ -54,14 +54,14 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, Subdivisi
 		Ceive.Circle:Draw(
 			CFrame.new(TopOfCylinder.Position) * Transform.Rotation * CFrame.Angles(0, math.rad(i), 0),
 			Radius,
-			Subdivisions / 2,
+			Subdivisions * 0.5,
 			90,
 			false
 		)
 		Ceive.Circle:Draw(
 			CFrame.new(BottomOfCylinder.Position) * Transform.Rotation * CFrame.Angles(Rad180D, math.rad(i), 0),
 			Radius,
-			Subdivisions / 2,
+			Subdivisions * 0.5,
 			90,
 			false
 		)

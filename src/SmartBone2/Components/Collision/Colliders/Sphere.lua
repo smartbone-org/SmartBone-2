@@ -9,7 +9,7 @@ end
 return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
 	debug.profilebegin("Sphere Testing")
 	Sphere0Point = Sphere0Point.Position
-	Sphere0Radius = math.min(Sphere0Radius.X, Sphere0Radius.Y, Sphere0Radius.Z) / 2
+	Sphere0Radius = math.min(Sphere0Radius.X, Sphere0Radius.Y, Sphere0Radius.Z) * 0.5
 
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(Sphere0Point, Sphere0Radius, Sphere1Point)
 

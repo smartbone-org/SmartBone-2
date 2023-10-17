@@ -61,7 +61,7 @@ local function SolveWind(self, BoneTree)
 
 	local TimeModifier = BoneTree.WindOffset
 		+ (
-			((os.clock() - (self.HeirarchyLength / 5)) + (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude / 5)
+			((os.clock() - (self.HeirarchyLength * 0.2)) + (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude * 0.2) -- * 0.2 is / 5
 			* Settings.WindInfluence
 		)
 
@@ -109,11 +109,11 @@ local function SolveWind(self, BoneTree)
 			Settings.WindDirection.Y + (Settings.WindDirection.Y * Y),
 			Settings.WindDirection.Z + (Settings.WindDirection.Z * Z)
 		)
-		WindMove /= 2
+		WindMove *= 0.5
 	end
 
 	WindMove /= self.FreeLength
-	WindMove *= (Settings.WindInfluence * (Settings.WindStrength / 100)) * (math.clamp(self.HeirarchyLength, 1, 10) / 10)
+	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
 
 	return WindMove
