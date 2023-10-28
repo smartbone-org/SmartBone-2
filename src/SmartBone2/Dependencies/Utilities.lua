@@ -1,7 +1,7 @@
 local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
 
 local module = {}
-module.LogVerbose = true
+module.LogVerbose = false
 module.LogIndent = 0
 
 function module.GetRotationBetween(U: Vector3, V: Vector3)

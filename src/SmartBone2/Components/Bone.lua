@@ -67,49 +67,43 @@ local function SolveWind(self, BoneTree)
 
 	local WindMove
 
+	local function GetNoise(X, Y, Z) -- Returns noise between 0, 1
+		local Value = math.noise(X, Y, Z)
+		Value = math.clamp(Value, -1, 1)
+		return Value ^ 2
+	end
+
+	local function SampleSin()
+		local Freq = Settings.WindSpeed ^ 0.8
+		local Power = Settings.WindSpeed ^ 0.9
+		local Amp = Settings.WindStrength * 10
+		local Wave = math.sin(TimeModifier * Freq) ^ 2 * (Power + Amp)
+		return Settings.WindDirection * Wave
+	end
+
+	local function SampleNoise()
+		local Freq = Settings.WindSpeed ^ 0.8
+		local Power = Settings.WindSpeed ^ 0.9
+		local Amp = Settings.WindStrength * 10
+		local Seed = BoneTree.WindOffset
+
+		local X = GetNoise(Freq, 0, Seed) * (Power + Amp)
+		local Y = GetNoise(0, Freq, Seed) * (Power + Amp)
+		local Z = GetNoise(Seed, 0, Freq) * (Power + Amp)
+
+		return Settings.WindDirection * Vector3.new(X, Y, Z)
+	end
+
 	if Settings.WindType == "Sine" then
-		local sineWave = math.sin(TimeModifier * Settings.WindSpeed)
-		WindMove = Vector3.new(
-			Settings.WindDirection.X + (Settings.WindDirection.X * sineWave),
-			Settings.WindDirection.Y + (Settings.WindDirection.Y * sineWave),
-			Settings.WindDirection.Z + (Settings.WindDirection.Z * sineWave)
-		)
+		WindMove = SampleSin()
 	elseif Settings.WindType == "Noise" then
-		local frequency = TimeModifier * Settings.WindSpeed
-		local seed = BoneTree.WindOffset
-		local amp = Settings.WindStrength * 10
-
-		local X = math.noise(frequency, 0, seed) * amp
-		local Y = math.noise(frequency, 0, -seed) * amp
-		local Z = math.noise(frequency, 0, seed + seed) * amp
-
-		WindMove = Vector3.new(
-			Settings.WindDirection.X + (Settings.WindDirection.X * X),
-			Settings.WindDirection.Y + (Settings.WindDirection.Y * Y),
-			Settings.WindDirection.Z + (Settings.WindDirection.Z * Z)
-		)
+		WindMove = SampleNoise()
 	elseif Settings.WindType == "Hybrid" then
-		local sineWave = math.sin(TimeModifier * Settings.WindSpeed)
-		WindMove = Vector3.new(
-			Settings.WindDirection.X + (Settings.WindDirection.X * sineWave),
-			Settings.WindDirection.Y + (Settings.WindDirection.Y * sineWave),
-			Settings.WindDirection.Z + (Settings.WindDirection.Z * sineWave)
-		)
-
-		local frequency = TimeModifier * Settings.WindSpeed
-		local seed = BoneTree.WindOffset
-		local amp = Settings.WindStrength * 10
-
-		local X = math.noise(frequency, 0, seed) * amp
-		local Y = math.noise(frequency, 0, -seed) * amp
-		local Z = math.noise(frequency, 0, seed + seed) * amp
-
-		WindMove += Vector3.new(
-			Settings.WindDirection.X + (Settings.WindDirection.X * X),
-			Settings.WindDirection.Y + (Settings.WindDirection.Y * Y),
-			Settings.WindDirection.Z + (Settings.WindDirection.Z * Z)
-		)
+		WindMove = SampleSin()
+		WindMove += SampleNoise()
 		WindMove *= 0.5
+	else
+		return WindMove -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	WindMove /= self.FreeLength
@@ -119,6 +113,7 @@ local function SolveWind(self, BoneTree)
 	return WindMove
 end
 
+--- @diagnostic disable-next-line: duplicate-doc-class
 --- @class Bone
 --- Internal class for all bones
 --- :::caution Caution: Warning
@@ -265,6 +260,10 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	local Root = BoneTree.Bones[1]
 
 	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(self.Bone)
+
+	if self.ParentIndex < 1 then -- Force anchor the root bone
+		self.Anchored = true
+	end
 
 	if self.Bone == self.RootBone then
 		self.TransformOffset = RootPart.CFrame * self.RootTransform

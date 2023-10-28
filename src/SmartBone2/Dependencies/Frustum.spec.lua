@@ -1,4 +1,4 @@
-local Frustum = require(script.Parent:FindFirstChild("Frustum"))
+local Frustum = require(script.Parent:WaitForChild("Frustum"))
 
 return function()
 	local FakeCamera = {

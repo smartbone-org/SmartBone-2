@@ -19,6 +19,9 @@ local ActorRuntime = Dependencies:WaitForChild("Runtime")
 local ColliderTranslations = {
 	Block = "Box",
 	Ball = "Sphere",
+	Capsule = "Capsule",
+	Sphere = "Sphere",
+	Box = "Box",
 }
 
 local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
@@ -141,7 +144,10 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 
 		if #Children == 0 then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
-			local Start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - Bone.Parent.WorldPosition).Magnitude)
+			local Parent = Bone.Parent
+			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
+
+			local Start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - ParentWorldPosition).Magnitude)
 			local tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
 			tailBone.Name = Bone.Name .. "_Tail"
@@ -298,7 +304,7 @@ function Class:LoadObject(Object: BasePart)
 	for _, Name in RootNames do
 		local RootBone = Object:FindFirstChild(Name)
 		if not RootBone then
-			warn(`[BonePhysics::LoadObject] Couldn't find Root Bone of name: {Name}`)
+			warn(`[BonePhysics::LoadObject] Couldn't find Root Bone of name: {Name} in RootPart: {Object.Name}`)
 			continue
 		end
 
@@ -463,7 +469,7 @@ function Class.Start()
 				ColliderData = HttpService:JSONDecode(RawColliderData)
 			end)
 
-			ColliderDescription = ColliderData
+			ColliderDescription = ColliderData and (type(ColliderData) == "table" and ColliderData[1] or nil) or nil
 		end
 
 		if ColliderDescription then

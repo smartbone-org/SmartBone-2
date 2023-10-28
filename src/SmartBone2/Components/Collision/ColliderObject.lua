@@ -100,6 +100,10 @@ function Class:GetCollisions(Point, Radius)
 		return {}
 	end
 
+	if not self.m_Object:IsDescendantOf(workspace) then -- If our object isnt a descendant of workspace then dont solve collisions
+		return {}
+	end
+
 	local Collisions = {}
 
 	for _, Collider in self.Colliders do

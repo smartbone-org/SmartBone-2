@@ -310,7 +310,7 @@ return function(Iris, RootObject, DebugState)
 
 		for _, Collider in ColliderObject.Colliders do
 			Iris.NextColumn()
-			Iris.Text(Collider.Type)
+			Iris.Text(tostring(Collider.Type))
 			Iris.NextColumn()
 			Iris.Text(tostring(Collider.Scale))
 			Iris.NextColumn()

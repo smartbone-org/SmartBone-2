@@ -80,7 +80,7 @@ function Class.new()
 		Transform = CFrame.identity,
 		Size = Vector3.zero,
 
-		GUID = HttpService:GenerateGUID(),
+		GUID = HttpService:GenerateGUID(false),
 	}, Class)
 
 	return self
@@ -134,19 +134,29 @@ end
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
 function Class:GetClosestPoint(Point, Radius)
+	local PropertyChange = false
+
+	if self.m_Object.Parent:FindFirstChildOfClass("Humanoid") then
+		PropertyChange = true -- Force update for humanoids
+	end
+
 	if self.Scale ~= self.PreviousScale then
-		self:UpdateTransform()
+		PropertyChange = true
 		self.PreviousScale = self.Scale
 	end
 
 	if self.Offset ~= self.PreviousOffset then
-		self:UpdateTransform()
+		PropertyChange = true
 		self.PreviousOffset = self.Offset
 	end
 
 	if self.Rotation ~= self.PreviousRotation then
-		self:UpdateTransform()
+		PropertyChange = true
 		self.PreviousRotation = self.Rotation
+	end
+
+	if PropertyChange then
+		self:UpdateTransform()
 	end
 
 	local Type = self.Type
@@ -164,7 +174,7 @@ function Class:GetClosestPoint(Point, Radius)
 		return SphereSolver(self.Transform, self.Size, Point, Radius)
 	end
 
-	warn(`Invalid collider shape: {Type}`)
+	-- warn(`Invalid collider shape: {Type} in object {self.m_Object.Name}`)
 
 	return
 end
@@ -179,10 +189,8 @@ function Class:DrawDebug(FILL_COLLIDER)
 	local Transform = self.Transform
 	local Size = self.Size
 
-	Gizmo.PushProperty("AlwaysOnTop", false)
-
 	if Type == "Box" then
-		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
+		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
 		Gizmo.Box:Draw(Transform, Size)
 
 		if FILL_COLLIDER then
@@ -198,7 +206,7 @@ function Class:DrawDebug(FILL_COLLIDER)
 		local CapsuleRadius = math.min(Size.Y, Size.Z) * 0.5
 		local CapsuleLength = Size.X
 
-		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
+		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
 		Gizmo.Capsule:Draw(Transform, CapsuleRadius, CapsuleLength, 15)
 
 		if FILL_COLLIDER then
@@ -220,7 +228,7 @@ function Class:DrawDebug(FILL_COLLIDER)
 	if Type == "Sphere" then
 		local Radius = math.min(Size.X, Size.Y, Size.Z) * 0.5
 
-		Gizmo.PushProperty("Color3", COLLIDER_COLOR)
+		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
 		Gizmo.Sphere:Draw(Transform, Radius, 15, 360)
 
 		if FILL_COLLIDER then
