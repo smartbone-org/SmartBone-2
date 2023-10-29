@@ -469,7 +469,6 @@ function Class.Start()
 				ColliderData = HttpService:JSONDecode(RawColliderData)
 			end)
 
-			-- If the collider data exists and its a table get the first element
 			ColliderDescription = ColliderData
 		end
 
