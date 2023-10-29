@@ -7,7 +7,6 @@ local CollisionSolvers = script.Parent:WaitForChild("Colliders")
 local BoxSolver = require(CollisionSolvers:WaitForChild("Box"))
 local CapsuleSolver = require(CollisionSolvers:WaitForChild("Capsule"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
-local WedgeSolver = require(CollisionSolvers:WaitForChild("Wedge"))
 
 local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
 
@@ -194,10 +193,6 @@ function Class:GetClosestPoint(Point, Radius)
 
 	if Type == "Sphere" then
 		return SphereSolver(self.Transform, self.Size, Point, Radius)
-	end
-
-	if Type == "Wedge" then
-		return WedgeSolver(self.Transform, self.Size, Point, Radius)
 	end
 
 	-- this crashes studio cause it prints so many times
