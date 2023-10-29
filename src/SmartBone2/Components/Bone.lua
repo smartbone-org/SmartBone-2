@@ -67,29 +67,38 @@ local function SolveWind(self, BoneTree)
 
 	local WindMove
 
-	local function GetNoise(X, Y, Z) -- Returns noise between 0, 1
+	local function GetNoise(X, Y, Z, Map) -- Returns noise between 0, 1
 		local Value = math.noise(X, Y, Z)
 		Value = math.clamp(Value, -1, 1)
-		return Value ^ 2
+
+		if Map then
+			Value ^= 2
+		end
+
+		return Value
 	end
 
 	local function SampleSin()
 		local Freq = Settings.WindSpeed ^ 0.8
 		local Power = Settings.WindSpeed ^ 0.9
 		local Amp = Settings.WindStrength * 10
-		local Wave = math.sin(TimeModifier * Freq) ^ 2 * (Power + Amp)
+		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
+		local Sin2 = math.cos(TimeModifier * Freq) ^ 2 - 0.2
+		local Wave = (Sin1 > Sin2 and Sin1 or Sin2) * (Power + Amp)
 		return Settings.WindDirection * Wave
 	end
 
-	local function SampleNoise()
+	local function SampleNoise(CustomAmp, Map)
+		CustomAmp = CustomAmp or 0
+
 		local Freq = Settings.WindSpeed ^ 0.8
 		local Power = Settings.WindSpeed ^ 0.9
 		local Amp = Settings.WindStrength * 10
 		local Seed = BoneTree.WindOffset
 
-		local X = GetNoise(Freq, 0, Seed) * (Power + Amp)
-		local Y = GetNoise(0, Freq, Seed) * (Power + Amp)
-		local Z = GetNoise(Seed, 0, Freq) * (Power + Amp)
+		local X = GetNoise(Freq, 0, Seed, Map) * (Power + Amp + CustomAmp)
+		local Y = GetNoise(0, Freq, Seed, Map) * (Power + Amp + CustomAmp)
+		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + Amp + CustomAmp)
 
 		return Settings.WindDirection * Vector3.new(X, Y, Z)
 	end
@@ -97,10 +106,10 @@ local function SolveWind(self, BoneTree)
 	if Settings.WindType == "Sine" then
 		WindMove = SampleSin()
 	elseif Settings.WindType == "Noise" then
-		WindMove = SampleNoise()
+		WindMove = SampleNoise(0, true)
 	elseif Settings.WindType == "Hybrid" then
 		WindMove = SampleSin()
-		WindMove += SampleNoise()
+		WindMove += SampleNoise(0.5, true)
 		WindMove *= 0.5
 	else
 		return WindMove -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
@@ -113,10 +122,9 @@ local function SolveWind(self, BoneTree)
 	return WindMove
 end
 
---- @diagnostic disable-next-line: duplicate-doc-class
 --- @class Bone
 --- Internal class for all bones
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Changes to the syntax in this class will not count to the major version in semver.
 --- :::
 

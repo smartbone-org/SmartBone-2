@@ -15,9 +15,28 @@ local Radians = 0.017453
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
 
+local function RoundV3(Vector, Decimals)
+	local X = math.floor(Vector.X * 10 ^ Decimals)
+	local Y = math.floor(Vector.Y * 10 ^ Decimals)
+	local Z = math.floor(Vector.Z * 10 ^ Decimals)
+
+	return X, Y, Z
+end
+
+local function CompareV3(Vector0, Vector1, Decimals)
+	local X0, Y0, Z0 = RoundV3(Vector0, Decimals)
+	local X1, Y1, Z1 = RoundV3(Vector1, Decimals)
+
+	if X0 == X1 and Y0 == Y1 and Z0 == Z1 then
+		return true
+	end
+
+	return false
+end
+
 --- @class Collider
 --- Internal class for colliders
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Changes to the syntax in this class will not count to the major version in semver.
 --- :::
 
@@ -73,9 +92,10 @@ function Class.new()
 		PreviousScale = Vector3.zero,
 		PreviousOffset = Vector3.zero,
 		PreviousRotation = Vector3.zero,
+		PreviousObjectPosition = Vector3.zero,
+		PreviousObjectRotation = Vector3.zero,
 
 		m_Object = nil,
-		ObjectConnection = nil,
 
 		Transform = CFrame.identity,
 		Size = Vector3.zero,
@@ -89,19 +109,9 @@ end
 --- @within Collider
 --- @param Object BasePart
 function Class:SetObject(Object: BasePart)
-	if self.ObjectConnection then
-		self.ObjectConnection:Disconnect()
-	end
-
 	self.m_Object = Object
 
 	self:UpdateTransform()
-
-	self.ObjectConnection = Object.Changed:Connect(function(Prop)
-		if Prop == "CFrame" or Prop == "Size" then
-			self:UpdateTransform()
-		end
-	end)
 end
 
 --- @within Collider
@@ -123,7 +133,7 @@ function Class:UpdateTransform()
 	local ScaledSize = ObjectSize * Scale
 
 	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
-	local TransformCFrame = CFrame.new(ObjectPosition + ScaledOffset) * ObjectCFrame.Rotation * RotationCFrame
+	local TransformCFrame = CFrame.new(ObjectPosition) * ObjectCFrame.Rotation * CFrame.new(ScaledOffset) * RotationCFrame
 
 	self.Transform = TransformCFrame
 	self.Size = ScaledSize
@@ -134,10 +144,10 @@ end
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
 function Class:GetClosestPoint(Point, Radius)
-	local PropertyChange = false
+	local PropertyChange = true
 
-	if self.m_Object.Parent:FindFirstChildOfClass("Humanoid") then
-		PropertyChange = true -- Force update for humanoids
+	if not self.m_Object then
+		return
 	end
 
 	if self.Scale ~= self.PreviousScale then
@@ -153,6 +163,16 @@ function Class:GetClosestPoint(Point, Radius)
 	if self.Rotation ~= self.PreviousRotation then
 		PropertyChange = true
 		self.PreviousRotation = self.Rotation
+	end
+
+	if CompareV3(self.m_Object.Position, self.PreviousObjectPosition, 2) then
+		PropertyChange = true
+		self.PreviousObjectPosition = self.m_Object.Position
+	end
+
+	if CompareV3(self.m_Object.Orientation, self.PreviousObjectRotation, 2) then
+		PropertyChange = true
+		self.PreviousObjectRotation = self.m_Object.Orientation
 	end
 
 	if PropertyChange then
@@ -244,10 +264,6 @@ end
 --- @within Collider
 function Class:Destroy()
 	SB_VERBOSE_LOG(`Collider destroying, object: {self.m_Object}`)
-
-	if self.ObjectConnection then
-		self.ObjectConnection:Disconnect()
-	end
 
 	setmetatable(self, nil)
 end

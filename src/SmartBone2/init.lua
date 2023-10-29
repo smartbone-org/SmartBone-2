@@ -81,7 +81,7 @@ end
 --- @param BoneObject Bone
 --- @param ParentIndex number
 --- @param HeirarchyLength number
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Used to add a bone to the provided bone tree
@@ -116,7 +116,7 @@ end
 --- @within SmartBone
 --- @param RootPart BasePart
 --- @param RootBone Bone
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Creates a bone tree from the RootPart and RootBone and then adds all child bones via m_AppendBone
@@ -172,7 +172,7 @@ end
 
 --- @private
 --- @within SmartBone
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Updates the view frustum used for optimization
@@ -208,7 +208,7 @@ end
 --- @within SmartBone
 --- @param BoneTree table
 --- @param Delta number
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Constrains each bone in the provided bone tree and cleans up colliders
@@ -225,7 +225,7 @@ end
 --- @param BoneTree table
 --- @param Index number
 --- @param Delta number
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Updates the provided bone tree with all optomizations
@@ -271,7 +271,7 @@ end
 --- @private
 --- @within SmartBone
 --- @return boolean
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Returns true if the root should be destroyed
@@ -469,7 +469,8 @@ function Class.Start()
 				ColliderData = HttpService:JSONDecode(RawColliderData)
 			end)
 
-			ColliderDescription = ColliderData and (type(ColliderData) == "table" and ColliderData[1] or nil) or nil
+			-- If the collider data exists and its a table get the first element
+			ColliderDescription = ColliderData
 		end
 
 		if ColliderDescription then
@@ -495,16 +496,18 @@ function Class.Start()
 		local ColliderType = ColliderTranslations[GetShapeName(Object)] or "Box"
 
 		ColliderDescription = {
-			Type = ColliderType,
-			ScaleX = 1,
-			ScaleY = 1,
-			ScaleZ = 1,
-			OffsetX = 0,
-			OffsetY = 0,
-			OffsetZ = 0,
-			RotationX = 0,
-			RotationY = 0,
-			RotationZ = 0,
+			{
+				Type = ColliderType,
+				ScaleX = 1,
+				ScaleY = 1,
+				ScaleZ = 1,
+				OffsetX = 0,
+				OffsetY = 0,
+				OffsetZ = 0,
+				RotationX = 0,
+				RotationY = 0,
+				RotationZ = 0,
+			},
 		}
 
 		return ColliderDescription

@@ -52,7 +52,7 @@ end
 
 --- @class BoneTree
 --- Internal class for all bone trees
---- :::caution Caution: Warning
+--- :::caution Caution:
 --- Changes to the syntax in this class will not count to the major version in semver.
 --- :::
 

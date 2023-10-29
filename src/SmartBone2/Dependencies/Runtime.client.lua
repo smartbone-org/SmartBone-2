@@ -52,7 +52,7 @@ local function GetCollider(Object: BasePart)
 		end)
 
 		-- If the collider data exists and its a table get the first element
-		ColliderDescription = ColliderData and (type(ColliderData) == "table" and ColliderData[1] or nil) or nil
+		ColliderDescription = ColliderData
 	end
 
 	if ColliderDescription then
@@ -78,16 +78,18 @@ local function GetCollider(Object: BasePart)
 	local ColliderType = ColliderTranslations[GetShapeName(Object)] or "Box"
 
 	ColliderDescription = {
-		Type = ColliderType,
-		ScaleX = 1,
-		ScaleY = 1,
-		ScaleZ = 1,
-		OffsetX = 0,
-		OffsetY = 0,
-		OffsetZ = 0,
-		RotationX = 0,
-		RotationY = 0,
-		RotationZ = 0,
+		{
+			Type = ColliderType,
+			ScaleX = 1,
+			ScaleY = 1,
+			ScaleZ = 1,
+			OffsetX = 0,
+			OffsetY = 0,
+			OffsetZ = 0,
+			RotationX = 0,
+			RotationY = 0,
+			RotationZ = 0,
+		},
 	}
 
 	return ColliderDescription
@@ -102,7 +104,7 @@ Actor.Name = `{RootObject.Name} - {BonePhysics.ID}`
 BonePhysics:LoadObject(RootObject)
 
 for _, ColliderDescription in ColliderDescriptions do
-	BonePhysics:LoadRawCollider({ ColliderDescription[1] }, ColliderDescription[2])
+	BonePhysics:LoadRawCollider(ColliderDescription[1], ColliderDescription[2])
 end
 
 local DebugState = {
@@ -135,9 +137,9 @@ CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Objec
 		end
 	end
 
-	local Collider = GetCollider(Object)
+	local ColliderObject = GetCollider(Object)
 
-	BonePhysics:LoadRawCollider({ Collider }, Object)
+	BonePhysics:LoadRawCollider(ColliderObject, Object)
 end)
 
 RunService.RenderStepped:Connect(function(deltaTime)
