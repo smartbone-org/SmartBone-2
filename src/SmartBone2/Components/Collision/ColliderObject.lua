@@ -44,7 +44,7 @@ Class.__index = Class
 --- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 --- @param Object BasePart
 --- @return ColliderObject
-function Class.new(ColliderTable: IRawCollider, Object: BasePart)
+function Class.new(ColliderTable: IColliderTable, Object: BasePart)
 	local self = setmetatable({
 		m_Object = Object,
 		Destroyed = false,

@@ -36,6 +36,7 @@ local ColliderTranslations = {
 	Capsule = "Capsule",
 	Sphere = "Sphere",
 	Box = "Box",
+	Wedge = "Wedge",
 }
 
 local function GetCollider(Object: BasePart)
@@ -69,6 +70,10 @@ local function GetCollider(Object: BasePart)
 
 		if obj:IsA("Part") then -- Allow meshes and unions to have colliders
 			return obj.Shape
+		end
+
+		if obj.ClassName == "WedgePart" then
+			return "Wedge"
 		end
 
 		return "Box"
