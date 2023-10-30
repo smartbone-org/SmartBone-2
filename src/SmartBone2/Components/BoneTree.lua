@@ -234,8 +234,6 @@ end
 --- Resets all bones to their rest positions.
 function Class:SkipUpdate()
 	debug.profilebegin("BoneTree::SkipUpdate")
-	self:PreUpdate()
-
 	for _, Bone in self.Bones do
 		Bone:SkipUpdate()
 	end

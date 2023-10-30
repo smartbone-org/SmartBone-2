@@ -19,3 +19,6 @@ Smartbone 2 offers a choice between a Spring constraint and a Distance constrain
 
 ## Wind
 If you want an object to have no wind influence, instead of just setting WindInfluence to 0 set the WindType attribute to an empty string, this will bypass all of the wind calculations and could possibly shave off a few ms.
+
+## Roblox Issues
+If Roblox allowed us to read TransformedWorldCFrame in parallel I'm guessing there could be a performance increase of nearly 2x, if Roblox also added something for BulkPropertySet where you could set any property without firing signals that would also be amazingly beneficial.

@@ -343,11 +343,10 @@ end
 --- Returns bone to rest position
 function Class:SkipUpdate()
 	if self.FirstSkipUpdate == false then
-		self.Bone.WorldCFrame = self.TransformOffset
+		self.Position = self.TransformOffset.Position
 		self.FirstSkipUpdate = true
 	end
 
-	self.AnimatedWorldCFrame = self.Bone.TransformedWorldCFrame
 	self.Position = self.Bone.WorldPosition
 	self.LastPosition = self.Position
 end

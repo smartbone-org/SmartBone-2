@@ -47,7 +47,7 @@ local function ClosestPointOnTri(v0, v1, v2, point) -- ClosestPoint, Normal
 	local Edge2 = ClosestPointOnLineSegment(v2, v0, point)
 
 	local Normal = cross(v1 - v0, v2 - v0).Unit
-	local Center = (v0 + v1 + v2) / 3
+	local Center = (v0 + v1 + v2) * 0.3333
 	local Projected = ProjectOnPlane(Center, Normal, point)
 
 	if PointInTriangle(point, v0, v1, v2) then

@@ -239,11 +239,13 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 		return
 	end
 
-	BoneTree:PreUpdate()
+	BoneTree:PreUpdate() -- Pre update MUST be called before we call SkipUpdate!
 
 	if not BoneTree.InView or BoneTree.UpdateRate == 0 then
-		task.synchronize()
 		BoneTree:SkipUpdate()
+
+		task.synchronize()
+		BoneTree:ApplyTransform()
 		return
 	end
 

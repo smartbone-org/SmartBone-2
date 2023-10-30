@@ -29,6 +29,7 @@ local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris = require(Dependencies.Iris)
+local ShouldDebug = RunService:IsStudio()
 
 local ColliderTranslations = {
 	Block = "Box",
@@ -117,11 +118,13 @@ local DebugState = {
 	DRAW_CONTACTS = Iris.State(false),
 }
 
-Iris:Connect(function()
-	if RootObject:GetAttribute("Debug") ~= nil then
-		DebugUi(Iris, BonePhysics, DebugState)
-	end
-end)
+if ShouldDebug then
+	Iris:Connect(function()
+		if RootObject:GetAttribute("Debug") ~= nil then
+			DebugUi(Iris, BonePhysics, DebugState)
+		end
+	end)
+end
 
 CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Object: BasePart)
 	if not Object:IsA("BasePart") then
@@ -151,13 +154,15 @@ RunService.RenderStepped:Connect(function(deltaTime)
 		return
 	end
 
-	BonePhysics:DrawDebug(
-		DebugState.DRAW_COLLIDERS:get(),
-		DebugState.DRAW_CONTACTS:get(),
-		DebugState.DRAW_PHYSICAL_BONE:get(),
-		DebugState.DRAW_BONE:get(),
-		DebugState.DRAW_AXIS_LIMITS:get(),
-		DebugState.DRAW_ROOT_PART:get(),
-		DebugState.DRAW_FILL_COLLIDERS:get()
-	)
+	if ShouldDebug then
+		BonePhysics:DrawDebug(
+			DebugState.DRAW_COLLIDERS:get(),
+			DebugState.DRAW_CONTACTS:get(),
+			DebugState.DRAW_PHYSICAL_BONE:get(),
+			DebugState.DRAW_BONE:get(),
+			DebugState.DRAW_AXIS_LIMITS:get(),
+			DebugState.DRAW_ROOT_PART:get(),
+			DebugState.DRAW_FILL_COLLIDERS:get()
+		)
+	end
 end)

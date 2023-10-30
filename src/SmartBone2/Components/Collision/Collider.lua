@@ -90,6 +90,7 @@ function Class.new()
 		Scale = Vector3.zero,
 		Offset = Vector3.zero,
 		Rotation = Vector3.zero,
+		Radius = 0,
 
 		PreviousScale = Vector3.zero,
 		PreviousOffset = Vector3.zero,
@@ -124,21 +125,33 @@ function Class:UpdateTransform()
 
 	local Object = self.m_Object
 	local ObjectCFrame = Object.CFrame
-	local ObjectPosition = ObjectCFrame.Position
 	local ObjectSize = Object.Size
 
-	local Scale = self.Scale
 	local Offset = self.Offset
 	local Rotation = self.Rotation
 
 	local ScaledOffset = ObjectSize * Offset
-	local ScaledSize = ObjectSize * Scale
 
 	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
-	local TransformCFrame = CFrame.new(ObjectPosition) * ObjectCFrame.Rotation * CFrame.new(ScaledOffset) * RotationCFrame
+	local TransformCFrame = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 
 	self.Transform = TransformCFrame
+end
+
+function Class:FastTransform()
+	local Object = self.m_Object
+	local ObjectCFrame = Object.CFrame
+	local ObjectSize = Object.Size
+
+	local Scale = self.Scale
+	local Offset = self.Offset
+
+	local ScaledOffset = ObjectSize * Offset
+	local ScaledSize = ObjectSize * Scale
+
+	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset)
 	self.Size = ScaledSize
+	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
 end
 
 --- @within Collider
@@ -146,6 +159,15 @@ end
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
 function Class:GetClosestPoint(Point, Radius)
+	self:FastTransform()
+
+	-- If we are outside the radius of the bounding box don't fully update transform and don't do any collision checks
+	-- Broadphase collision detection
+	local PointDistance = (Point - self.Transform.Position).Magnitude
+	if PointDistance > self.Radius then
+		return
+	end
+
 	local PropertyChange = true
 
 	if not self.m_Object then
