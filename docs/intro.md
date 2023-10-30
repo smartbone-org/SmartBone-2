@@ -57,7 +57,7 @@ You can limit a bone to moving between 0 studs and 5 studs on the x axis relativ
 
 Colliders can be setup via a tag with the name "SmartCollider", you can optomise colliders using a collider key create a string attribute called "ColliderKey" on your root part and your collider. Now only colliders with that collider key can collide with your object.
 
-You can also manually change the shape of a collider using a string attribute called "ColliderShape" with an option of "Box", "Capsule" and "Sphere".
+You can also manually change the shape of a collider using a string attribute called "ColliderShape" with an option of "Box", "Capsule", "Cylinder" and "Sphere".
 
 ## Update Flow Chart
 ![](assets/flowchart.png)
