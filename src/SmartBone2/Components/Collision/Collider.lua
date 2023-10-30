@@ -6,6 +6,7 @@ local Dependencies = script.Parent.Parent.Parent:WaitForChild("Dependencies")
 local CollisionSolvers = script.Parent:WaitForChild("Colliders")
 local BoxSolver = require(CollisionSolvers:WaitForChild("Box"))
 local CapsuleSolver = require(CollisionSolvers:WaitForChild("Capsule"))
+local CylinderSolver = require(CollisionSolvers:WaitForChild("Cylinder"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
 
 local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
@@ -195,6 +196,10 @@ function Class:GetClosestPoint(Point, Radius)
 		return SphereSolver(self.Transform, self.Size, Point, Radius)
 	end
 
+	if Type == "Cylinder" then
+		return CylinderSolver(self.Transform, self.Size, Point, Radius)
+	end
+
 	-- this crashes studio cause it prints so many times
 	-- warn(`Invalid collider shape: {Type} in object {self.m_Object.Name}`)
 
@@ -256,6 +261,21 @@ function Class:DrawDebug(FILL_COLLIDER)
 		if FILL_COLLIDER then
 			Gizmo.SetStyle(FILL_COLOR, 0.75, false)
 			Gizmo.VolumeSphere:Draw(Transform, Radius)
+			Gizmo.PushProperty("Transparency", 0)
+		end
+
+		return
+	end
+
+	if Type == "Cylinder" then
+		local Radius = math.min(Size.Y, Size.Z) * 0.5
+
+		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
+		Gizmo.Cylinder:Draw(Transform, Radius, Size.X, 15)
+
+		if FILL_COLLIDER then
+			Gizmo.SetStyle(FILL_COLOR, 0.75, false)
+			Gizmo.VolumeCylinder:Draw(Transform, Radius, Size.X, 0, 360)
 			Gizmo.PushProperty("Transparency", 0)
 		end
 

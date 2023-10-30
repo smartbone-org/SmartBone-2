@@ -22,6 +22,7 @@ local ColliderTranslations = {
 	Capsule = "Capsule",
 	Sphere = "Sphere",
 	Box = "Box",
+	Cylinder = "Cylinder",
 }
 
 local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
@@ -486,7 +487,7 @@ function Class.Start()
 			end
 
 			if obj:IsA("Part") then -- Allow meshes and unions to have colliders
-				return obj.Shape
+				return obj.Shape.Name
 			end
 
 			return "Box"
