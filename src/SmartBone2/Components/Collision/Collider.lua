@@ -114,30 +114,20 @@ end
 function Class:SetObject(Object: BasePart)
 	self.m_Object = Object
 
+	self:FastTransform()
 	self:UpdateTransform()
 end
 
 --- @within Collider
-function Class:UpdateTransform()
-	if self.m_Object == nil then
-		return
-	end
-
-	local Object = self.m_Object
-	local ObjectCFrame = Object.CFrame
-	local ObjectSize = Object.Size
-
-	local Offset = self.Offset
+function Class:UpdateTransform() -- Should I even bother with this, all it really saves is a global call + mat transform
 	local Rotation = self.Rotation
 
-	local ScaledOffset = ObjectSize * Offset
-
 	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
-	local TransformCFrame = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 
-	self.Transform = TransformCFrame
+	self.Transform *= RotationCFrame
 end
 
+--- @within Collider
 function Class:FastTransform()
 	local Object = self.m_Object
 	local ObjectCFrame = Object.CFrame
@@ -159,49 +149,21 @@ end
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
 function Class:GetClosestPoint(Point, Radius)
+	if self.m_Object == nil then
+		return
+	end
+
 	self:FastTransform()
 
 	-- If we are outside the radius of the bounding box don't fully update transform and don't do any collision checks
 	-- Broadphase collision detection
-	local PointDistance = (Point - self.Transform.Position).Magnitude
+	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
+
 	if PointDistance > self.Radius then
 		return
 	end
 
-	local PropertyChange = true
-
-	if not self.m_Object then
-		return
-	end
-
-	if self.Scale ~= self.PreviousScale then
-		PropertyChange = true
-		self.PreviousScale = self.Scale
-	end
-
-	if self.Offset ~= self.PreviousOffset then
-		PropertyChange = true
-		self.PreviousOffset = self.Offset
-	end
-
-	if self.Rotation ~= self.PreviousRotation then
-		PropertyChange = true
-		self.PreviousRotation = self.Rotation
-	end
-
-	if CompareV3(self.m_Object.Position, self.PreviousObjectPosition, 2) then
-		PropertyChange = true
-		self.PreviousObjectPosition = self.m_Object.Position
-	end
-
-	if CompareV3(self.m_Object.Orientation, self.PreviousObjectRotation, 2) then
-		PropertyChange = true
-		self.PreviousObjectRotation = self.m_Object.Orientation
-	end
-
-	if PropertyChange then
-		self:UpdateTransform()
-	end
+	self:UpdateTransform()
 
 	local Type = self.Type
 
@@ -230,13 +192,19 @@ end
 
 --- @within Collider
 --- @param FILL_COLLIDER boolean
-function Class:DrawDebug(FILL_COLLIDER)
+function Class:DrawDebug(FILL_COLLIDER, SHOW_INFLUENCE)
 	local COLLIDER_COLOR = Color3.new(0.509803, 0.933333, 0.427450)
 	local FILL_COLOR = Color3.new(0.901960, 0.784313, 0.513725)
+	local INFLUENCE_COLOR = Color3.new(1, 0.3, 0.3)
 
 	local Type = self.Type
 	local Transform = self.Transform
 	local Size = self.Size
+
+	if SHOW_INFLUENCE or true then
+		Gizmo.SetStyle(INFLUENCE_COLOR, 0, false)
+		Gizmo.Sphere:Draw(Transform, self.Radius, 12, 360)
+	end
 
 	if Type == "Box" then
 		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
