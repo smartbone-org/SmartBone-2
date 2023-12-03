@@ -1,7 +1,5 @@
 local Rad90D = math.rad(90)
 
---- @class Sphere
---- Renders a wireframe sphere.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -17,12 +15,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Sphere
---- @function Draw
---- @param Transform CFrame
---- @param Radius number
---- @param Subdivisions number
---- @param Angle number
 function Gizmo:Draw(Transform: CFrame, Radius: number, Subdivisions: number, Angle: number)
 	local Ceive = self.Ceive
 
@@ -35,13 +27,6 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Subdivisions: number, Ang
 	Ceive.Circle:Draw(Transform * CFrame.Angles(Rad90D, 0, 0), Radius, Subdivisions, Angle)
 end
 
---- @within Sphere
---- @function Create
---- @param Transform CFrame
---- @param Radius number
---- @param Subdivisions number
---- @param Angle number
---- @return {Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Radius: number, Subdivisions: number, Angle: number)
 	local PropertyTable = {
 		Transform = Transform,

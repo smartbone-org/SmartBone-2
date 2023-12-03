@@ -1,4 +1,8 @@
 local ColliderClass = require(script.Parent:WaitForChild("Collider"))
+local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
+
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+local SleepCycleInterval = 1 / 5
 
 type IRawCollider = {
 	Type: string,
@@ -15,20 +19,55 @@ type IRawCollider = {
 
 type IColliderTable = { [number]: IRawCollider }
 
+--- @class ColliderObject
+--- Internal class for collider
+--- :::caution Caution:
+--- Changes to the syntax in this class will not count to the major version in semver.
+--- :::
+
+--- @within ColliderObject
+--- @private
+--- @readonly
+--- @prop m_Object BasePart
+
+--- @within ColliderObject
+--- @readonly
+--- @prop Destroyed boolean
+
+--- @within ColliderObject
+--- @readonly
+--- @prop Colliders {}
+
 local Class = {}
 Class.__index = Class
 
-function Class.new(ColliderTable, Object)
+--- @within ColliderObject
+--- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
+--- @param Object BasePart
+--- @return ColliderObject
+function Class.new(ColliderTable: IColliderTable, Object: BasePart)
 	local self = setmetatable({
 		m_Object = Object,
+		m_Awake = true,
+		m_LastSleepCycle = 0,
+		Destroyed = false,
 		Colliders = {},
 	}, Class)
 
 	self:m_LoadColliderTable(ColliderTable)
 
+	self.DestroyConnection = Object:GetPropertyChangedSignal("Parent"):Connect(function()
+		if Object.Parent == nil then
+			self.Destroyed = true
+		end
+	end)
+
 	return self
 end
 
+--- @within ColliderObject
+--- @private
+--- @param Collider {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}
 function Class:m_LoadCollider(Collider: IRawCollider)
 	local FormattedScale = Vector3.new(Collider.ScaleX, Collider.ScaleY, Collider.ScaleZ)
 	local FormattedOffset = Vector3.new(Collider.OffsetX, Collider.OffsetY, Collider.OffsetZ)
@@ -39,11 +78,14 @@ function Class:m_LoadCollider(Collider: IRawCollider)
 	ColliderSolver.Offset = FormattedOffset
 	ColliderSolver.Rotation = FormattedRotation
 	ColliderSolver.Type = Collider.Type
-	ColliderSolver.Object = self.m_Object
+	ColliderSolver:SetObject(self.m_Object)
 
 	table.insert(self.Colliders, ColliderSolver)
 end
 
+--- @within ColliderObject
+--- @private
+--- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 function Class:m_LoadColliderTable(ColliderTable: IColliderTable)
 	for _, Collider in ColliderTable do
 		self:m_LoadCollider(Collider)
@@ -52,24 +94,89 @@ end
 
 -- Public
 
+--- @within ColliderObject
+--- @param Point Vector3
+--- @param Radius number -- Radius of bone
+--- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
 function Class:GetCollisions(Point, Radius)
+	debug.profilebegin("ColliderObject::GetCollisions")
+	if not self.m_Object then
+		debug.profileend()
+		return {}
+	end
+
+	if #self.Colliders == 0 then
+		debug.profileend()
+		return {}
+	end
+
+	debug.profilebegin("Sleep Cycle")
+	if os.clock() - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep conditions every 5th of a second
+		self.m_LastSleepCycle = os.clock()
+
+		if self.m_Object:IsDescendantOf(workspace) then -- If our object is not a descendant of workspace put it to sleep
+			self.m_Awake = true
+		else
+			self.m_Awake = false
+		end
+	end
+	debug.profileend()
+
+	if not self.m_Awake then
+		debug.profileend()
+		return {}
+	end
+
+	local ObjectData = {
+		CFrame = self.m_Object.CFrame,
+		Size = self.m_Object.Size,
+	}
+
 	local Collisions = {}
 
+	debug.profilebegin("Determine Collisions")
 	for _, Collider in self.Colliders do
-		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(Point, Radius)
+		debug.profilebegin("Determine collision")
+		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(ObjectData, Point, Radius)
+		debug.profileend()
 
 		if IsInside then
 			table.insert(Collisions, { ClosestPoint = ClosestPoint, Normal = Normal })
 		end
 	end
+	debug.profileend()
+	debug.profileend()
 
 	return Collisions
 end
 
-function Class:DrawDebug()
+--- @within ColliderObject
+--- @param FILL_COLLIDERS boolean
+--- @param SHOW_INFLUENCE boolean
+--- @param SHOW_AWAKE boolean
+--- @param SHOW_BROADPHASE boolean
+function Class:DrawDebug(FILL_COLLIDERS, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADPHASE)
 	for _, Collider in self.Colliders do
-		Collider:DrawDebug()
+		Collider:DrawDebug(self, FILL_COLLIDERS, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADPHASE)
+		Collider.InNarrowphase = false
 	end
+end
+
+--- @within ColliderObject
+function Class:Destroy()
+	task.synchronize()
+	SB_VERBOSE_LOG(`Collider object destroying, object: {self.m_Object}`)
+
+	self.DestroyConnection:Disconnect()
+
+	if #self.Colliders ~= 0 then
+		for _, Collider in self.Colliders do
+			Collider:Destroy()
+		end
+	end
+
+	setmetatable(self, nil)
+	task.desynchronize()
 end
 
 return Class

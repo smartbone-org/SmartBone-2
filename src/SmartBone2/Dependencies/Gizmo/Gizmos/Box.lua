@@ -1,5 +1,3 @@
---- @class Box
---- Renders a wireframe box.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -15,11 +13,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Box
---- @function Draw
---- @param Transform CFrame
---- @param Size Vector3
---- @param DrawTriangles boolean
 function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	local Ceive = self.Ceive
 
@@ -31,7 +24,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	local Uv = Transform.UpVector
 	local Rv = Transform.RightVector
 	local Lv = Transform.LookVector
-	local sO2 = Size / 2
+	local sO2 = Size * 0.5
 	local sUv = Uv * sO2.Y
 	local sRv = Rv * sO2.X
 	local sLv = Lv * sO2.Z
@@ -97,12 +90,6 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	CalculateZFace(sUv, sRv, -sLv)
 end
 
---- @within Box
---- @function Create
---- @param Transform CFrame
---- @param Size Vector3
---- @param DrawTriangles boolean
---- @return {Transform: CFrame, Size: Vector3, DrawTriangles: boolean, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	local PropertyTable = {
 		Transform = Transform,

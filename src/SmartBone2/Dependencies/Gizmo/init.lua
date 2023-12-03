@@ -1,5 +1,10 @@
-local TweenService = game:GetService("TweenService")
+--!nocheck
+
+-- CeiveImGizmo
+-- https://github.com/JakeyWasTaken/CeiveImGizmo
+
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 local Terrain = workspace.Terrain
 
 local AOTWireframeHandle: WireframeHandleAdornment = Terrain:FindFirstChild("AOTGizmoAdornment")
@@ -29,13 +34,13 @@ local ActiveObjects = {}
 local RetainObjects = {}
 local Debris = {}
 local Tweens = {}
-local PropertyTable = {AlwaysOnTop = true}
+local PropertyTable = { AlwaysOnTop = true }
 local Pool = {}
 
 local CleanerScheduled = false
 
 local function Retain(Gizmo, GizmoProperties)
-	table.insert(RetainObjects, {Gizmo, GizmoProperties})
+	table.insert(RetainObjects, { Gizmo, GizmoProperties })
 end
 
 local function Register(object)
@@ -84,88 +89,313 @@ end
 -- Types
 
 type IRay = {
-	Draw: (self, Origin: Vector3, End: Vector3) -> (),
-	Create: (self, Origin: Vector3, End: Vector3) -> {Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number}
+	Draw: (self: IRay, Origin: Vector3, End: Vector3) -> (),
+	Create: (
+		self: IRay,
+		Origin: Vector3,
+		End: Vector3
+	) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
 }
 
 type IBox = {
-	Draw: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
-	Create: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> {Transform: CFrame, Size: Vector3, DrawTriangles: boolean, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IBox, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Create: (
+		self: IBox,
+		Transform: CFrame,
+		Size: Vector3,
+		DrawTriangles: boolean
+	) -> {
+		Transform: CFrame,
+		Size: Vector3,
+		DrawTriangles: boolean,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IPlane = {
-	Draw: (self, Position: Vector3, Normal: Vector3, Size: Vector3) -> (),
-	Create: (self, Position: Vector3, Normal: Vector3, Size: Vector3) -> {Position: Vector3, Normal: Vector3, Size: Vector3, DrawTriangles: boolean, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IPlane, Position: Vector3, Normal: Vector3, Size: Vector3) -> (),
+	Create: (
+		self: IPlane,
+		Position: Vector3,
+		Normal: Vector3,
+		Size: Vector3
+	) -> {
+		Position: Vector3,
+		Normal: Vector3,
+		Size: Vector3,
+		DrawTriangles: boolean,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IWedge = {
-	Draw: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
-	Create: (self, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> {Transform: CFrame, Size: Vector3, DrawTriangles: boolean, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IWedge, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Create: (
+		self: IWedge,
+		Transform: CFrame,
+		Size: Vector3,
+		DrawTriangles: boolean
+	) -> {
+		Transform: CFrame,
+		Size: Vector3,
+		DrawTriangles: boolean,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ICircle = {
-	Draw: (self, Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> {Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ICircle, Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> (),
+	Create: (
+		self: ICircle,
+		Transform: CFrame,
+		Radius: number,
+		Subdivisions: number,
+		ConnectToStart: boolean?
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Subdivisions: number,
+		ConnectToStart: boolean?,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ISphere = {
-	Draw: (self, Transform: CFrame, Radius: number, Subdivisions: number, Angle: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Subdivisions: number, Angle: number) -> {Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ISphere, Transform: CFrame, Radius: number, Subdivisions: number, Angle: number) -> (),
+	Create: (
+		self: ISphere,
+		Transform: CFrame,
+		Radius: number,
+		Subdivisions: number,
+		Angle: number
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Subdivisions: number,
+		Angle: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ICylinder = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> {Transform: CFrame, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ICylinder, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Create: (
+		self: ICylinder,
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ICapsule = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> {Transform: CFrame, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ICapsule, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Create: (
+		self: ICapsule,
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ICone = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> {Transform: CFrame, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ICone, Transform: CFrame, Radius: number, Length: number, Subdivisions: number) -> (),
+	Create: (
+		self: ICone,
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Subdivisions: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IArrow = {
-	Draw: (self, Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> (),
-	Create: (self, Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> {Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IArrow, Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> (),
+	Create: (
+		self: IArrow,
+		Origin: Vector3,
+		End: Vector3,
+		Radius: number,
+		Length: number,
+		Subdivisions: number
+	) -> {
+		Origin: Vector3,
+		End: Vector3,
+		Radius: number,
+		Length: number,
+		Subdivisions: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IMesh = {
-	Draw: (self, Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> (),
-	Create: (self, Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> {Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IMesh, Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> (),
+	Create: (
+		self: IMesh,
+		Transform: CFrame,
+		Size: Vector3,
+		Vertices: {},
+		Faces: {}
+	) -> {
+		Transform: CFrame,
+		Size: Vector3,
+		Vertices: {},
+		Faces: {},
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type ILine = {
-	Draw: (self, Transform: CFrame, Length: number) -> (),
-	Create: (self, Transform: CFrame, Length: number) -> {Transform: CFrame, Length: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: ILine, Transform: CFrame, Length: number) -> (),
+	Create: (
+		self: ILine,
+		Transform: CFrame,
+		Length: number
+	) -> { Transform: CFrame, Length: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
 }
 
 type IVolumeCone = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Length: number) -> {Transform: CFrame, Radius: number, Length: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IVolumeCone, Transform: CFrame, Radius: number, Length: number) -> (),
+	Create: (
+		self: IVolumeCone,
+		Transform: CFrame,
+		Radius: number,
+		Length: number
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IVolumeBox = {
-	Draw: (self, Transform: CFrame, Size: Vector3) -> (),
-	Create: (self, Transform: CFrame, Size: Vector3) -> {Transform: CFrame, Size: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IVolumeBox, Transform: CFrame, Size: Vector3) -> (),
+	Create: (
+		self: IVolumeBox,
+		Transform: CFrame,
+		Size: Vector3
+	) -> { Transform: CFrame, Size: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
 }
 
 type IVolumeSphere = {
-	Draw: (self, Transform: CFrame, Radius: number) -> (),
-	Create: (self, Transform: CFrame, Radius: number) -> {Transform: CFrame, Radius: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IVolumeSphere, Transform: CFrame, Radius: number) -> (),
+	Create: (
+		self: IVolumeSphere,
+		Transform: CFrame,
+		Radius: number
+	) -> { Transform: CFrame, Radius: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
 }
 
 type IVolumeCylinder = {
-	Draw: (self, Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?) -> (),
-	Create: (self, Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?) -> {Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IVolumeCylinder, Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?) -> (),
+	Create: (
+		self: IVolumeCylinder,
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		InnerRadius: number?,
+		Angle: number?
+	) -> {
+		Transform: CFrame,
+		Radius: number,
+		Length: number,
+		InnerRadius: number?,
+		Angle: number?,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IVolumeArrow = {
-	Draw: (self, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
-	Create: (self, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> {Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
+	Draw: (self: IVolumeArrow, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
+	Create: (
+		self: IVolumeArrow,
+		Origin: Vector3,
+		End: Vector3,
+		CylinderRadius: number,
+		ConeRadius: number,
+		Length: number,
+		UseCylinder: boolean?
+	) -> {
+		Origin: Vector3,
+		End: Vector3,
+		CylinderRadius: number,
+		ConeRadius: number,
+		Length: number,
+		UseCylinder: boolean?,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
 }
 
 type IStyles = {
@@ -177,7 +407,7 @@ type IStyles = {
 type ICeive = {
 	ActiveRays: number,
 	ActiveInstances: number,
-	
+
 	PushProperty: (Property: string, Value: any?) -> (),
 	PopProperty: (Property: string) -> any?,
 	SetStyle: (Color: Color3?, Transparency: number?, AlwaysOnTop: boolean?) -> (),
@@ -188,7 +418,7 @@ type ICeive = {
 	ScheduleCleaning: () -> (),
 	TweenProperies: (Properties: {}, Goal: {}, TweenInfo: TweenInfo) -> () -> (),
 	Init: () -> (),
-	
+
 	Styles: IStyles,
 
 	Ray: IRay,
@@ -207,13 +437,10 @@ type ICeive = {
 	VolumeBox: IVolumeBox,
 	VolumeSphere: IVolumeSphere,
 	VolumeCylinder: IVolumeCylinder,
-	VolumeArrow: IVolumeArrow
+	VolumeArrow: IVolumeArrow,
 }
 
 -- Ceive
-
---- @class CEIVE
---- Root class for all the gizmos.
 
 local Styles = {
 	Color = "Color3",
@@ -227,14 +454,11 @@ local Ceive: ICeive = {
 	ActiveInstances = 0,
 
 	Styles = Styles,
-	
+
 	AOTWireframeHandle = AOTWireframeHandle,
 	WireframeHandle = WireframeHandle,
 }
 
---- @within CEIVE
---- @function GetPoolSize
---- @return PoolSize number
 function Ceive.GetPoolSize(): number
 	local n = 0
 
@@ -245,14 +469,9 @@ function Ceive.GetPoolSize(): number
 	return n
 end
 
---- @within CEIVE
---- @function PushProperty
---- Push Property sets the value of a property.
---- @param Property string
---- @param Value any
 function Ceive.PushProperty(Property, Value)
 	PropertyTable[Property] = Value
-	
+
 	if Property == "AlwaysOnTop" then
 		return
 	end
@@ -263,25 +482,14 @@ function Ceive.PushProperty(Property, Value)
 	end)
 end
 
---- @within CEIVE
---- @function PopProperty
---- Pop Property returns the property value.
---- @param Property string
---- @return any
 function Ceive.PopProperty(Property): any
 	if PropertyTable[Property] then
 		return PropertyTable[Property]
 	end
-	
+
 	return AOTWireframeHandle[Property]
 end
 
---- @within CEIVE
---- @function SetStyle
---- Sets the style of all properties.
---- @param Color Color3?
---- @param Transparency number?
---- @param AlwaysOnTop boolean?
 function Ceive.SetStyle(Color, Transparency, AlwaysOnTop)
 	if Color and typeof(Color) == "Color3" then
 		Ceive.PushProperty("Color3", Color)
@@ -296,8 +504,6 @@ function Ceive.SetStyle(Color, Transparency, AlwaysOnTop)
 	end
 end
 
---- @within CEIVE
---- @function DoCleaning
 function Ceive.DoCleaning()
 	AOTWireframeHandle:Clear()
 	WireframeHandle:Clear()
@@ -307,52 +513,33 @@ function Ceive.DoCleaning()
 	end
 
 	ActiveObjects = {}
-	
+
 	Ceive.ActiveRays = 0
 	Ceive.ActiveInstances = 0
 end
 
---- @within CEIVE
---- @function ScheduleCleaning
 function Ceive.ScheduleCleaning()
 	if CleanerScheduled then
 		return
 	end
-	
+
 	CleanerScheduled = true
-	
+
 	task.delay(0, function()
 		Ceive.DoCleaning()
-		
+
 		CleanerScheduled = false
 	end)
 end
 
---- @within CEIVE
---- @function AddDebrisInSeconds
---- Acts as a wrapper for your code that runs for a provided amount of seconds.
---- @param Seconds number
---- @param Callback function
 function Ceive.AddDebrisInSeconds(Seconds: number, Callback)
-	table.insert(Debris, {"Seconds", Seconds, os.clock(), Callback})
+	table.insert(Debris, { "Seconds", Seconds, os.clock(), Callback })
 end
 
---- @within CEIVE
---- @function AddDebrisInFrames
---- Acts as a wrapper for your code that runs for a provided amount of frames.
---- @param Frames number
---- @param Callback function
 function Ceive.AddDebrisInFrames(Frames: number, Callback)
-	table.insert(Debris, {"Frames", Frames, 0, Callback})
+	table.insert(Debris, { "Frames", Frames, 0, Callback })
 end
 
---- @within CEIVE
---- @function TweenProperties
---- Tweens the property table to the goal with the provided TweenInfo, returns a function which can be used to cancel.
---- @param Properties table
---- @param Goal table
---- @param TweenInfo TweenInfo
---- @return Cancel function
 function Ceive.TweenProperties(Properties: {}, Goal: {}, TweenInfo: TweenInfo): () -> ()
 	local p_Properties = Properties
 	local c_Properties = deepCopy(Properties)
@@ -362,7 +549,7 @@ function Ceive.TweenProperties(Properties: {}, Goal: {}, TweenInfo: TweenInfo): 
 		Properties = c_Properties,
 		Goal = Goal,
 		TweenInfo = TweenInfo,
-		Time = 0
+		Time = 0,
 	})
 
 	local TweenIndex = #Tweens
@@ -372,8 +559,6 @@ function Ceive.TweenProperties(Properties: {}, Goal: {}, TweenInfo: TweenInfo): 
 	end
 end
 
---- @within CEIVE
---- @function Init
 function Ceive.Init()
 	RunService.RenderStepped:Connect(function(dt)
 		for i, Tween in Tweens do
@@ -383,7 +568,7 @@ function Ceive.Init()
 			if Alpha > 1 then
 				Alpha = 1
 			end
-			
+
 			local function LerpProperty(Start, End, Time)
 				if type(Start) == "number" then
 					return Lerp(Start, End, Time)
@@ -396,7 +581,7 @@ function Ceive.Init()
 				if not Tween.Goal[k] then
 					continue
 				end
-				
+
 				local TweenAlpha = TweenService:GetValue(Alpha, Tween.TweenInfo.EasingStyle, Tween.TweenInfo.EasingDirection)
 				local PropertyValue = LerpProperty(v, Tween.Goal[k], TweenAlpha)
 
@@ -419,7 +604,7 @@ function Ceive.Init()
 					table.remove(Debris, i)
 					continue
 				end
-				
+
 				DebrisCallback()
 
 				continue
@@ -437,26 +622,23 @@ function Ceive.Init()
 
 		for i, Gizmo in RetainObjects do
 			local GizmoPropertys = Gizmo[2]
-			
+
 			if not GizmoPropertys.Enabled then
 				continue
 			end
-			
+
 			if GizmoPropertys.Destroy then
 				table.remove(RetainObjects, i)
 			end
-			
+
 			Gizmo[1]:Update(GizmoPropertys)
 		end
 	end)
 end
 
---- @within CEIVE
---- @function SetEnabled
---- @param Value boolean
 function Ceive.SetEnabled(Value)
 	Ceive.Enabled = Value
-	
+
 	if Value == false then
 		Ceive.DoCleaning()
 	end
@@ -465,7 +647,7 @@ end
 -- Load Gizmos
 
 for _, Gizmo in Gizmos:GetChildren() do
-	Ceive[ Gizmo.Name ] = require(Gizmo).Init(Ceive, PropertyTable, Request, Release, Retain, Register)
+	Ceive[Gizmo.Name] = require(Gizmo).Init(Ceive, PropertyTable, Request, Release, Retain, Register)
 end
 
 return Ceive

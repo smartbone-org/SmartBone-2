@@ -1,5 +1,3 @@
---- @class Arrow
---- Renders a wireframe arrow.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -15,14 +13,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-
---- @within Arrow
---- @function Draw
---- @param Origin Vector3
---- @param End Vector3
---- @param Radius number
---- @param Length number
---- @param Subdivisions number
 function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number)
 	local Ceive = self.Ceive
 
@@ -32,18 +22,9 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: numbe
 
 	Ceive.Ray:Draw(Origin, End)
 
-	local ArrowCFrame = CFrame.lookAt(End + ((Origin - End).Unit * (Length / 2)), End)
+	local ArrowCFrame = CFrame.lookAt(End + ((Origin - End).Unit * (Length * 0.5)), End)
 	Ceive.Cone:Draw(ArrowCFrame, Radius, Length, Subdivisions)
 end
-
---- @within Arrow
---- @function Create
---- @param Origin Vector3
---- @param End Vector3
---- @param Radius number
---- @param Length number
---- @param Subdivisions number
---- @return {Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 
 function Gizmo:Create(Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number)
 	local PropertyTable = {

@@ -1,5 +1,3 @@
---- @class Circle
---- Renders a wireframe Circle.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -15,13 +13,6 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
---- @within Circle
---- @function Draw
---- @param Transform CFrame
---- @param Radius number
---- @param Subdivisions number
---- @param Angle number
---- @param ConnectToStart boolean?
 function Gizmo:Draw(Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, ConnectToStart: boolean?)
 	local Ceive = self.Ceive
 
@@ -70,14 +61,6 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Subdivisions: number, Ang
 	return PreviousVertex
 end
 
---- @within Circle
---- @function Create
---- @param Transform CFrame
---- @param Radius number
---- @param Subdivisions number
---- @param Angle number
---- @param ConnectToStart boolean?
---- @return {Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, ConnectToStart: boolean?, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, ConnectToStart: boolean?)
 	local PropertyTable = {
 		Transform = Transform,

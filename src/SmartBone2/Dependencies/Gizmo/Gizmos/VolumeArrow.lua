@@ -1,5 +1,3 @@
---- @class VolumeArrow
---- Renders an arrow with a ConeHandleAdornment instead of a wireframe cone.
 local Gizmo = {}
 Gizmo.__index = Gizmo
 
@@ -16,28 +14,19 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain, Register)
 	return self
 end
 
---- @within VolumeArrow
---- @function Draw
---- @param Origin Vector3
---- @param End Vector3
---- @param CylinderRadius number
---- @param ConeRadius number
---- @param Length number
---- @param UseCylinder boolean?
 function Gizmo:Draw(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
 		return
 	end
-	
-	local ArrowCFrame = CFrame.lookAt(End - (End - Origin).Unit * (Length / 2), End)
+
+	local ArrowCFrame = CFrame.lookAt(End - (End - Origin).Unit * (Length * 0.5), End)
 
 	if UseCylinder == true then
-		local Direction = (End - Origin).Unit
 		local BottomCone = ArrowCFrame.Position
 		local CylinderLength = (BottomCone - Origin).Magnitude
-		local CylinderCFrame = CFrame.lookAt( (Origin + BottomCone) / 2, End )
+		local CylinderCFrame = CFrame.lookAt((Origin + BottomCone) * 0.5, End)
 
 		Ceive.VolumeCylinder:Draw(CylinderCFrame, CylinderRadius, CylinderLength)
 	else
@@ -47,15 +36,6 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeR
 	Ceive.VolumeCone:Draw(ArrowCFrame, ConeRadius, Length)
 end
 
---- @within VolumeArrow
---- @function Create
---- @param Origin Vector3
---- @param End Vector3
---- @param CylinderRadius number
---- @param ConeRadius number
---- @param Length number
---- @param UseCylinder boolean?
---- @return {Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number,  UseCylinder: boolean?, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean}
 function Gizmo:Create(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?)
 	local PropertyTable = {
 		Origin = Origin,
