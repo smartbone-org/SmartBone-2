@@ -182,7 +182,7 @@ end
 
 function Class:m_CleanColliders()
 	debug.profilebegin("Clean Colliders")
-	if #self.ColliderObjects ~= 0 then -- Micro optomizations
+	if #self.ColliderObjects ~= 0 then -- Micro optimizations
 		for i, ColliderObject in self.ColliderObjects do
 			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
 				SB_VERBOSE_WARN(`Deleting Collider Object`)
@@ -220,7 +220,7 @@ end
 --- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
---- Updates the provided bone tree with all optomizations
+--- Updates the provided bone tree with all optimizations
 function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
 
