@@ -1,7 +1,7 @@
 ---
 sidebar_position: 5
 ---
-# Optomization
+# Optimization
 
 Don't forget you can always use the Debug attribute to open a runtime editor where you can see details on certain things! (Only in studio)
 
