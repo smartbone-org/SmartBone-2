@@ -1,7 +1,5 @@
 # SmartBone 2
 
-(I'll just call SmartBone 2 Smartbone from now on)
-
 You can find out more info in the [documentation](https://celnakrblx.github.io/SmartBone-2/docs/intro)
 
 **Current Features**
