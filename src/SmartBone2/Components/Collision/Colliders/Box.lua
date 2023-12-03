@@ -44,6 +44,8 @@ local function ClosestPointFunc(cframe, size, point)
 		return true, closestPoint, -cframe.ZVector
 	end
 
+	-- Shouldnt reach
+	warn("CLOSEST POINT ON BOX FAIL")
 	return
 end
 

@@ -1,3 +1,6 @@
+local Dependencies = script.Parent
+local Utilities = require(Dependencies:WaitForChild("Utilities"))
+
 local Class = {}
 
 function Class.GetCFrames(camera, distance)
@@ -21,7 +24,7 @@ function Class.GetCFrames(camera, distance)
 	local topNormal = rightVec:Cross(cameraPos - farPlaneTopRight).Unit
 	local bottomNormal = rightVec:Cross(cameraPos - farPlaneBottomRight).Unit
 	debug.profileend()
-	return frustumCFrameInverse, farPlaneWidth2, farPlaneHeight2, distance2, rightNormal, leftNormal, topNormal, bottomNormal, cameraPos
+	return frustumCFrameInverse, farPlaneWidth2, farPlaneHeight2, distance2, rightNormal, leftNormal, topNormal, bottomNormal, cameraCFrame
 end
 
 function Class.InViewFrustum(
@@ -34,9 +37,12 @@ function Class.InViewFrustum(
 	leftNormal,
 	topNormal,
 	bottomNormal,
-	cameraPos
+	cameraCf
 )
 	debug.profilebegin("Frustum::InViewFrustum")
+
+	local cameraPos = cameraCf.Position
+
 	-- Check if point lies outside frustum OBB
 	local relativeToOBB = frustumCFrameInverse * point
 	if
@@ -62,17 +68,44 @@ function Class.InViewFrustum(
 	return true
 end
 
-function Class.ObjectInFrustum(Object, ...)
+function Class.ObjectInFrustum(
+	Object,
+	frustumCFrameInverse,
+	farPlaneWidth2,
+	farPlaneHeight2,
+	distance2,
+	rightNormal,
+	leftNormal,
+	topNormal,
+	bottomNormal,
+	cameraCFrame
+)
 	local CF = Object.CFrame
 	local Size = Object.Size
 
-	for i = 1, 8 do
-		local point = CF
-			* CFrame.new(Size.X * (i % 2 == 0 and 0.5 or -0.5), Size.Y * (i % 4 > 1 and 0.5 or -0.5), Size.Z * (i % 8 > 3 and 0.5 or -0.5))
+	-- Allows for really big root parts to still be checked correctly
+	local Closest = Utilities.ClosestPointOnLine(cameraCFrame.Position, cameraCFrame.LookVector, Utilities.FarPlane, CF.Position)
+	local Inside, point = Utilities.ClosestPointInBox(CF, Size, Closest)
 
-		if Class.InViewFrustum(point.Position, ...) then
-			return true
-		end
+	if Inside then
+		return true
+	end
+
+	if
+		Class.InViewFrustum(
+			point,
+			frustumCFrameInverse,
+			farPlaneWidth2,
+			farPlaneHeight2,
+			distance2,
+			rightNormal,
+			leftNormal,
+			topNormal,
+			bottomNormal,
+			cameraCFrame
+		)
+	then
+		return true
 	end
 
 	return false

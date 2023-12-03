@@ -21,6 +21,8 @@ export type IBone = {
 	RootTransform: CFrame,
 	Radius: number,
 
+	SolvedAnimatedCFrame: boolean,
+
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
 	LocalTransformOffset: CFrame,
@@ -37,17 +39,24 @@ export type IBone = {
 	ZAxisLimits: NumberRange,
 }
 
-local function QueryTransformedWorldCFrame(Bone: Bone)
-	local Parent = Bone.Parent
-	local ParentCFrame
+-- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
+local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
+	Bone.SolvedAnimatedCFrame = true
 
-	if Parent:IsA("Bone") then
-		ParentCFrame = QueryTransformedWorldCFrame(Parent)
-	else
-		ParentCFrame = Parent.CFrame
+	local ParentIndex = Bone.ParentIndex
+	local BoneObject = Bone.Bone
+
+	if ParentIndex < 1 then
+		return BoneTree.RootPart.CFrame * BoneObject.TransformedCFrame
 	end
 
-	return ParentCFrame:ToWorldSpace(Bone.TransformedCFrame)
+	local ParentBone: IBone = BoneTree.Bones[ParentIndex]
+
+	if not ParentBone.SolvedAnimatedCFrame then
+		ParentBone.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, ParentBone)
+	end
+
+	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
 local function ClipVector(LastPosition, Position, Vector)
@@ -58,6 +67,11 @@ end
 
 local function SolveWind(self, BoneTree)
 	local Settings = BoneTree.Settings
+	local WindType = Settings.WindType
+
+	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
+		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
+	end
 
 	local TimeModifier = BoneTree.WindOffset
 		+ (
@@ -78,10 +92,16 @@ local function SolveWind(self, BoneTree)
 		return Value
 	end
 
+	local function SampleGust()
+		local Length = 0.3
+		local Freq = 1
+		return math.sin(TimeModifier * Freq) * Length + (1 - Length)
+	end
+
 	local function SampleSin()
 		local Freq = Settings.WindSpeed ^ 0.8
 		local Power = Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 10
+		local Amp = Settings.WindStrength * 2
 		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
 		local Sin2 = math.cos(TimeModifier * Freq) ^ 2 - 0.2
 		local Wave = (Sin1 > Sin2 and Sin1 or Sin2) * (Power + Amp)
@@ -93,7 +113,7 @@ local function SolveWind(self, BoneTree)
 
 		local Freq = Settings.WindSpeed ^ 0.8
 		local Power = Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 10
+		local Amp = Settings.WindStrength * 2
 		local Seed = BoneTree.WindOffset
 
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + Amp + CustomAmp)
@@ -104,15 +124,13 @@ local function SolveWind(self, BoneTree)
 	end
 
 	if Settings.WindType == "Sine" then
-		WindMove = SampleSin()
+		WindMove = SampleSin() * SampleGust()
 	elseif Settings.WindType == "Noise" then
-		WindMove = SampleNoise(0, true)
+		WindMove = SampleNoise(0, true) * SampleGust()
 	elseif Settings.WindType == "Hybrid" then
-		WindMove = SampleSin()
-		WindMove += SampleNoise(0.5, true)
+		WindMove = SampleSin() * SampleGust()
+		WindMove += SampleNoise(0.5, true) * SampleGust()
 		WindMove *= 0.5
-	else
-		return WindMove -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	WindMove /= self.FreeLength
@@ -230,6 +248,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		RootBone = RootBone,
 		Radius = 0,
 
+		SolvedAnimatedCFrame = false,
+
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
 		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
@@ -267,7 +287,7 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	local RootPart = self.RootPart
 	local Root = BoneTree.Bones[1]
 
-	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(self.Bone)
+	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, self)
 
 	if self.ParentIndex < 1 then -- Force anchor the root bone
 		self.Anchored = true
@@ -384,14 +404,13 @@ end
 function Class:ApplyTransform(BoneTree)
 	debug.profilebegin("Bone::ApplyTransform")
 
-	-- self.AnimatedWorldCFrame = self.Bone.TransformedWorldCFrame
+	self.SolvedAnimatedCFrame = false
+	self.FirstSkipUpdate = false
 
 	if self.ParentIndex < 1 then
 		debug.profileend()
 		return
 	end
-
-	self.FirstSkipUpdate = false
 
 	local ParentBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone

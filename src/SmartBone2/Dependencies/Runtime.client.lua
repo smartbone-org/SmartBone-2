@@ -23,78 +23,13 @@ repeat
 until Setup
 
 local CollectionService = game:GetService("CollectionService")
-local HttpService = game:GetService("HttpService")
 local RunService = game:GetService("RunService")
 local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris = require(Dependencies.Iris)
+local Utilities = require(Dependencies.Utilities)
 local ShouldDebug = RunService:IsStudio()
-
-local ColliderTranslations = {
-	Block = "Box",
-	Ball = "Sphere",
-	Capsule = "Capsule",
-	Sphere = "Sphere",
-	Box = "Box",
-	Cylinder = "Cylinder",
-}
-
-local function GetCollider(Object: BasePart)
-	-- Any shapes which arent defined in the translation table are defaulted to box
-
-	local ColliderModule = Object:FindFirstChild("self.Collider")
-	local ColliderDescription
-
-	if ColliderModule and ColliderModule:IsA("ModuleScript") then
-		local RawColliderData = require(ColliderModule)
-		local ColliderData
-		pcall(function()
-			ColliderData = HttpService:JSONDecode(RawColliderData)
-		end)
-
-		ColliderDescription = ColliderData
-	end
-
-	if ColliderDescription then
-		return ColliderDescription
-	end
-
-	-- Only runs if there was no collider module or the collider data wasn't valid json
-
-	local function GetShapeName(obj)
-		local ShapeAttribute = obj:GetAttribute("ColliderShape")
-
-		if ShapeAttribute then
-			return ShapeAttribute
-		end
-
-		if obj:IsA("Part") then -- Allow meshes and unions to have colliders
-			return obj.Shape.Name
-		end
-
-		return "Box"
-	end
-
-	local ColliderType = ColliderTranslations[GetShapeName(Object)] or "Box"
-
-	ColliderDescription = {
-		{
-			Type = ColliderType,
-			ScaleX = 1,
-			ScaleY = 1,
-			ScaleZ = 1,
-			OffsetX = 0,
-			OffsetY = 0,
-			OffsetZ = 0,
-			RotationX = 0,
-			RotationY = 0,
-			RotationZ = 0,
-		},
-	}
-
-	return ColliderDescription
-end
 
 if not Iris.HasInit() then
 	Iris = Iris.Init()
@@ -114,10 +49,14 @@ local DebugState = {
 	DRAW_ROOT_PART = Iris.State(false),
 	DRAW_AXIS_LIMITS = Iris.State(false),
 	DRAW_COLLIDERS = Iris.State(false),
+	DRAW_COLLIDER_INFLUENCE = Iris.State(false),
+	DRAW_COLLIDER_AWAKE = Iris.State(false),
+	DRAW_COLLIDER_BROADPHASE = Iris.State(false),
 	DRAW_FILL_COLLIDERS = Iris.State(false),
 	DRAW_CONTACTS = Iris.State(false),
 }
 
+-- ShouldDebug is just if we are in studio or not
 if ShouldDebug then
 	Iris:Connect(function()
 		if RootObject:GetAttribute("Debug") ~= nil then
@@ -134,26 +73,29 @@ CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Objec
 	local ColliderKey = Object:GetAttribute("ColliderKey")
 	local RootColliderKey = RootObject:GetAttribute("ColliderKey")
 
-	if ColliderKey and RootColliderKey then
-		if ColliderKey ~= RootColliderKey then
-			return
-		end
+	if tostring(ColliderKey) ~= tostring(RootColliderKey) then
+		return
 	end
 
-	local ColliderObject = GetCollider(Object)
+	local ColliderObject = Utilities.GetCollider(Object)
 
 	BonePhysics:LoadRawCollider(ColliderObject, Object)
 end)
 
-RunService.RenderStepped:Connect(function(deltaTime)
+local Connection
+
+Connection = RunService.RenderStepped:Connect(function(deltaTime)
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
+		task.synchronize()
+		Connection:Disconnect()
 		BonePhysics:Destroy()
 		Actor:Destroy()
 		return
 	end
 
+	-- ShouldDebug is just if we are in studio or not
 	if ShouldDebug then
 		BonePhysics:DrawDebug(
 			DebugState.DRAW_COLLIDERS:get(),
@@ -162,7 +104,10 @@ RunService.RenderStepped:Connect(function(deltaTime)
 			DebugState.DRAW_BONE:get(),
 			DebugState.DRAW_AXIS_LIMITS:get(),
 			DebugState.DRAW_ROOT_PART:get(),
-			DebugState.DRAW_FILL_COLLIDERS:get()
+			DebugState.DRAW_FILL_COLLIDERS:get(),
+			DebugState.DRAW_COLLIDER_INFLUENCE:get(),
+			DebugState.DRAW_COLLIDER_AWAKE:get(),
+			DebugState.DRAW_COLLIDER_BROADPHASE:get()
 		)
 	end
 end)

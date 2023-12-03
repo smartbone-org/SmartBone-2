@@ -173,6 +173,21 @@ return function(Iris, RootObject, DebugState)
 	Iris.End()
 
 	Iris.SameLine()
+	Iris.Checkbox({ "Draw Collider Influence" }, { isChecked = DebugState.DRAW_COLLIDER_INFLUENCE })
+	helpMarker(Iris, "Shows the sphere of influence around each collider.")
+	Iris.End()
+
+	Iris.SameLine()
+	Iris.Checkbox({ "Draw Collider Awake" }, { isChecked = DebugState.DRAW_COLLIDER_AWAKE })
+	helpMarker(Iris, "Shows if a collider is awake or asleep.")
+	Iris.End()
+
+	Iris.SameLine()
+	Iris.Checkbox({ "Draw Collider Broadphase" }, { isChecked = DebugState.DRAW_COLLIDER_BROADPHASE })
+	helpMarker(Iris, "Shows if a collider isn't reaching narrowphase.")
+	Iris.End()
+
+	Iris.SameLine()
 	Iris.Checkbox({ "Draw Fill Colliders" }, { isChecked = DebugState.DRAW_FILL_COLLIDERS })
 	helpMarker(Iris, "Fills all colliders this root object can collide with.")
 	Iris.End()

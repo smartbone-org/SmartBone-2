@@ -17,25 +17,6 @@ local Radians = 0.017453
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
 
-local function RoundV3(Vector, Decimals)
-	local X = math.floor(Vector.X * 10 ^ Decimals)
-	local Y = math.floor(Vector.Y * 10 ^ Decimals)
-	local Z = math.floor(Vector.Z * 10 ^ Decimals)
-
-	return X, Y, Z
-end
-
-local function CompareV3(Vector0, Vector1, Decimals)
-	local X0, Y0, Z0 = RoundV3(Vector0, Decimals)
-	local X1, Y1, Z1 = RoundV3(Vector1, Decimals)
-
-	if X0 == X1 and Y0 == Y1 and Z0 == Z1 then
-		return true
-	end
-
-	return false
-end
-
 --- @class Collider
 --- Internal class for colliders
 --- :::caution Caution:
@@ -100,6 +81,8 @@ function Class.new()
 
 		m_Object = nil,
 
+		InNarrowphase = false,
+
 		Transform = CFrame.identity,
 		Size = Vector3.zero,
 
@@ -114,24 +97,27 @@ end
 function Class:SetObject(Object: BasePart)
 	self.m_Object = Object
 
-	self:FastTransform()
+	self:FastTransform({ CFrame = Object.CFrame, Size = Object.Size })
 	self:UpdateTransform()
 end
 
 --- @within Collider
 function Class:UpdateTransform() -- Should I even bother with this, all it really saves is a global call + mat transform
+	debug.profilebegin("UpdateTransform")
 	local Rotation = self.Rotation
 
 	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
 
 	self.Transform *= RotationCFrame
+	debug.profileend()
 end
 
 --- @within Collider
-function Class:FastTransform()
-	local Object = self.m_Object
-	local ObjectCFrame = Object.CFrame
-	local ObjectSize = Object.Size
+--- @param ObjectData {CFrame: CFrame, Size: Vector3}
+function Class:FastTransform(ObjectData)
+	debug.profilebegin("Fast Transform")
+	local ObjectCFrame = ObjectData.CFrame
+	local ObjectSize = ObjectData.Size
 
 	local Scale = self.Scale
 	local Offset = self.Offset
@@ -142,68 +128,93 @@ function Class:FastTransform()
 	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset)
 	self.Size = ScaledSize
 	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
+	debug.profileend()
 end
 
 --- @within Collider
+--- @param ObjectData {CFrame: CFrame, Size: Vector3}
 --- @param Point Vector3
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
-function Class:GetClosestPoint(Point, Radius)
+function Class:GetClosestPoint(ObjectData, Point, Radius)
 	if self.m_Object == nil then
 		return
 	end
 
-	self:FastTransform()
+	debug.profilebegin("Broadphase")
+	self:FastTransform(ObjectData)
+	self.InNarrowphase = false
 
 	-- If we are outside the radius of the bounding box don't fully update transform and don't do any collision checks
 	-- Broadphase collision detection
 	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
+	debug.profileend()
 
 	if PointDistance > self.Radius then
 		return
 	end
 
+	debug.profilebegin("Narrowphase")
 	self:UpdateTransform()
+
+	self.InNarrowphase = true
 
 	local Type = self.Type
 
 	-- Determine which collision solver we should send this off to
+	local IsInside, ClosestPoint, Normal
+
 	if Type == "Box" then
-		return BoxSolver(self.Transform, self.Size, Point, Radius)
+		IsInside, ClosestPoint, Normal = BoxSolver(self.Transform, self.Size, Point, Radius)
 	end
 
 	if Type == "Capsule" then
-		return CapsuleSolver(self.Transform, self.Size, Point, Radius)
+		IsInside, ClosestPoint, Normal = CapsuleSolver(self.Transform, self.Size, Point, Radius)
 	end
 
 	if Type == "Sphere" then
-		return SphereSolver(self.Transform, self.Size, Point, Radius)
+		IsInside, ClosestPoint, Normal = SphereSolver(self.Transform, self.Size, Point, Radius)
 	end
 
 	if Type == "Cylinder" then
-		return CylinderSolver(self.Transform, self.Size, Point, Radius)
+		IsInside, ClosestPoint, Normal = CylinderSolver(self.Transform, self.Size, Point, Radius)
 	end
 
 	-- this crashes studio cause it prints so many times
 	-- warn(`Invalid collider shape: {Type} in object {self.m_Object.Name}`)
+	debug.profileend()
 
-	return
+	return IsInside, ClosestPoint, Normal
 end
 
 --- @within Collider
+--- @param ColliderObject ColliderObject
 --- @param FILL_COLLIDER boolean
-function Class:DrawDebug(FILL_COLLIDER, SHOW_INFLUENCE)
+--- @param SHOW_INFLUENCE boolean
+--- @param SHOW_AWAKE boolean
+--- @param SHOW_BROADPHASE boolean
+function Class:DrawDebug(ColliderObject, FILL_COLLIDER, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADPHASE)
 	local COLLIDER_COLOR = Color3.new(0.509803, 0.933333, 0.427450)
 	local FILL_COLOR = Color3.new(0.901960, 0.784313, 0.513725)
+	local SLEEP_COLOR = Color3.new(1, 0, 1)
+	local BROADPHASE_COLOR = Color3.new(0, 1, 1)
 	local INFLUENCE_COLOR = Color3.new(1, 0.3, 0.3)
 
 	local Type = self.Type
 	local Transform = self.Transform
 	local Size = self.Size
 
-	if SHOW_INFLUENCE or true then
+	if not ColliderObject.m_Awake and SHOW_AWAKE then
+		COLLIDER_COLOR = SLEEP_COLOR
+	end
+
+	if self.InNarrowphase == false and SHOW_BROADPHASE then
+		FILL_COLOR = BROADPHASE_COLOR
+	end
+
+	if SHOW_INFLUENCE then
 		Gizmo.SetStyle(INFLUENCE_COLOR, 0, false)
-		Gizmo.Sphere:Draw(Transform, self.Radius, 12, 360)
+		Gizmo.Sphere:Draw(Transform, self.Radius, 25, 360)
 	end
 
 	if Type == "Box" then
@@ -223,12 +234,12 @@ function Class:DrawDebug(FILL_COLLIDER, SHOW_INFLUENCE)
 		local CapsuleRadius = math.min(Size.Y, Size.Z) * 0.5
 		local CapsuleLength = Size.X
 
+		local TransformedTransform = Transform * CFrame.Angles(math.rad(90), -math.rad(90), 0)
+
 		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
-		Gizmo.Capsule:Draw(Transform, CapsuleRadius, CapsuleLength, 15)
+		Gizmo.Capsule:Draw(TransformedTransform, CapsuleRadius, CapsuleLength, 15)
 
 		if FILL_COLLIDER then
-			local TransformedTransform = Transform * CFrame.Angles(math.rad(90), -math.rad(90), 0)
-
 			local Top = TransformedTransform.Position + TransformedTransform.UpVector * (CapsuleLength * 0.5)
 			local Bottom = TransformedTransform.Position - TransformedTransform.UpVector * (CapsuleLength * 0.5)
 
@@ -261,11 +272,11 @@ function Class:DrawDebug(FILL_COLLIDER, SHOW_INFLUENCE)
 		local Radius = math.min(Size.Y, Size.Z) * 0.5
 
 		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
-		Gizmo.Cylinder:Draw(Transform, Radius, Size.X, 15)
+		Gizmo.Cylinder:Draw(Transform * CFrame.Angles(0, 0, math.rad(90)), Radius, Size.X, 15)
 
 		if FILL_COLLIDER then
 			Gizmo.SetStyle(FILL_COLOR, 0.75, false)
-			Gizmo.VolumeCylinder:Draw(Transform, Radius, Size.X, 0, 360)
+			Gizmo.VolumeCylinder:Draw(Transform * CFrame.Angles(0, -math.rad(90), 0), Radius, Size.X, 0, 360)
 			Gizmo.PushProperty("Transparency", 0)
 		end
 

@@ -99,10 +99,18 @@ end
 --- @param Radius number -- Radius of bone
 --- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
 function Class:GetCollisions(Point, Radius)
-	if #self.Colliders == 0 then
+	debug.profilebegin("ColliderObject::GetCollisions")
+	if not self.m_Object then
+		debug.profileend()
 		return {}
 	end
 
+	if #self.Colliders == 0 then
+		debug.profileend()
+		return {}
+	end
+
+	debug.profilebegin("Sleep Cycle")
 	if os.clock() - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep conditions every 5th of a second
 		self.m_LastSleepCycle = os.clock()
 
@@ -112,34 +120,51 @@ function Class:GetCollisions(Point, Radius)
 			self.m_Awake = false
 		end
 	end
+	debug.profileend()
 
 	if not self.m_Awake then
+		debug.profileend()
 		return {}
 	end
 
+	local ObjectData = {
+		CFrame = self.m_Object.CFrame,
+		Size = self.m_Object.Size,
+	}
+
 	local Collisions = {}
 
+	debug.profilebegin("Determine Collisions")
 	for _, Collider in self.Colliders do
-		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(Point, Radius)
+		debug.profilebegin("Determine collision")
+		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(ObjectData, Point, Radius)
+		debug.profileend()
 
 		if IsInside then
 			table.insert(Collisions, { ClosestPoint = ClosestPoint, Normal = Normal })
 		end
 	end
+	debug.profileend()
+	debug.profileend()
 
 	return Collisions
 end
 
 --- @within ColliderObject
 --- @param FILL_COLLIDERS boolean
-function Class:DrawDebug(FILL_COLLIDERS)
+--- @param SHOW_INFLUENCE boolean
+--- @param SHOW_AWAKE boolean
+--- @param SHOW_BROADPHASE boolean
+function Class:DrawDebug(FILL_COLLIDERS, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADPHASE)
 	for _, Collider in self.Colliders do
-		Collider:DrawDebug(FILL_COLLIDERS)
+		Collider:DrawDebug(self, FILL_COLLIDERS, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADPHASE)
+		Collider.InNarrowphase = false
 	end
 end
 
 --- @within ColliderObject
 function Class:Destroy()
+	task.synchronize()
 	SB_VERBOSE_LOG(`Collider object destroying, object: {self.m_Object}`)
 
 	self.DestroyConnection:Disconnect()
@@ -151,6 +176,7 @@ function Class:Destroy()
 	end
 
 	setmetatable(self, nil)
+	task.desynchronize()
 end
 
 return Class

@@ -16,15 +16,6 @@ local ColliderObjectClass = require(Components:WaitForChild("Collision"):WaitFor
 
 local ActorRuntime = Dependencies:WaitForChild("Runtime")
 
-local ColliderTranslations = {
-	Block = "Box",
-	Ball = "Sphere",
-	Capsule = "Capsule",
-	Sphere = "Sphere",
-	Box = "Box",
-	Cylinder = "Cylinder",
-}
-
 local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 	for k, v in Object1:GetAttributes() do
 		Object2:SetAttribute(k, v)
@@ -33,10 +24,10 @@ end
 
 local SB_INDENT_LOG = Utilities.SB_INDENT_LOG
 local SB_UNINDENT_LOG = Utilities.SB_UNINDENT_LOG
-local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+-- local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 local SB_VERBOSE_WARN = Utilities.SB_VERBOSE_WARN
-local SB_VERBOSE_ERROR = Utilities.SB_VERBOSE_ERROR
+-- local SB_VERBOSE_ERROR = Utilities.SB_VERBOSE_ERROR
 
 --- @class SmartBone
 --- Root for all SmartBone objects.
@@ -179,7 +170,7 @@ end
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
 	debug.profilebegin("BonePhysics::m_UpdateViewFrustum")
-	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, 500) -- Hard coded 500 stud limit on any object
+	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Utilities.FarPlane) -- Hard coded 500 stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
 		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
@@ -377,15 +368,29 @@ end
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROOT_PART boolean
 --- @param DRAW_FILL_COLLIDERS boolean
+--- @param DRAW_COLLIDER_INFLUENCE boolean
+--- @param DRAW_COLLIDER_AWAKE boolean
+--- @param DRAW_COLLIDER_BROADPHASE boolean
 --- Draws the debug gizmos
-function Class:DrawDebug(DRAW_COLLIDERS, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_FILL_COLLIDERS)
+function Class:DrawDebug(
+	DRAW_COLLIDERS,
+	DRAW_CONTACTS,
+	DRAW_PHYSICAL_BONE,
+	DRAW_BONE,
+	DRAW_AXIS_LIMITS,
+	DRAW_ROOT_PART,
+	DRAW_FILL_COLLIDERS,
+	DRAW_COLLIDER_INFLUENCE,
+	DRAW_COLLIDER_AWAKE,
+	DRAW_COLLIDER_BROADPHASE
+)
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART)
 	end
 
 	if DRAW_COLLIDERS then
 		for _, ColliderObject in self.ColliderObjects do
-			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS)
+			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS, DRAW_COLLIDER_INFLUENCE, DRAW_COLLIDER_AWAKE, DRAW_COLLIDER_BROADPHASE)
 		end
 	end
 end
@@ -454,65 +459,11 @@ function Class.Start()
 
 			SB_VERBOSE_LOG(`Adding collider: {Object.Name}, Collider Key: {ColliderKey}`)
 			table.insert(ColliderObjects.Raw, Object)
+
+			-- task.wait()
 		end
 
 		return ColliderObjects
-	end
-
-	local function GetCollider(Object: BasePart)
-		-- Any shapes which arent defined in the translation table are defaulted to box
-
-		local ColliderModule = Object:FindFirstChild("self.Collider")
-		local ColliderDescription
-
-		if ColliderModule and ColliderModule:IsA("ModuleScript") then
-			local RawColliderData = require(ColliderModule)
-			local ColliderData
-			pcall(function()
-				ColliderData = HttpService:JSONDecode(RawColliderData)
-			end)
-
-			ColliderDescription = ColliderData
-		end
-
-		if ColliderDescription then
-			return ColliderDescription
-		end
-
-		-- Only runs if there was no collider module or the collider data wasn't valid json
-
-		local function GetShapeName(obj)
-			local ShapeAttribute = obj:GetAttribute("ColliderShape")
-
-			if ShapeAttribute then
-				return ShapeAttribute
-			end
-
-			if obj:IsA("Part") then -- Allow meshes and unions to have colliders
-				return obj.Shape.Name
-			end
-
-			return "Box"
-		end
-
-		local ColliderType = ColliderTranslations[GetShapeName(Object)] or "Box"
-
-		ColliderDescription = {
-			{
-				Type = ColliderType,
-				ScaleX = 1,
-				ScaleY = 1,
-				ScaleZ = 1,
-				OffsetX = 0,
-				OffsetY = 0,
-				OffsetZ = 0,
-				RotationX = 0,
-				RotationY = 0,
-				RotationZ = 0,
-			},
-		}
-
-		return ColliderDescription
 	end
 
 	local function SetupObject(Object: BasePart)
@@ -525,12 +476,18 @@ function Class.Start()
 
 		local GlobalColliders = GatherColliders()
 		local ColliderKey = Object:GetAttribute("ColliderKey")
+		local ColliderObjects
 
-		local ColliderObjects = ColliderKey and GlobalColliders.Key[tostring(ColliderKey)] or GlobalColliders.Raw
+		if ColliderKey then
+			ColliderObjects = GlobalColliders.Key[tostring(ColliderKey)] or {}
+		else
+			ColliderObjects = GlobalColliders.Raw or {}
+		end
+
 		local ColliderDescriptions = {} -- {Description, Object}
 
 		for _, ColliderObject in ColliderObjects do
-			table.insert(ColliderDescriptions, { GetCollider(ColliderObject), ColliderObject })
+			table.insert(ColliderDescriptions, { Utilities.GetCollider(ColliderObject), ColliderObject })
 		end
 
 		local Actor = Instance.new("Actor")

@@ -2,8 +2,10 @@
 
 local WIND_SEED = 1029410295159813
 local WIND_RNG = Random.new(WIND_SEED)
+local Lighting = game:GetService("Lighting")
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local BoneClass = require(script.Parent:WaitForChild("Bone"))
+local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 Gizmo.Init()
 
@@ -44,9 +46,9 @@ local function map(n, start, stop, newStart, newStop, withinBounds)
 
 	--// Returns values constrained to exact range
 	if newStart < newStop then
-		return math.max(math.min(value, newStop), newStart)
+		return (value < newStop and value or newStop) > newStart and (value < newStop and value or newStop) or newStart
 	else
-		return math.max(math.min(value, newStart), newStop)
+		return (value < newStart and value or newStart) > newStop and (value < newStart and value or newStart) or newStop
 	end
 end
 
@@ -194,7 +196,7 @@ end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
---- Calculates forces and updates workspace wind. Also calls Bone:StepPhysics()
+--- Calculates forces and updates wind. Also calls Bone:StepPhysics()
 function Class:StepPhysics(Delta)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
@@ -205,13 +207,23 @@ function Class:StepPhysics(Delta)
 	local ProjectedForce = ForceDirection * (DGrav < 0 and 0 or DGrav)
 
 	Force -= ProjectedForce
-	Force = (Force + Settings.Force) * Delta
+	Force = (Force + Settings.Force) * Delta -- Dont really want delta here but everything breaks if i remove it and i cant be bothered to fix it
 
 	if Settings.MatchWorkspaceWind == true then
 		local GW = workspace.GlobalWind
 		Settings.WindDirection = SafeUnit(GW)
 		Settings.WindSpeed = GW.Magnitude
+	else
+		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
+		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
+
+		Settings.WindDirection = SafeUnit(WindDirection)
+		Settings.WindSpeed = WindSpeed
 	end
+
+	local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
+
+	Settings.WindStrength = WindStrength
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force)
@@ -299,6 +311,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 end
 
 function Class:Destroy()
+	task.synchronize()
 	self.DestroyConnection:Disconnect()
 
 	for _, Bone in self.Bones do
@@ -306,6 +319,7 @@ function Class:Destroy()
 	end
 
 	setmetatable(self, nil)
+	task.desynchronize()
 end
 
 return Class

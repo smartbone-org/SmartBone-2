@@ -23,8 +23,6 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, InnerRadi
 		return
 	end
 
-	Transform *= CFrame.Angles(0, -math.rad(90), 0)
-
 	local Cylinder = self.Request("CylinderHandleAdornment")
 	Cylinder.Color3 = self.Propertys.Color3
 	Cylinder.Transparency = self.Propertys.Transparency
