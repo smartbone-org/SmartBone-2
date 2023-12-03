@@ -18,7 +18,7 @@ I'll do a quick run over whats new.
 * Collision support
 * More constraints (Distance and Spring)
 
-Over the past 3 months alot has been done and we are excited to finally share it with you! A few notes are that at the moment we don't fully believe it's production ready, there is definitely going to be bugs or oversights, this is more of an open testing so we can flesh out everything finish off any optomization and bug fixes.
+Over the past 3 months alot has been done and we are excited to finally share it with you! A few notes are that at the moment we don't fully believe it's production ready, there is definitely going to be bugs or oversights, this is more of an open testing so we can flesh out everything finish off any optimization and bug fixes.
 
 There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) which has colliders and over 170 SmartBone objects setup.
 
