@@ -22,4 +22,6 @@ Over the past 3 months alot has been done and we are excited to finally share it
 
 There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) which has colliders and over 170 SmartBone objects setup.
 
-At the moment plugins are locally installed and can be found in the [releases page](https://github.com/CelnakRBLX/SmartBone-2/releases)
+You can find the plugins here:
+[Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)
+[SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)
