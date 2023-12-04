@@ -59,6 +59,11 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
+-- Gets a bones local cframe relative to an object
+local function GetLocalCFrame(Bone: Bone, Object: BasePart): CFrame
+	return Object.CFrame:ToObjectSpace(Bone.WorldCFrame)
+end
+
 local function ClipVector(LastPosition, Position, Vector)
 	LastPosition *= (Vector3.one - Vector)
 	LastPosition += (Position * Vector)
