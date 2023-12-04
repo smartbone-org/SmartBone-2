@@ -39,6 +39,20 @@ export type IBone = {
 	ZAxisLimits: NumberRange,
 }
 
+-- I beg roblox to make TransformedWorldCFrame parallel safe
+local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
+	local Parent = OriginBone.Parent
+	local ParentCFrame
+
+	if Parent:IsA("Bone") then
+		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
+	elseif Parent:IsA("BasePart") then
+		ParentCFrame = Parent.CFrame
+	end
+
+	return ParentCFrame:ToWorldSpace(OriginBone.TransformedCFrame)
+end
+
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
 local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	Bone.SolvedAnimatedCFrame = true
@@ -47,7 +61,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	local BoneObject = Bone.Bone
 
 	if ParentIndex < 1 then
-		return BoneTree.RootPart.CFrame * BoneObject.TransformedCFrame
+		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
 
 	local ParentBone: IBone = BoneTree.Bones[ParentIndex]
@@ -57,11 +71,6 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	end
 
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
-end
-
--- Gets a bones local cframe relative to an object
-local function GetLocalCFrame(Bone: Bone, Object: BasePart): CFrame
-	return Object.CFrame:ToObjectSpace(Bone.WorldCFrame)
 end
 
 local function ClipVector(LastPosition, Position, Vector)
