@@ -294,9 +294,25 @@ function Class:LoadObject(Object: BasePart)
 	end
 
 	local RootNames = RootAttribute:split(",")
+	local Bones = {}
 
+	-- Gather bones into table indexed with name
+	for _, Descendant in Object:GetDescendants() do
+		if not Descendant:IsA("Bone") then
+			continue
+		end
+
+		if Bones[Descendant.Name] then
+			warn(`[BonePhysics::LoadObject] Duplicate bones of name: {Descendant.Name} in RootPart: {Object.Name}`)
+			continue
+		end
+
+		Bones[Descendant.Name] = Descendant
+	end
+
+	-- Create bone trees
 	for _, Name in RootNames do
-		local RootBone = Object:FindFirstChild(Name)
+		local RootBone = Bones[Name]
 		if not RootBone then
 			warn(`[BonePhysics::LoadObject] Couldn't find Root Bone of name: {Name} in RootPart: {Object.Name}`)
 			continue

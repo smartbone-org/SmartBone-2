@@ -39,6 +39,20 @@ export type IBone = {
 	ZAxisLimits: NumberRange,
 }
 
+-- I beg roblox to make TransformedWorldCFrame parallel safe
+local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
+	local Parent = OriginBone.Parent
+	local ParentCFrame
+
+	if Parent:IsA("Bone") then
+		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
+	elseif Parent:IsA("BasePart") then
+		ParentCFrame = Parent.CFrame
+	end
+
+	return ParentCFrame:ToWorldSpace(OriginBone.TransformedCFrame)
+end
+
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
 local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	Bone.SolvedAnimatedCFrame = true
@@ -47,7 +61,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	local BoneObject = Bone.Bone
 
 	if ParentIndex < 1 then
-		return BoneTree.RootPart.CFrame * BoneObject.TransformedCFrame
+		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
 
 	local ParentBone: IBone = BoneTree.Bones[ParentIndex]
@@ -235,7 +249,7 @@ local Class = {}
 Class.__index = Class
 
 function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
-	return setmetatable({
+	local self = setmetatable({
 		Bone = Bone,
 		FreeLength = -1,
 		Weight = 1 * 0.7,
@@ -270,6 +284,17 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		-- Debug
 		CollisionsData = {},
 	}, Class)
+
+	self.AttributeConnection = Bone.AttributeChanged:Connect(function()
+		-- Do this cause of axis lock
+		local Settings = Utilities.GatherBoneSettings(Bone)
+
+		for k, v in Settings do
+			self[k] = v
+		end
+	end)
+
+	return self
 end
 
 --- @within Bone
@@ -351,6 +376,9 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = SpringConstraint(self, Position, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
+	else
+		-- Go to anchored position if our constraint type is incorrect
+		Position = self.AnimatedWorldCFrame.Position
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
@@ -593,6 +621,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 end
 
 function Class:Destroy()
+	self.AttributeConnection:Disconnect()
+
 	setmetatable(self, nil)
 end
 

@@ -88,9 +88,10 @@ Connection = RunService.RenderStepped:Connect(function(deltaTime)
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
-		task.synchronize()
 		Connection:Disconnect()
 		BonePhysics:Destroy()
+
+		task.synchronize()
 		Actor:Destroy()
 		return
 	end

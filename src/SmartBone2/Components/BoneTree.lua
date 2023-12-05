@@ -151,6 +151,11 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		end
 	end)
 
+	self.AttributeConnection = RootPart.AttributeChanged:Connect(function(Attribute)
+		-- No need validating
+		self.Settings[Attribute] = RootPart:GetAttribute(Attribute)
+	end)
+
 	return self
 end
 
@@ -313,6 +318,7 @@ end
 function Class:Destroy()
 	task.synchronize()
 	self.DestroyConnection:Disconnect()
+	self.AttributeConnection:Disconnect()
 
 	for _, Bone in self.Bones do
 		Bone:Destroy()
