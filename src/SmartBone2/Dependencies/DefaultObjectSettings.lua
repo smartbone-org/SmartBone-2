@@ -10,7 +10,7 @@ return {
 
 	AnchorsRotate = false,
 
-	Constraint = "Distance",
+	Constraint = "Spring",
 	Force = Vector3.yAxis * FORCE_MULTIPLIER,
 	Gravity = -Vector3.yAxis,
 

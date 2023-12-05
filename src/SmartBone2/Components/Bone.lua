@@ -249,7 +249,7 @@ local Class = {}
 Class.__index = Class
 
 function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
-	return setmetatable({
+	local self = setmetatable({
 		Bone = Bone,
 		FreeLength = -1,
 		Weight = 1 * 0.7,
@@ -284,6 +284,17 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		-- Debug
 		CollisionsData = {},
 	}, Class)
+
+	self.AttributeConnection = Bone.AttributeChanged:Connect(function()
+		-- Do this cause of axis lock
+		local Settings = Utilities.GatherBoneSettings(Bone)
+
+		for k, v in Settings do
+			self[k] = v
+		end
+	end)
+
+	return self
 end
 
 --- @within Bone
@@ -365,6 +376,9 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = SpringConstraint(self, Position, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
+	else
+		-- Go to anchored position if our constraint type is incorrect
+		Position = self.AnimatedWorldCFrame.Position
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
@@ -607,6 +621,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 end
 
 function Class:Destroy()
+	self.AttributeConnection:Disconnect()
+
 	setmetatable(self, nil)
 end
 
