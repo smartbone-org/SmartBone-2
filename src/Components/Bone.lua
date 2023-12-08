@@ -8,6 +8,7 @@ local Constraints = script.Parent:WaitForChild("Constraints")
 local AxisConstraint = require(Constraints:WaitForChild("AxisConstraint"))
 local CollisionConstraint = require(Constraints:WaitForChild("CollisionConstraint"))
 local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"))
+local FrictionConstraint = require(Constraints:WaitForChild("FrictionConstraint"))
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
@@ -22,6 +23,7 @@ export type IBone = {
 	LocalTransform: CFrame,
 	RootTransform: CFrame,
 	Radius: number,
+	Friction: number,
 
 	SolvedAnimatedCFrame: boolean,
 
@@ -39,6 +41,8 @@ export type IBone = {
 	XAxisLimits: NumberRange,
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
+
+	CollisionHits: { [number]: BasePart },
 }
 
 local function IsNaN(Value: any): boolean
@@ -87,6 +91,19 @@ local function ClipVector(LastPosition, Position, Vector)
 	LastPosition *= (Vector3.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
+end
+
+local function GetFriction(Object0: BasePart, Object1: BasePart): number
+	local Prop0 = Object0.CurrentPhysicalProperties
+	local Prop1 = Object1.CurrentPhysicalProperties
+
+	local f0 = Prop0.Friction
+	local w0 = Prop0.FrictionWeight
+
+	local f1 = Prop1.Friction
+	local w1 = Prop1.FrictionWeight
+
+	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
 local function SolveWind(self, BoneTree)
@@ -271,6 +288,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
+		Friction = 0,
 
 		SolvedAnimatedCFrame = false,
 
@@ -290,6 +308,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
 
 		FirstSkipUpdate = false,
+
+		CollisionHits = {},
 
 		-- Debug
 		CollisionsData = {},
@@ -378,6 +398,9 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
 
+	-- Friction must be first
+	Position = FrictionConstraint(self, Position, self.LastPosition)
+
 	if #ColliderObjects ~= 0 then
 		Position = CollisionConstraint(self, Position, ColliderObjects)
 	end
@@ -391,8 +414,13 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = self.AnimatedWorldCFrame.Position
 	end
 
-	local AxisConstrainted = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
-	Position = AxisConstrainted
+	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+
+	self.Friction = 0
+
+	for _, HitPart in self.CollisionHits do
+		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
+	end
 
 	self.Position = Position
 	debug.profileend()

@@ -95,6 +95,12 @@ end
 -- Public
 
 --- @within ColliderObject
+--- @return BasePart
+function Class:GetObject()
+	return self.m_Object
+end
+
+--- @within ColliderObject
 --- @param Point Vector3
 --- @param Radius number -- Radius of bone
 --- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}

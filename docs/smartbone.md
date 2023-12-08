@@ -17,6 +17,10 @@ sidebar_position: 2
 
 - Make sure you don’t add any spaces or characters unless they are part of the name of the bone(s) you want to be included
 
+### Friction
+
+Friction is controlled by the root part and the colliding objects physical properties.
+
 ---
 ### Attributes
 
