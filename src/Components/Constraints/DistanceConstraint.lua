@@ -15,4 +15,5 @@ return function(self, Position, BoneTree)
 	end
 
 	debug.profileend()
+	return
 end

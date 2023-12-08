@@ -514,6 +514,9 @@ function Class.Start()
 
 		Actor.Parent = ActorFolder
 
+		-- If we dont yield here a bug happens on occasion where the actor doesn't bind quick enough and misses the setup message
+		task.wait()
+
 		Actor:SendMessage("Setup", Object, ColliderDescriptions, script)
 
 		SB_VERBOSE_LOG(`Runtime Started`)

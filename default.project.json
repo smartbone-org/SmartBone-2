@@ -1,18 +1,6 @@
 {
-  "name": "SmartBone2",
-  "tree": {
-    "$className": "DataModel",
-
-    "ReplicatedStorage": {
-      "SmartBone": {
-        "$path": "src/SmartBone2"
-      }
-    },
-
-    "StarterPlayer": {
-      "StarterPlayerScripts": {
-        "$path": "src/client"
-      }
-    }
-  }
+	"name": "smartbone2",
+	"tree": {
+		"$path": "src"
+	}
 }

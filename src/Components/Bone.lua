@@ -10,6 +10,8 @@ local CollisionConstraint = require(Constraints:WaitForChild("CollisionConstrain
 local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"))
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
+local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+
 export type IBone = {
 	Bone: Bone,
 	FreeLength: number,
@@ -38,6 +40,14 @@ export type IBone = {
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
 }
+
+local function IsNaN(Value: any): boolean
+	if Value ~= Value then
+		return true
+	end
+
+	return false
+end
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
@@ -381,7 +391,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = self.AnimatedWorldCFrame.Position
 	end
 
-	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+	local AxisConstrainted = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+	Position = AxisConstrainted
 
 	self.Position = Position
 	debug.profileend()
@@ -422,6 +433,8 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 		local alpha = (1 - factor ^ Delta)
 
 		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+
+		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
 	end
 	debug.profileend()
 end
