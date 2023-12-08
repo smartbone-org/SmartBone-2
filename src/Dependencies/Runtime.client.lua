@@ -98,17 +98,19 @@ Connection = RunService.RenderStepped:Connect(function(deltaTime)
 
 	-- ShouldDebug is just if we are in studio or not
 	if ShouldDebug then
-		BonePhysics:DrawDebug(
-			DebugState.DRAW_COLLIDERS:get(),
-			DebugState.DRAW_CONTACTS:get(),
-			DebugState.DRAW_PHYSICAL_BONE:get(),
-			DebugState.DRAW_BONE:get(),
-			DebugState.DRAW_AXIS_LIMITS:get(),
-			DebugState.DRAW_ROOT_PART:get(),
-			DebugState.DRAW_FILL_COLLIDERS:get(),
-			DebugState.DRAW_COLLIDER_INFLUENCE:get(),
-			DebugState.DRAW_COLLIDER_AWAKE:get(),
-			DebugState.DRAW_COLLIDER_BROADPHASE:get()
-		)
+		if RootObject:GetAttribute("Debug") ~= nil then
+			BonePhysics:DrawDebug(
+				DebugState.DRAW_COLLIDERS:get(),
+				DebugState.DRAW_CONTACTS:get(),
+				DebugState.DRAW_PHYSICAL_BONE:get(),
+				DebugState.DRAW_BONE:get(),
+				DebugState.DRAW_AXIS_LIMITS:get(),
+				DebugState.DRAW_ROOT_PART:get(),
+				DebugState.DRAW_FILL_COLLIDERS:get(),
+				DebugState.DRAW_COLLIDER_INFLUENCE:get(),
+				DebugState.DRAW_COLLIDER_AWAKE:get(),
+				DebugState.DRAW_COLLIDER_BROADPHASE:get()
+			)
+		end
 	end
 end)

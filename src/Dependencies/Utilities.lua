@@ -10,6 +10,14 @@ local ColliderTranslations = {
 	Cylinder = "Cylinder",
 }
 
+local function SafeUnit(Vector: Vector3): Vector3
+	if Vector.Magnitude == 0 then
+		return -Vector3.yAxis
+	end
+
+	return Vector.Unit
+end
+
 local module = {}
 module.LogVerbose = false
 module.LogIndent = 0
@@ -19,7 +27,8 @@ function module.GetRotationBetween(U: Vector3, V: Vector3)
 	local Cos = U:Dot(V)
 	local Sin = U:Cross(V).Magnitude
 	local Angle = math.atan2(Sin, Cos)
-	local W = U:Cross(V).Unit
+	local W = SafeUnit(U:Cross(V))
+
 	return CFrame.fromAxisAngle(W, Angle)
 end
 
