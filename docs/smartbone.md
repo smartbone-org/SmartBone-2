@@ -21,12 +21,22 @@ sidebar_position: 2
 
 Friction is controlled by the root part and the colliding objects physical properties.
 
+### Constraints
+
+Each constraint has it's own purpose,
+
+- Spring will return the bone to its rest position sort of like jelly
+
+- Distance will keep the bones at a fixed distance from eachother and is always pulled downwards
+
+- Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
+
 ---
 ### Attributes
 
 **All attributes listed here are optional and not required to get a SmartBone object working.**
 
-- \[*Boolean*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
+- \[*Any*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
 
 - \[*Number*\] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
 
@@ -40,7 +50,7 @@ Friction is controlled by the root part and the colliding objects physical prope
 
 - \[*Vector3*\] Force – Additional Force applied to Bones in World Space. Supplementary to Gravity.
 
-- \[*String*\] Constraint - Option between Spring and Distance.
+- \[*String*\] Constraint - Option between Spring, Distance and Rope.
 
 - \[*String*\] WindType - Option between Sine, Noise and Hybrid.
 

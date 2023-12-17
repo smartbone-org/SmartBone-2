@@ -1,4 +1,5 @@
 --!nocheck
+--!native
 
 local WIND_SEED = 1029410295159813
 local WIND_RNG = Random.new(WIND_SEED)
@@ -7,7 +8,11 @@ local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local BoneClass = require(script.Parent:WaitForChild("Bone"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
+local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
 Gizmo.Init()
+
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 export type IBoneTree = {
 	WindOffset: number,
@@ -73,6 +78,11 @@ end
 --- @prop RootPart BasePart
 
 --- @within BoneTree
+--- @readonly
+--- @prop RootPartSize Vector3
+--- Constant value of the root parts size at the start of the simulation
+
+--- @within BoneTree
 --- @prop Bones table
 
 --- @within BoneTree
@@ -96,6 +106,11 @@ end
 --- @readonly
 --- @prop Destroyed boolean
 --- True if the root part has been destroyed
+
+--- @within BoneTree
+--- @readonly
+--- @prop FirstSkipUpdate boolean
+--- False if the bone tree hasn't skipped an update this frame. True if it has
 
 --- @within BoneTree
 --- @readonly
@@ -130,13 +145,17 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		WindOffset = WIND_RNG:NextNumber(0, 1000000),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
+		RootPartSize = RootPart.Size,
 		Bones = {},
 		Settings = {},
 		UpdateRate = 0,
 		InView = true,
 		AccumulatedDelta = 0,
+		BoundingBoxCFrame = RootPart.CFrame,
+		BoundingBoxSize = RootPart.Size,
 
 		Destroyed = false,
+		FirstSkipUpdate = false,
 
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
 		Force = Vector3.zero,
@@ -144,6 +163,10 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		ObjectMove = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
+
+	-- RootPart.Removing:Connect(function()
+	-- 	print("hy")
+	-- end)
 
 	self.DestroyConnection = RootPart:GetPropertyChangedSignal("Parent"):Connect(function()
 		if RootPart.Parent == nil then
@@ -157,6 +180,33 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 	end)
 
 	return self
+end
+
+--- @within BoneTree
+--- Called in BoneTree:PreUpdate(),
+--- Computes the bounding box of all the bones
+function Class:UpdateBoundingBox()
+	debug.profilebegin("BoneTree::UpdateBoundingBox")
+	local BottomCorner = MaxVector
+	local TopCorner = -MaxVector
+
+	debug.profilebegin("Max Min Bones")
+	for _, Bone in self.Bones do
+		debug.profilebegin("Max Min Bone")
+		local Position = Bone.Position
+
+		BottomCorner = BottomCorner:Min(Position)
+		TopCorner = TopCorner:Max(Position)
+		debug.profileend()
+	end
+	debug.profileend()
+
+	local CenterOfMass = (BottomCorner + TopCorner) / 2
+
+	self.BoundingBoxCFrame = CFrame.new(CenterOfMass)
+	self.BoundingBoxSize = self.RootPartSize:Max(TopCorner - BottomCorner)
+
+	debug.profileend()
 end
 
 --- @within BoneTree
@@ -192,6 +242,7 @@ function Class:PreUpdate()
 
 	self.RestGravity = RootPartCFrame * self.LocalGravity
 	self:UpdateThrottling(RootPartPosition)
+	self:UpdateBoundingBox()
 
 	for _, Bone in self.Bones do
 		Bone:PreUpdate(self)
@@ -254,6 +305,8 @@ function Class:SkipUpdate()
 	for _, Bone in self.Bones do
 		Bone:SkipUpdate()
 	end
+
+	self.FirstSkipUpdate = true
 	debug.profileend()
 end
 
@@ -264,6 +317,8 @@ function Class:SolveTransform(Delta)
 	for _, Bone in self.Bones do
 		Bone:SolveTransform(self, Delta)
 	end
+
+	self.FirstSkipUpdate = false
 	debug.profileend()
 end
 
@@ -283,13 +338,19 @@ end
 --- @param DRAW_BONE boolean
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROOT_PART boolean
-function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART)
+--- @param DRAW_BOUNDING_BOX boolean
+function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
 	local ROOT_PART_FILL_COLOR = Color3.fromRGB(255, 89, 89)
 
 	Gizmo.PushProperty("AlwaysOnTop", false)
+
+	if DRAW_BOUNDING_BOX then
+		Gizmo.PushProperty("Color3", ROOT_PART_BOUNDING_BOX_COLOR)
+		Gizmo.Box:Draw(self.BoundingBoxCFrame, self.BoundingBoxSize, true)
+	end
 
 	if DRAW_ROOT_PART then
 		Gizmo.PushProperty("Color3", ROOT_PART_BOUNDING_BOX_COLOR)
@@ -316,6 +377,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 end
 
 function Class:Destroy()
+	SB_VERBOSE_LOG("Destroy BoneTree")
+
 	task.synchronize()
 	self.DestroyConnection:Disconnect()
 	self.AttributeConnection:Disconnect()

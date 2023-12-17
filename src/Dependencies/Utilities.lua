@@ -64,7 +64,7 @@ function module.GatherBoneSettings(Bone)
 	local YAxisLimits = Bone:GetAttribute("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
 	local ZAxisLimits = Bone:GetAttribute("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
 
-	local Radius = Bone:GetAttribute("Radius") or 0
+	local Radius = Bone:GetAttribute("Radius") or 0.25
 
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },

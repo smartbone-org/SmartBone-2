@@ -26,9 +26,6 @@ local function BoneEditor(Iris, BoneObject)
 	local Radius = Iris.InputNum({ "Radius", 0.1, 0, math.huge, "%.3f" }, { number = BoneObject.Radius })
 	BoneObject.Radius = Radius.number.value
 
-	local Restitution = Iris.InputNum({ "Restitution", 0.1, 0, math.huge, "%.3f" }, { number = BoneObject.Restitution })
-	BoneObject.Restitution = Restitution.number.value
-
 	local IsAnchored = Iris.Checkbox({ "Anchored" }, { isChecked = BoneObject.Anchored })
 	BoneObject.Anchored = IsAnchored.isChecked.value
 
@@ -160,6 +157,11 @@ return function(Iris, RootObject, DebugState)
 	Iris.SameLine()
 	Iris.Checkbox({ "Draw Root Part" }, { isChecked = DebugState.DRAW_ROOT_PART })
 	helpMarker(Iris, "Draws a bounding box and fills in the root part.")
+	Iris.End()
+
+	Iris.SameLine()
+	Iris.Checkbox({ "Draw Bounding Box" }, { isChecked = DebugState.DRAW_BOUNDING_BOX })
+	helpMarker(Iris, "Draws the bounding box used for frustum culling")
 	Iris.End()
 
 	Iris.SameLine()

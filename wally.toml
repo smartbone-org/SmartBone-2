@@ -1,7 +1,7 @@
 [package]
 name = "jakeywastaken/smartbone-2"
 description = "Revamped release of SmartBone (legacy)"
-version = "0.1.1"
+version = "0.2.0"
 license = "MIT"
 authors = ["CelnakRBLX", "JakeyWasTaken"]
 registry = "https://github.com/UpliftGames/wally-index"

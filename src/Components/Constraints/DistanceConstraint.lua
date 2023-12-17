@@ -4,11 +4,9 @@ return function(self, Position, BoneTree)
 
 	if ParentBone then
 		local RestLength = self.FreeLength
-		local BoneSub = (Position - ParentBone.Position)
-		local BoneDirection = BoneSub.Unit
-		local BoneDistance = math.min(BoneSub.Magnitude, RestLength)
+		local BoneDirection = (Position - ParentBone.Position).Unit
 
-		local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
+		local RestPosition = ParentBone.Position + (BoneDirection * RestLength)
 
 		debug.profileend()
 		return RestPosition

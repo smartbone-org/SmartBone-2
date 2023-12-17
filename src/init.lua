@@ -174,7 +174,11 @@ function Class:m_UpdateViewFrustum()
 
 	for _, BoneTree in self.BoneTrees do
 		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
-		BoneTree.InView = Frustum.ObjectInFrustum(BoneTree.RootPart, a, b, c, d, e, f, g, h, i)
+		local FakeObject = {
+			CFrame = BoneTree.BoundingBoxCFrame,
+			Size = BoneTree.BoundingBoxSize,
+		}
+		BoneTree.InView = Frustum.ObjectInFrustum(FakeObject, a, b, c, d, e, f, g, h, i)
 		debug.profileend()
 	end
 	debug.profileend()
@@ -204,7 +208,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Constrains each bone in the provided bone tree and cleans up colliders
-function Class:m_ConstrainBoneTree(BoneTree: BoneTreeClass.IBoneTree, Delta: number)
+function Class:m_ConstrainBoneTree(BoneTree: BoneTreeClass.IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
 	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
 
 	BoneTree:Constrain(self.ColliderObjects, Delta)
@@ -227,18 +231,33 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	if BoneTree.Destroyed then
 		BoneTree:Destroy()
 		table.remove(self.BoneTrees, Index)
+
+		debug.profileend()
 		return
 	end
 
 	BoneTree:PreUpdate() -- Pre update MUST be called before we call SkipUpdate!
 
-	if not BoneTree.InView or BoneTree.UpdateRate == 0 then
+	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
+		local AlreadySkipped = BoneTree.FirstSkipUpdate
+
 		BoneTree:SkipUpdate()
 
-		task.synchronize()
-		BoneTree:ApplyTransform()
+		if not AlreadySkipped then
+			task.synchronize()
+			BoneTree:ApplyTransform()
+		else
+			debug.profileend()
+		end
+
 		return
 	end
+
+	debug.profilebegin("Step Colliders")
+	for _, ColliderObject in self.ColliderObjects do
+		ColliderObject:Step()
+	end
+	debug.profileend()
 
 	local UpdateHz = 1 / BoneTree.UpdateRate
 	local DidUpdate = false
@@ -249,7 +268,6 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 
 		DidUpdate = true
 
-		BoneTree:PreUpdate()
 		BoneTree:StepPhysics(UpdateHz)
 		self:m_ConstrainBoneTree(BoneTree, Delta)
 		BoneTree:SolveTransform(UpdateHz)
@@ -366,13 +384,10 @@ function Class:StepBoneTrees(Delta)
 	end
 
 	self:m_CleanColliders()
-
-	task.desynchronize()
 	self:m_UpdateViewFrustum()
 	for i, BoneTree in self.BoneTrees do
 		self:m_UpdateBoneTree(BoneTree, i, Delta)
 	end
-	task.synchronize()
 end
 
 --- @client
@@ -398,10 +413,11 @@ function Class:DrawDebug(
 	DRAW_FILL_COLLIDERS,
 	DRAW_COLLIDER_INFLUENCE,
 	DRAW_COLLIDER_AWAKE,
-	DRAW_COLLIDER_BROADPHASE
+	DRAW_COLLIDER_BROADPHASE,
+	DRAW_BOUNDING_BOX
 )
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART)
+		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX)
 	end
 
 	if DRAW_COLLIDERS then
@@ -414,6 +430,8 @@ end
 --- @within SmartBone
 --- Destroys the root and all its children
 function Class:Destroy()
+	SB_VERBOSE_LOG("Deleting SmartBone Object")
+
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:Destroy()
 	end

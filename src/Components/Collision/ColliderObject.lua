@@ -133,17 +133,12 @@ function Class:GetCollisions(Point, Radius)
 		return {}
 	end
 
-	local ObjectData = {
-		CFrame = self.m_Object.CFrame,
-		Size = self.m_Object.Size,
-	}
-
 	local Collisions = {}
 
 	debug.profilebegin("Determine Collisions")
 	for _, Collider in self.Colliders do
 		debug.profilebegin("Determine collision")
-		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(ObjectData, Point, Radius)
+		local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(Point, Radius)
 		debug.profileend()
 
 		if IsInside then
@@ -154,6 +149,15 @@ function Class:GetCollisions(Point, Radius)
 	debug.profileend()
 
 	return Collisions
+end
+
+--- @within ColliderObject
+function Class:Step()
+	debug.profilebegin("ColliderObject::Step")
+	for _, Collider in self.Colliders do
+		Collider:Step()
+	end
+	debug.profileend()
 end
 
 --- @within ColliderObject

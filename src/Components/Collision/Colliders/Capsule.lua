@@ -1,3 +1,4 @@
+--!native
 local function solve(p0, d0, len, p1)
 	local v = p1 - p0
 	local k = v:Dot(d0)

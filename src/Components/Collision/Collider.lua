@@ -50,6 +50,9 @@ Gizmo.Init()
 --- @prop m_Object BasePart
 
 --- @within Collider
+--- @prop InNarrowphase boolean
+
+--- @within Collider
 --- @prop ObjectConnection RBXScriptConnection
 
 --- @within Collider
@@ -97,65 +100,50 @@ end
 function Class:SetObject(Object: BasePart)
 	self.m_Object = Object
 
-	self:FastTransform({ CFrame = Object.CFrame, Size = Object.Size })
 	self:UpdateTransform()
 end
 
 --- @within Collider
-function Class:UpdateTransform() -- Should I even bother with this, all it really saves is a global call + mat transform
-	debug.profilebegin("UpdateTransform")
-	local Rotation = self.Rotation
-
-	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
-
-	self.Transform *= RotationCFrame
-	debug.profileend()
-end
-
---- @within Collider
---- @param ObjectData {CFrame: CFrame, Size: Vector3}
-function Class:FastTransform(ObjectData)
-	debug.profilebegin("Fast Transform")
-	local ObjectCFrame = ObjectData.CFrame
-	local ObjectSize = ObjectData.Size
+function Class:UpdateTransform()
+	debug.profilebegin("Update Transform")
+	local Object = self.m_Object
+	local ObjectCFrame = Object.CFrame
+	local ObjectSize = Object.Size
 
 	local Scale = self.Scale
 	local Offset = self.Offset
+	local Rotation = self.Rotation
 
 	local ScaledOffset = ObjectSize * Offset
 	local ScaledSize = ObjectSize * Scale
 
-	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset)
+	local RotationCFrame = CFrame.Angles(Rotation.X * Radians, Rotation.Y * Radians, Rotation.Z * Radians)
+
+	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 	self.Size = ScaledSize
 	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
 	debug.profileend()
 end
 
 --- @within Collider
---- @param ObjectData {CFrame: CFrame, Size: Vector3}
 --- @param Point Vector3
 --- @param Radius number
 --- @return Vector3 | nil -- Returns nil if specified collider shape is invalid
-function Class:GetClosestPoint(ObjectData, Point, Radius)
+function Class:GetClosestPoint(Point, Radius)
 	if self.m_Object == nil then
 		return
 	end
 
-	debug.profilebegin("Broadphase")
-	self:FastTransform(ObjectData)
 	self.InNarrowphase = false
 
-	-- If we are outside the radius of the bounding box don't fully update transform and don't do any collision checks
-	-- Broadphase collision detection
+	-- Broadphase influence detection
 	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
-	debug.profileend()
 
 	if PointDistance > self.Radius then
 		return
 	end
 
 	debug.profilebegin("Narrowphase")
-	self:UpdateTransform()
 
 	self.InNarrowphase = true
 
@@ -180,11 +168,16 @@ function Class:GetClosestPoint(ObjectData, Point, Radius)
 		IsInside, ClosestPoint, Normal = CylinderSolver(self.Transform, self.Size, Point, Radius)
 	end
 
-	-- this crashes studio cause it prints so many times
-	-- warn(`Invalid collider shape: {Type} in object {self.m_Object.Name}`)
 	debug.profileend()
 
 	return IsInside, ClosestPoint, Normal
+end
+
+--- @within Collider
+function Class:Step()
+	debug.profilebegin("Collider::Step")
+	self:UpdateTransform()
+	debug.profileend()
 end
 
 --- @within Collider
