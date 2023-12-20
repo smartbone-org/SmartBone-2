@@ -402,6 +402,7 @@ end
 --- @param DRAW_COLLIDER_INFLUENCE boolean
 --- @param DRAW_COLLIDER_AWAKE boolean
 --- @param DRAW_COLLIDER_BROADPHASE boolean
+--- @param DRAW_BOUNDING_BOX boolean
 --- Draws the debug gizmos
 function Class:DrawDebug(
 	DRAW_COLLIDERS,
