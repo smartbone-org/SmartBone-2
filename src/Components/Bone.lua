@@ -1,13 +1,20 @@
 --!nocheck
+--!native
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-Gizmo.Init()
+local IsStudio = game:GetService("RunService"):IsStudio()
+
+if IsStudio then
+	Gizmo.Init()
+end
 
 local Constraints = script.Parent:WaitForChild("Constraints")
 local AxisConstraint = require(Constraints:WaitForChild("AxisConstraint"))
 local CollisionConstraint = require(Constraints:WaitForChild("CollisionConstraint"))
 local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"))
+local FrictionConstraint = require(Constraints:WaitForChild("FrictionConstraint"))
+local RopeConstraint = require(Constraints:WaitForChild("RopeConstraint"))
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
@@ -22,6 +29,7 @@ export type IBone = {
 	LocalTransform: CFrame,
 	RootTransform: CFrame,
 	Radius: number,
+	Friction: number,
 
 	SolvedAnimatedCFrame: boolean,
 
@@ -39,6 +47,8 @@ export type IBone = {
 	XAxisLimits: NumberRange,
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
+
+	CollisionHits: { [number]: BasePart },
 }
 
 local function IsNaN(Value: any): boolean
@@ -51,26 +61,30 @@ end
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
+	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
 	local Parent = OriginBone.Parent
 	local ParentCFrame
 
 	if Parent:IsA("Bone") then
 		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
-	elseif Parent:IsA("BasePart") then
+	else -- Hope it's a BasePart (Should be unless someone has done some weird source editing)
 		ParentCFrame = Parent.CFrame
 	end
 
-	return ParentCFrame:ToWorldSpace(OriginBone.TransformedCFrame)
+	debug.profileend()
+	return ParentCFrame * OriginBone.TransformedCFrame
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
 local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
+	debug.profilebegin("QueryTransformedWorldCFrame")
 	Bone.SolvedAnimatedCFrame = true
 
 	local ParentIndex = Bone.ParentIndex
 	local BoneObject = Bone.Bone
 
 	if ParentIndex < 1 then
+		debug.profileend()
 		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
 
@@ -80,6 +94,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 		ParentBone.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, ParentBone)
 	end
 
+	debug.profileend()
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
@@ -87,6 +102,19 @@ local function ClipVector(LastPosition, Position, Vector)
 	LastPosition *= (Vector3.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
+end
+
+local function GetFriction(Object0: BasePart, Object1: BasePart): number
+	local Prop0 = Object0.CurrentPhysicalProperties
+	local Prop1 = Object1.CurrentPhysicalProperties
+
+	local f0 = Prop0.Friction
+	local w0 = Prop0.FrictionWeight
+
+	local f1 = Prop1.Friction
+	local w1 = Prop1.FrictionWeight
+
+	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
 local function SolveWind(self, BoneTree)
@@ -253,6 +281,9 @@ end
 --- @prop FirstSkipUpdate boolean
 
 --- @within Bone
+--- @prop CollisionHits {}
+
+--- @within Bone
 --- @prop CollisionData {}
 
 local Class = {}
@@ -271,6 +302,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
+		Friction = 0,
 
 		SolvedAnimatedCFrame = false,
 
@@ -290,6 +322,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
 
 		FirstSkipUpdate = false,
+
+		CollisionHits = {},
 
 		-- Debug
 		CollisionsData = {},
@@ -378,6 +412,9 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
 
+	-- Friction must be first
+	Position = FrictionConstraint(self, Position, self.LastPosition)
+
 	if #ColliderObjects ~= 0 then
 		Position = CollisionConstraint(self, Position, ColliderObjects)
 	end
@@ -386,13 +423,21 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 		Position = SpringConstraint(self, Position, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
+	elseif BoneTree.Settings.Constraint == "Rope" then
+		Position = RopeConstraint(self, Position, BoneTree)
 	else
 		-- Go to anchored position if our constraint type is incorrect
 		Position = self.AnimatedWorldCFrame.Position
 	end
 
-	local AxisConstrainted = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
-	Position = AxisConstrainted
+	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+
+	self.Friction = 0
+
+	for _, HitPart in self.CollisionHits do
+		-- Pretty much just if objfriction > friction then friction = objfriction end
+		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
+	end
 
 	self.Position = Position
 	debug.profileend()
@@ -421,10 +466,12 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 		return
 	end
 
+	self.FirstSkipUpdate = false
+
 	local ParentBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
 
-	if ParentBone and BoneParent and BoneParent:IsA("Bone") and BoneParent ~= BoneTree.RootBone then
+	if ParentBone and BoneParent then
 		local ReferenceCFrame = ParentBone.TransformOffset
 		local v1 = self.Position - ParentBone.Position
 		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
@@ -446,7 +493,6 @@ function Class:ApplyTransform(BoneTree)
 	debug.profilebegin("Bone::ApplyTransform")
 
 	self.SolvedAnimatedCFrame = false
-	self.FirstSkipUpdate = false
 
 	if self.ParentIndex < 1 then
 		debug.profileend()
@@ -456,12 +502,16 @@ function Class:ApplyTransform(BoneTree)
 	local ParentBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
 
-	if ParentBone and BoneParent and BoneParent:IsA("Bone") and BoneParent ~= BoneTree.RootBone then
+	if ParentBone and BoneParent then
 		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
 		else
 			if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == true then
 				BoneParent.WorldCFrame = ParentBone.TransformOffset * ParentBone.CalculatedWorldCFrame.Rotation
+				debug.profileend()
+				return
+			elseif ParentBone.Anchored then
+				BoneParent.WorldCFrame = ParentBone.TransformOffset
 				debug.profileend()
 				return
 			end

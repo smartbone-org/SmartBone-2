@@ -17,12 +17,29 @@ sidebar_position: 2
 
 - Make sure you don’t add any spaces or characters unless they are part of the name of the bone(s) you want to be included
 
+Note: Reparenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
+This is due to Roblox not adding a .Destroying signal or something similar, if you'd like for the object to continue simulating you would have to remove the SmartBone tag and add it again.
+
+### Friction
+
+Friction is controlled by the root part and the colliding objects physical properties.
+
+### Constraints
+
+Each constraint has it's own purpose,
+
+- Spring will return the bone to its rest position sort of like jelly
+
+- Distance will keep the bones at a fixed distance from eachother and is always pulled downwards
+
+- Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
+
 ---
 ### Attributes
 
 **All attributes listed here are optional and not required to get a SmartBone object working.**
 
-- \[*Boolean*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
+- \[*Any*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
 
 - \[*Number*\] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
 
@@ -36,7 +53,7 @@ sidebar_position: 2
 
 - \[*Vector3*\] Force – Additional Force applied to Bones in World Space. Supplementary to Gravity.
 
-- \[*String*\] Constraint - Option between Spring and Distance.
+- \[*String*\] Constraint - Option between Spring, Distance and Rope.
 
 - \[*String*\] WindType - Option between Sine, Noise and Hybrid.
 

@@ -27,12 +27,15 @@ local RunService = game:GetService("RunService")
 local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
-local Iris = require(Dependencies.Iris)
+local Iris
 local Utilities = require(Dependencies.Utilities)
 local ShouldDebug = RunService:IsStudio()
 
-if not Iris.HasInit() then
-	Iris = Iris.Init()
+if ShouldDebug then
+	Iris = require(Dependencies.Iris)
+	if not Iris.HasInit() then
+		Iris = Iris.Init()
+	end
 end
 
 Actor.Name = `{RootObject.Name} - {BonePhysics.ID}`
@@ -43,18 +46,23 @@ for _, ColliderDescription in ColliderDescriptions do
 	BonePhysics:LoadRawCollider(ColliderDescription[1], ColliderDescription[2])
 end
 
-local DebugState = {
-	DRAW_BONE = Iris.State(false),
-	DRAW_PHYSICAL_BONE = Iris.State(false),
-	DRAW_ROOT_PART = Iris.State(false),
-	DRAW_AXIS_LIMITS = Iris.State(false),
-	DRAW_COLLIDERS = Iris.State(false),
-	DRAW_COLLIDER_INFLUENCE = Iris.State(false),
-	DRAW_COLLIDER_AWAKE = Iris.State(false),
-	DRAW_COLLIDER_BROADPHASE = Iris.State(false),
-	DRAW_FILL_COLLIDERS = Iris.State(false),
-	DRAW_CONTACTS = Iris.State(false),
-}
+local DebugState
+
+if ShouldDebug then
+	DebugState = {
+		DRAW_BONE = Iris.State(false),
+		DRAW_PHYSICAL_BONE = Iris.State(false),
+		DRAW_ROOT_PART = Iris.State(false),
+		DRAW_BOUNDING_BOX = Iris.State(false),
+		DRAW_AXIS_LIMITS = Iris.State(false),
+		DRAW_COLLIDERS = Iris.State(false),
+		DRAW_COLLIDER_INFLUENCE = Iris.State(false),
+		DRAW_COLLIDER_AWAKE = Iris.State(false),
+		DRAW_COLLIDER_BROADPHASE = Iris.State(false),
+		DRAW_FILL_COLLIDERS = Iris.State(false),
+		DRAW_CONTACTS = Iris.State(false),
+	}
+end
 
 -- ShouldDebug is just if we are in studio or not
 if ShouldDebug then
@@ -84,14 +92,14 @@ end)
 
 local Connection
 
-Connection = RunService.RenderStepped:Connect(function(deltaTime)
+Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
-		Connection:Disconnect()
 		BonePhysics:Destroy()
 
 		task.synchronize()
+		Connection:Disconnect()
 		Actor:Destroy()
 		return
 	end
@@ -99,6 +107,7 @@ Connection = RunService.RenderStepped:Connect(function(deltaTime)
 	-- ShouldDebug is just if we are in studio or not
 	if ShouldDebug then
 		if RootObject:GetAttribute("Debug") ~= nil then
+			task.synchronize()
 			BonePhysics:DrawDebug(
 				DebugState.DRAW_COLLIDERS:get(),
 				DebugState.DRAW_CONTACTS:get(),
@@ -109,7 +118,8 @@ Connection = RunService.RenderStepped:Connect(function(deltaTime)
 				DebugState.DRAW_FILL_COLLIDERS:get(),
 				DebugState.DRAW_COLLIDER_INFLUENCE:get(),
 				DebugState.DRAW_COLLIDER_AWAKE:get(),
-				DebugState.DRAW_COLLIDER_BROADPHASE:get()
+				DebugState.DRAW_COLLIDER_BROADPHASE:get(),
+				DebugState.DRAW_BOUNDING_BOX:get()
 			)
 		end
 	end

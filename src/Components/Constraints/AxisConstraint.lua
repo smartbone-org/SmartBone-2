@@ -1,6 +1,6 @@
 return function(self, Position, LastPosition, RootCFrame)
 	debug.profilebegin("Axis Constraint")
-	local RootOffset = RootCFrame:PointToObjectSpace(Position)
+	local RootOffset = RootCFrame:Inverse() * Position
 
 	local X = RootOffset.X
 	local Y = RootOffset.Y
@@ -25,15 +25,15 @@ return function(self, Position, LastPosition, RootCFrame)
 	local ZMin = ZLimit.Min + self.Radius
 	local ZMax = ZMin <= (ZLimit.Max - self.Radius) and ZLimit.Max - self.Radius or ZMin
 
-	X = math.clamp(X, XMin, XMax)
-	Y = math.clamp(Y, YMin, YMax)
-	Z = math.clamp(Z, ZMin, ZMax)
+	X = X < XMin and XMin or (X > XMax and XMax or X)
+	Y = Y < YMin and YMin or (Y > YMax and YMax or Y)
+	Z = Z < ZMin and ZMin or (Z > ZMax and ZMax or Z)
 
 	X *= XLock
 	Y *= YLock
 	Z *= ZLock
 
-	local WorldSpace = RootCFrame:PointToWorldSpace(Vector3.new(X, Y, Z))
+	local WorldSpace = RootCFrame * Vector3.new(X, Y, Z)
 
 	Position = WorldSpace
 

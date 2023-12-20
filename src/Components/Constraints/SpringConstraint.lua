@@ -1,3 +1,4 @@
+--!native
 return function(self, Position, BoneTree, Delta)
 	debug.profilebegin("Spring Constraint")
 	local Settings = BoneTree.Settings

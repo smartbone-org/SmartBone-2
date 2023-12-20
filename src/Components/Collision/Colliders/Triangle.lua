@@ -4,6 +4,7 @@
 
 ]]
 
+--!native
 local dot = Vector3.new().Dot
 local cross = Vector3.new().Cross
 local clamp = math.clamp

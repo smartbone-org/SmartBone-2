@@ -1,3 +1,4 @@
+--!native
 local function ClosestPointFunc(position, radius, point)
 	local distance = (position - point).Magnitude
 	local normal = (point - position).Unit

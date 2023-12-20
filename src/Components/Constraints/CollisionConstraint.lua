@@ -1,9 +1,15 @@
 return function(self, Position, Colliders)
 	debug.profilebegin("Collision Constraint")
 	local Collisions = {}
+	local HitParts = {}
 
 	for _, Collider in Colliders do
 		local ColliderCollisions = Collider:GetCollisions(Position, self.Radius)
+
+		if #ColliderCollisions > 0 then
+			table.insert(HitParts, Collider:GetObject())
+		end
+
 		for _, Collision in ColliderCollisions do
 			table.insert(Collisions, Collision)
 		end
@@ -15,6 +21,7 @@ return function(self, Position, Colliders)
 	end
 
 	self.CollisionsData = Collisions
+	self.CollisionHits = HitParts
 	debug.profileend()
 
 	return Position

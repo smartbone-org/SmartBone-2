@@ -1,3 +1,4 @@
+--!native
 local Dependencies = script.Parent
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 
