@@ -3,7 +3,11 @@
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-Gizmo.Init()
+local IsStudio = game:GetService("RunService"):IsStudio()
+
+if IsStudio then
+	Gizmo.Init()
+end
 
 local Constraints = script.Parent:WaitForChild("Constraints")
 local AxisConstraint = require(Constraints:WaitForChild("AxisConstraint"))
@@ -57,26 +61,30 @@ end
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
+	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
 	local Parent = OriginBone.Parent
 	local ParentCFrame
 
 	if Parent:IsA("Bone") then
 		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
-	elseif Parent:IsA("BasePart") then
+	else -- Hope it's a BasePart (Should be unless someone has done some weird source editing)
 		ParentCFrame = Parent.CFrame
 	end
 
-	return ParentCFrame:ToWorldSpace(OriginBone.TransformedCFrame)
+	debug.profileend()
+	return ParentCFrame * OriginBone.TransformedCFrame
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
 local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
+	debug.profilebegin("QueryTransformedWorldCFrame")
 	Bone.SolvedAnimatedCFrame = true
 
 	local ParentIndex = Bone.ParentIndex
 	local BoneObject = Bone.Bone
 
 	if ParentIndex < 1 then
+		debug.profileend()
 		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
 
@@ -86,6 +94,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 		ParentBone.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, ParentBone)
 	end
 
+	debug.profileend()
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 

@@ -15,7 +15,11 @@ local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 local Radians = 0.017453
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
-Gizmo.Init()
+local IsStudio = game:GetService("RunService"):IsStudio()
+
+if IsStudio then
+	Gizmo.Init()
+end
 
 --- @class Collider
 --- Internal class for colliders

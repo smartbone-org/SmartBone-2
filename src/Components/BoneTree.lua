@@ -10,7 +10,11 @@ local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSe
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
-Gizmo.Init()
+local IsStudio = game:GetService("RunService"):IsStudio()
+
+if IsStudio then
+	Gizmo.Init()
+end
 
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
@@ -164,12 +168,8 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
-	-- RootPart.Removing:Connect(function()
-	-- 	print("hy")
-	-- end)
-
-	self.DestroyConnection = RootPart:GetPropertyChangedSignal("Parent"):Connect(function()
-		if RootPart.Parent == nil then
+	self.DestroyConnection = RootPart.AncestryChanged:Connect(function()
+		if not RootPart:IsDescendantOf(game) then
 			self.Destroyed = true
 		end
 	end)
@@ -187,6 +187,15 @@ end
 --- Computes the bounding box of all the bones
 function Class:UpdateBoundingBox()
 	debug.profilebegin("BoneTree::UpdateBoundingBox")
+
+	if not self.InView then
+		self.BoundingBoxCFrame = self.RootPart.CFrame
+		self.BoundingBoxSize = self.RootPart.Size
+
+		debug.profileend()
+		return
+	end
+
 	local BottomCorner = MaxVector
 	local TopCorner = -MaxVector
 

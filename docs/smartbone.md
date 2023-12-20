@@ -17,6 +17,9 @@ sidebar_position: 2
 
 - Make sure you don’t add any spaces or characters unless they are part of the name of the bone(s) you want to be included
 
+Note: Reparenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
+This is due to Roblox not adding a .Destroying signal or something similar, if you'd like for the object to continue simulating you would have to remove the SmartBone tag and add it again.
+
 ### Friction
 
 Friction is controlled by the root part and the colliding objects physical properties.

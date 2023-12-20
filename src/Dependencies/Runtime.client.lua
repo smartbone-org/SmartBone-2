@@ -92,14 +92,14 @@ end)
 
 local Connection
 
-Connection = RunService.RenderStepped:ConnectParallel(function(deltaTime)
+Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
-		Connection:Disconnect()
 		BonePhysics:Destroy()
 
 		task.synchronize()
+		Connection:Disconnect()
 		Actor:Destroy()
 		return
 	end
