@@ -2,7 +2,7 @@
 
 You can find out more info in the [documentation](https://celnakrblx.github.io/SmartBone-2/docs/intro)
 
-The wally package can be found [here](https://wally.run/package/jakeywastaken/smartbone-2?version=0.1.1)
+The wally package can be found [here](https://wally.run/package/jakeywastaken/smartbone-2)
 
 **Current Features**
 
