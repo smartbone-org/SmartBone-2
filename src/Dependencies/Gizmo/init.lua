@@ -5,7 +5,9 @@
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local Terrain = workspace.Terrain
+local Terrain = workspace:FindFirstChild("Terrain")
+
+assert(Terrain, "No terrain object found under workspace...")
 
 local AOTWireframeHandle: WireframeHandleAdornment = Terrain:FindFirstChild("AOTGizmoAdornment")
 local WireframeHandle: WireframeHandleAdornment = Terrain:FindFirstChild("GizmoAdornment")

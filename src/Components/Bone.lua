@@ -16,6 +16,7 @@ local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"
 local FrictionConstraint = require(Constraints:WaitForChild("FrictionConstraint"))
 local RopeConstraint = require(Constraints:WaitForChild("RopeConstraint"))
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
+local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 
@@ -27,11 +28,11 @@ export type IBone = {
 	HeirarchyLength: number,
 	Transform: CFrame,
 	LocalTransform: CFrame,
-	RootTransform: CFrame,
 	Radius: number,
 	Friction: number,
 
 	SolvedAnimatedCFrame: boolean,
+	HasChild: boolean,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -67,7 +68,7 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 
 	if Parent:IsA("Bone") then
 		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
-	else -- Hope it's a BasePart (Should be unless someone has done some weird source editing)
+	else -- This should always be a basepart unless someone has the weirdest model setup ever. If that person is you, why?
 		ParentCFrame = Parent.CFrame
 	end
 
@@ -152,7 +153,7 @@ local function SolveWind(self, BoneTree)
 
 	local function SampleSin()
 		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = Settings.WindSpeed ^ 0.9
+		local Power = 0 --Settings.WindSpeed ^ 0.9
 		local Amp = Settings.WindStrength * 2
 		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
 		local Sin2 = math.cos(TimeModifier * Freq) ^ 2 - 0.2
@@ -164,7 +165,7 @@ local function SolveWind(self, BoneTree)
 		CustomAmp = CustomAmp or 0
 
 		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = Settings.WindSpeed ^ 0.9
+		local Power = 0 --Settings.WindSpeed ^ 0.9
 		local Amp = Settings.WindStrength * 2
 		local Seed = BoneTree.WindOffset
 
@@ -221,9 +222,6 @@ end
 
 --- @within Bone
 --- @prop LocalTransform CFrame
-
---- @within Bone
---- @prop RootTransform CFrame
 
 --- @within Bone
 --- @readonly
@@ -298,13 +296,14 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		HeirarchyLength = 0,
 		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(RootBone.TransformedWorldCFrame):Inverse(),
 		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
-		RootTransform = RootBone.WorldCFrame:ToObjectSpace(RootPart.CFrame):Inverse(),
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
 		Friction = 0,
+		RotationLimit = 0,
 
 		SolvedAnimatedCFrame = false,
+		HasChild = false,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
@@ -353,7 +352,6 @@ end
 --- @param BoneTree BoneTree
 function Class:PreUpdate(BoneTree) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
-	local RootPart = self.RootPart
 	local Root = BoneTree.Bones[1]
 
 	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, self)
@@ -363,7 +361,7 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	end
 
 	if self.Bone == self.RootBone then
-		self.TransformOffset = RootPart.CFrame * self.RootTransform
+		self.TransformOffset = self.AnimatedWorldCFrame
 	else
 		self.TransformOffset = Root.AnimatedWorldCFrame * self.Transform
 	end
@@ -431,6 +429,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+	Position = RotationConstraint(self, Position, BoneTree)
 
 	self.Friction = 0
 
@@ -468,7 +467,7 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 
 	self.FirstSkipUpdate = false
 
-	local ParentBone = BoneTree.Bones[self.ParentIndex]
+	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent then
@@ -523,11 +522,13 @@ function Class:ApplyTransform(BoneTree)
 end
 
 --- @within Bone
---- @param DRAW_CONTACTS any
---- @param DRAW_PHYSICAL_BONE any
---- @param DRAW_BONE any
---- @param DRAW_AXIS_LIMITS any
-function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+--- @param BoneTree any
+--- @param DRAW_CONTACTS boolean
+--- @param DRAW_PHYSICAL_BONE boolean
+--- @param DRAW_BONE boolean
+--- @param DRAW_AXIS_LIMITS boolean
+--- @param DRAW_ROTATION_LIMIT boolean
+function Class:DrawDebug(BoneTree, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROTATION_LIMIT)
 	debug.profilebegin("Bone::DrawDebug")
 	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
@@ -536,6 +537,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local BONE_FRONT_ARROW_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_UP_ARROW_COLOR = Color3.fromRGB(0, 255, 0)
 	local BONE_RIGHT_ARROW_COLOR = Color3.fromRGB(0, 0, 255)
+	local ROTATION_CONE_COLOR = Color3.fromRGB(0, 183, 255)
 	local AXIS_X_COLOR = Color3.fromRGB(255, 0, 0)
 	local AXIS_Y_COLOR = Color3.fromRGB(0, 255, 0)
 	local AXIS_Z_COLOR = Color3.fromRGB(0, 0, 255)
@@ -554,6 +556,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local BONE_CYLINDER_RADIUS = 0.005
 	local BONE_ARROW_EXPANSION = 0.25
 	local BONE_RADIUS = 0.08
+
+	local ROTATION_CONE_LENGTH = 1
 
 	local BoneCFrame = self.AnimatedWorldCFrame
 	local BonePosition = BoneCFrame.Position
@@ -678,6 +682,35 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 				9
 			)
 		end
+	end
+
+	-- Draw rotation limit
+
+	if DRAW_ROTATION_LIMIT and self.RotationLimit < 180 and self.RotationLimit > 0 and self.ParentIndex > 0 and self.HasChild then
+		local ConeRadius
+		local InverseDirection = 1
+		if self.RotationLimit < 89.5 then
+			ConeRadius = ROTATION_CONE_LENGTH * math.tan(math.rad(self.RotationLimit))
+		elseif self.RotationLimit > 90 then
+			InverseDirection = -1
+			ConeRadius = ROTATION_CONE_LENGTH * math.tan(math.rad(180 - self.RotationLimit))
+		else
+			ROTATION_CONE_LENGTH = 0
+			ConeRadius = 5
+		end
+
+		ConeRadius = math.min(ConeRadius, 5)
+
+		if ConeRadius == 5 then
+			ROTATION_CONE_LENGTH = 0
+		end
+
+		local ConeDirection = (self.Position - BoneTree.Bones[self.ParentIndex].Position).Unit * InverseDirection
+
+		local NewBoneCFrame = CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH / 2), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
+
+		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
+		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
 	end
 
 	debug.profileend()

@@ -32,7 +32,6 @@ export type IBoneTree = {
 
 	LocalGravity: Vector3,
 	Force: Vector3,
-	RestGravity: Vector3,
 	ObjectMove: Vector3,
 	ObjectPreviousPosition: Vector3,
 }
@@ -103,6 +102,14 @@ end
 
 --- @within BoneTree
 --- @readonly
+--- @prop BoundingBoxCFrame CFrame
+
+--- @within BoneTree
+--- @readonly
+--- @prop BoundingBoxSize Size
+
+--- @within BoneTree
+--- @readonly
 --- @prop AccumulatedDelta number
 --- Used in the runtime
 
@@ -123,10 +130,6 @@ end
 --- @within BoneTree
 --- @readonly
 --- @prop Force Vector3
-
---- @within BoneTree
---- @readonly
---- @prop RestGravity Vector3
 
 --- @within BoneTree
 --- @prop ObjectMove Vector3
@@ -163,7 +166,6 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 
 		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
 		Force = Vector3.zero,
-		RestGravity = Vector3.zero,
 		ObjectMove = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
@@ -176,7 +178,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 
 	self.AttributeConnection = RootPart.AttributeChanged:Connect(function(Attribute)
 		-- No need validating
-		self.Settings[Attribute] = RootPart:GetAttribute(Attribute)
+		self.Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
 
 	return self
@@ -249,7 +251,6 @@ function Class:PreUpdate()
 	self.ObjectMove = (RootPartPosition - self.ObjectPreviousPosition)
 	self.ObjectPreviousPosition = RootPartPosition
 
-	self.RestGravity = RootPartCFrame * self.LocalGravity
 	self:UpdateThrottling(RootPartPosition)
 	self:UpdateBoundingBox()
 
@@ -266,12 +267,7 @@ function Class:StepPhysics(Delta)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
 	local Force = Settings.Gravity
-	local ForceDirection = Settings.Gravity.Unit
 
-	local DGrav = self.RestGravity:Dot(ForceDirection)
-	local ProjectedForce = ForceDirection * (DGrav < 0 and 0 or DGrav)
-
-	Force -= ProjectedForce
 	Force = (Force + Settings.Force) * Delta -- Dont really want delta here but everything breaks if i remove it and i cant be bothered to fix it
 
 	if Settings.MatchWorkspaceWind == true then
@@ -348,7 +344,8 @@ end
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROOT_PART boolean
 --- @param DRAW_BOUNDING_BOX boolean
-function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX)
+--- @param DRAW_ROTATION_LIMITS boolean
+function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
@@ -375,7 +372,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 		local BonePosition = Bone.Bone.TransformedWorldCFrame.Position
 		local ParentBone = self.Bones[Bone.ParentIndex]
 
-		Bone:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+		Bone:DrawDebug(self, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROTATION_LIMITS)
 
 		if DRAW_PHYSICAL_BONE and i ~= 1 then
 			Gizmo.PushProperty("Color3", LINE_CONNECTING_COLOR)

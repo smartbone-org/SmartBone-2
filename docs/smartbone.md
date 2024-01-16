@@ -34,6 +34,22 @@ Each constraint has it's own purpose,
 
 - Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
 
+### Wind
+
+Wind can be controlled via GlobalWind (MatchWorkspaceWind must be true) or through attributes in Lighting.
+
+- \[*Number*\] WindStrength - The "density" of the air, this is used regardless of MatchWorkspaceWind.
+
+- \[*Number*\] WindSpeed - The speed which wind travels at, only important if MatchWorkspaceWind is false.
+
+- \[*Vector3*\] WindDirection - The direction in which the wind travels, only important if MatchWorkspaceWind is false.
+
+WindStrength controls the amplitude of the wind,
+WindSpeed also controls the amplitude of the wind,
+WindSpeed controls the frequency of the wind,
+
+For example if you wanted more flowy wind you would have a lower wind speed with a higher wind strength.
+
 ---
 ### Attributes
 
@@ -60,12 +76,6 @@ Each constraint has it's own purpose,
 - \[*Boolean*\] MatchWorkspaceWind - If true then wind is dependent on workspace.GlobalWind.
 
 - \[*Number*\] WindInfluence – How much influence wind has on the SmartBone object.
-
-- \[*Number*\] WindStrength - The "density" of the air.
-
-- \[*Number*\] WindSpeed - The speed which wind travels at, only important if MatchWorkspaceWind is false.
-
-- \[*Vector3*\] WindDirection - The direction in which the wind travels, only important if MatchWorkspaceWind is false.
 
 - \[*String*\] ColliderKey - If this attribute is set then the object will only collide with colliders that have the same collider key.
 

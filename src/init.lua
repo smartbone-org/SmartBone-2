@@ -92,6 +92,8 @@ function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone,
 		Bone.FreeLength = BoneLength
 		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
 		Bone.HeirarchyLength = HeirarchyLength
+
+		ParentBone.HasChild = true
 	end
 
 	if HeirarchyLength <= BoneTree.Settings.AnchorDepth then
@@ -403,6 +405,7 @@ end
 --- @param DRAW_COLLIDER_AWAKE boolean
 --- @param DRAW_COLLIDER_BROADPHASE boolean
 --- @param DRAW_BOUNDING_BOX boolean
+--- @param DRAW_ROTATION_LIMITS boolean
 --- Draws the debug gizmos
 function Class:DrawDebug(
 	DRAW_COLLIDERS,
@@ -415,10 +418,11 @@ function Class:DrawDebug(
 	DRAW_COLLIDER_INFLUENCE,
 	DRAW_COLLIDER_AWAKE,
 	DRAW_COLLIDER_BROADPHASE,
-	DRAW_BOUNDING_BOX
+	DRAW_BOUNDING_BOX,
+	DRAW_ROTATION_LIMITS
 )
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX)
+		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS)
 	end
 
 	if DRAW_COLLIDERS then

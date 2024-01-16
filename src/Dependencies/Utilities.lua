@@ -66,11 +66,14 @@ function module.GatherBoneSettings(Bone)
 
 	local Radius = Bone:GetAttribute("Radius") or 0.25
 
+	local RotationLimit = Bone:GetAttribute("RotationLimit") or 180
+
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },
 		XAxisLimits = XAxisLimits,
 		YAxisLimits = YAxisLimits,
 		ZAxisLimits = ZAxisLimits,
+		RotationLimit = RotationLimit,
 		Radius = Radius,
 	}
 
