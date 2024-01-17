@@ -3,9 +3,10 @@
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
 local IsStudio = game:GetService("RunService"):IsStudio()
 
-if IsStudio then
+if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
 	Gizmo.Init()
 end
 
@@ -434,7 +435,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	self.Friction = 0
 
 	for _, HitPart in self.CollisionHits do
-		-- Pretty much just if objfriction > friction then friction = objfriction end
+		-- Use whatever object has the heigher friction
 		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
 	end
 
@@ -445,8 +446,8 @@ end
 --- @within Bone
 --- Returns bone to rest position
 function Class:SkipUpdate()
-	if self.FirstSkipUpdate == false then
-		self.Position = self.TransformOffset.Position
+	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
+		self.CalculatedWorldCFrame = self.TransformOffset
 		self.FirstSkipUpdate = true
 	end
 

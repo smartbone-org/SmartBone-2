@@ -9,10 +9,11 @@ local BoneClass = require(script.Parent:WaitForChild("Bone"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
 local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
 local IsStudio = game:GetService("RunService"):IsStudio()
 
-if IsStudio then
+if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
 	Gizmo.Init()
 end
 

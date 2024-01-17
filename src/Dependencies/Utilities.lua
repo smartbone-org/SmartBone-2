@@ -1,5 +1,6 @@
 local HttpService = game:GetService("HttpService")
 local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
+local Config = require(script.Parent:WaitForChild("Config"))
 
 local ColliderTranslations = {
 	Block = "Box",
@@ -19,9 +20,7 @@ local function SafeUnit(Vector: Vector3): Vector3
 end
 
 local module = {}
-module.LogVerbose = false
 module.LogIndent = 0
-module.FarPlane = 500
 
 function module.GetRotationBetween(U: Vector3, V: Vector3)
 	local Cos = U:Dot(V)
@@ -211,7 +210,7 @@ function module.SB_ASSERT_CB(condition, callback, ...)
 end
 
 function module.SB_VERBOSE_LOG(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 
@@ -221,7 +220,7 @@ function module.SB_VERBOSE_LOG(message: string)
 end
 
 function module.SB_VERBOSE_WARN(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 
@@ -231,7 +230,7 @@ function module.SB_VERBOSE_WARN(message: string)
 end
 
 function module.SB_VERBOSE_ERROR(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 

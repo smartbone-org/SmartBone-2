@@ -9,6 +9,7 @@ local Dependencies = script:WaitForChild("Dependencies")
 
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
 
 local BoneClass = require(Components:WaitForChild("Bone"))
 local BoneTreeClass = require(Components:WaitForChild("BoneTree"))
@@ -172,7 +173,7 @@ end
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
 	debug.profilebegin("BonePhysics::m_UpdateViewFrustum")
-	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Utilities.FarPlane) -- Hard coded 500 stud limit on any object
+	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
 		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
@@ -499,7 +500,9 @@ function Class.Start()
 			SB_VERBOSE_LOG(`Adding collider: {Object.Name}, Collider Key: {ColliderKey}`)
 			table.insert(ColliderObjects.Raw, Object)
 
-			-- task.wait()
+			if Config.YIELD_ON_COLLIDER_GATHER then
+				task.wait()
+			end
 		end
 
 		return ColliderObjects
