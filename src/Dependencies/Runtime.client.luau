@@ -29,7 +29,8 @@ local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris
 local Utilities = require(Dependencies.Utilities)
-local ShouldDebug = RunService:IsStudio()
+local Config = require(Dependencies.Config)
+local ShouldDebug = RunService:IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
 
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)
