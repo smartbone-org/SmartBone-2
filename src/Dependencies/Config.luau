@@ -1,4 +1,4 @@
--- Configuration for stuff you might want to disable.
+-- Configuration
 
 return {
     -- Controls if when an object is out of activation distance / fov if its bones should be sent back to their rest location.

@@ -1,3 +1,11 @@
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 return function(self, Position, LastPosition, RootCFrame)
 	debug.profilebegin("Axis Constraint")
 	local RootOffset = RootCFrame:Inverse() * Position
@@ -41,7 +49,7 @@ return function(self, Position, LastPosition, RootCFrame)
 	local YAxis = RootCFrame.UpVector
 	local ZAxis = RootCFrame.LookVector
 
-	local DifferenceDirection = (Position - LastPosition).Unit
+	local DifferenceDirection = SafeUnit(Position - LastPosition)
 
 	-- Remove our velocity on the vectors we collided with, stops any weird jittering.
 	if X ~= RootOffset.X then

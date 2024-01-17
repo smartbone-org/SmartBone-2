@@ -1,4 +1,12 @@
 --!native
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 local function solve(p0, d0, len, p1)
 	local v = p1 - p0
 	local k = v:Dot(d0)
@@ -29,7 +37,7 @@ local function ClosestPointFunc(cframe, size, point)
 	local projTop = ProjectOnPlane(topPlane, topPlaneN, point)
 
 	local function GetFinalProj(proj, o)
-		local projDir = (proj - o).Unit
+		local projDir = SafeUnit(proj - o)
 		local projDistance = (proj - o).Magnitude
 		return o + projDir * math.min(projDistance, radius)
 	end
@@ -38,7 +46,7 @@ local function ClosestPointFunc(cframe, size, point)
 	projTop = GetFinalProj(projTop, topPlane)
 
 	local radiusDistance = (l0 - point).Magnitude
-	local radiusNormal = (point - l0).Unit
+	local radiusNormal = SafeUnit(point - l0)
 	local radiusInside = (radiusDistance <= radius)
 	local radiusPosition = l0 + (radiusNormal * radius)
 
@@ -49,10 +57,10 @@ local function ClosestPointFunc(cframe, size, point)
 	local d = math.min(d0, d1, d2)
 
 	if k == length or d == d0 then
-		local dot = (point - projTop).Unit:Dot(topPlaneN)
+		local dot = SafeUnit(point - projTop):Dot(topPlaneN)
 		return dot < 0, projTop, topPlaneN
 	elseif k == -length or d == d1 then
-		local dot = (point - projEnd).Unit:Dot(endPlaneN)
+		local dot = SafeUnit(point - projEnd):Dot(endPlaneN)
 		return dot < 0, projEnd, endPlaneN
 	end
 

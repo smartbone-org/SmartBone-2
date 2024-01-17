@@ -20,6 +20,7 @@ local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 export type IBone = {
 	Bone: Bone,
@@ -447,7 +448,8 @@ end
 --- Returns bone to rest position
 function Class:SkipUpdate()
 	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
-		self.CalculatedWorldCFrame = self.TransformOffset
+		SB_VERBOSE_LOG("Skipping bone, resetting transform.")
+		self.CalculatedWorldCFrame = self.AnimatedWorldCFrame
 		self.FirstSkipUpdate = true
 	end
 

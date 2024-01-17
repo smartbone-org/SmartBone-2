@@ -1,3 +1,11 @@
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 local function ClosestPointFunc(cframe, size, point)
 	local rel = cframe:pointToObjectSpace(point)
 	local sx, sy, sz = size.x, size.y, size.z
@@ -10,7 +18,7 @@ local function ClosestPointFunc(cframe, size, point)
 
 	if not (cx == rx and cy == ry and cz == rz) then
 		local closestPoint = cframe * Vector3.new(cx, cy, cz)
-		local normal = (point - closestPoint).unit
+		local normal = SafeUnit(point - closestPoint)
 		return false, closestPoint, normal
 	end
 

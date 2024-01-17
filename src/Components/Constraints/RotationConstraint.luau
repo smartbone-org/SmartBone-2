@@ -1,3 +1,11 @@
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 return function(self, Position, BoneTree)
     debug.profilebegin("Rotation Constraint")
     local ParentIndex = self.ParentIndex
@@ -17,10 +25,10 @@ return function(self, Position, BoneTree)
 
     local ParentBoneLimit = ParentBone.RotationLimit
     local ParentBonePosition = ParentBone.Position
-    local DefaultDirection = (ParentBone.Position - GrandParentBone.Position).Unit
+    local DefaultDirection = SafeUnit(ParentBone.Position - GrandParentBone.Position)
 
     local DistanceToParent = (Position - ParentBonePosition).Magnitude
-    local DirectionToSelf = (Position - ParentBonePosition).Unit
+    local DirectionToSelf = SafeUnit(Position - ParentBonePosition)
 
     if ParentBoneLimit >= 180 then
         debug.profileend()
@@ -35,7 +43,7 @@ return function(self, Position, BoneTree)
     local LimitedVector
 
 	if VectorAngle >= RotationLimit then
-		local Cross = DefaultDirection:Cross(DirectionToSelf).Unit
+		local Cross = SafeUnit(DefaultDirection:Cross(DirectionToSelf))
 		LimitedVector = CFrame.fromAxisAngle(Cross, RotationLimit) * DefaultDirection
     else
         LimitedVector = DirectionToSelf

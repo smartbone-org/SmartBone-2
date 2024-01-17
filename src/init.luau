@@ -117,7 +117,7 @@ end
 --- Creates a bone tree from the RootPart and RootBone and then adds all child bones via m_AppendBone
 function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 	local Settings = Utilities.GatherObjectSettings(RootPart)
-	local BoneTree = BoneTreeClass.new(RootBone, RootPart, Settings.Gravity)
+	local BoneTree = BoneTreeClass.new(RootBone, RootPart)
 
 	BoneTree.Settings = Settings
 
@@ -249,8 +249,10 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 		if not AlreadySkipped then
 			task.synchronize()
 			BoneTree:ApplyTransform()
+
+			SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
 		else
-			debug.profileend()
+			debug.profileend() -- Stop warnings about unable to end debug tag
 		end
 
 		return

@@ -1,4 +1,12 @@
 --!native
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 local function solve(p0, d0, len, p1)
 	local v = p1 - p0
 	local k = v:Dot(d0)
@@ -10,7 +18,7 @@ local function ClosestPointFunc(cframe, length, radius, point)
 	local l0 = solve(cframe.Position, cframe.UpVector, length * 0.5, point)
 
 	local distance = (l0 - point).Magnitude
-	local normal = (point - l0).Unit
+	local normal = SafeUnit(point - l0)
 	local is_inside = (distance <= radius)
 
 	return is_inside, l0 + (normal * radius), normal

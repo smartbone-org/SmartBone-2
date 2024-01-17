@@ -31,7 +31,6 @@ export type IBoneTree = {
 
 	Destroyed: boolean,
 
-	LocalGravity: Vector3,
 	Force: Vector3,
 	ObjectMove: Vector3,
 	ObjectPreviousPosition: Vector3,
@@ -39,6 +38,7 @@ export type IBoneTree = {
 
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
+		--warn("Vector was saved")
 		return Vector3.zero
 	end
 
@@ -126,10 +126,6 @@ end
 
 --- @within BoneTree
 --- @readonly
---- @prop LocalGravity CFrame
-
---- @within BoneTree
---- @readonly
 --- @prop Force Vector3
 
 --- @within BoneTree
@@ -146,9 +142,8 @@ Class.__index = Class
 --- @within BoneTree
 --- @param RootBone Bone
 --- @param RootPart BasePart
---- @param Gravity Vector3
 --- @return BoneTree
-function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneTree
+function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 	local self = setmetatable({
 		WindOffset = WIND_RNG:NextNumber(0, 1000000),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
@@ -165,7 +160,6 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Gravity: Vector3): IBoneT
 		Destroyed = false,
 		FirstSkipUpdate = false,
 
-		LocalGravity = RootBone.CFrame:PointToWorldSpace(Gravity).Unit * Gravity.Magnitude,
 		Force = Vector3.zero,
 		ObjectMove = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
