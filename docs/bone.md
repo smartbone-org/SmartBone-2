@@ -19,4 +19,6 @@ sidebar_position: 4
 
 - \[*NumberRange*\] ZAxisLimits - The limit on which the bone can travel on the z axis relative to the root part, default is -inf, inf.
 
-- \[*Number*\] Radius - The radius of the bone, default is 0.
+- \[*Number*\] Radius - The radius of the bone, default is 0.25.
+
+- \[*Number*\] RotationLimit - The maximum rotated offset a bone can be from its parent, default is 180°.

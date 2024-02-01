@@ -268,7 +268,7 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	local DidUpdate = false
 
 	BoneTree.AccumulatedDelta += Delta
-	while BoneTree.AccumulatedDelta > 0 do
+	while BoneTree.AccumulatedDelta > UpdateHz do
 		BoneTree.AccumulatedDelta -= UpdateHz
 
 		DidUpdate = true

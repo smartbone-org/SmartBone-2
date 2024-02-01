@@ -63,6 +63,8 @@ local function IsNaN(Value: any): boolean
 end
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
+-- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
+-- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
 	local Parent = OriginBone.Parent
@@ -86,7 +88,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	local ParentIndex = Bone.ParentIndex
 	local BoneObject = Bone.Bone
 
-	if ParentIndex < 1 then
+	if ParentIndex < 1 then -- We are no longer in the smartbone tree
 		debug.profileend()
 		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
@@ -290,14 +292,17 @@ local Class = {}
 Class.__index = Class
 
 function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
+	-- CFrame of the parent bone or the root bone
+	local ParentCFrame = Bone.Parent:IsA("Bone") and Bone.Parent.TransformedWorldCFrame or RootBone.TransformedWorldCFrame
+
 	local self = setmetatable({
 		Bone = Bone,
 		FreeLength = -1,
 		Weight = 1 * 0.7,
 		ParentIndex = -1,
 		HeirarchyLength = 0,
-		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(RootBone.TransformedWorldCFrame):Inverse(),
-		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
+		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(ParentCFrame):Inverse(),
+		LocalTransform = Bone.TransformedCFrame:ToObjectSpace(RootBone.TransformedCFrame):Inverse(),
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
@@ -308,8 +313,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		HasChild = false,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
-		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
-		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
+		TransformOffset = CFrame.identity,
+		LocalTransformOffset = CFrame.identity,
 		RestPosition = Vector3.zero,
 		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
@@ -355,6 +360,7 @@ end
 function Class:PreUpdate(BoneTree) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local Root = BoneTree.Bones[1]
+	local Parent = BoneTree.Bones[self.ParentIndex]
 
 	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, self)
 
@@ -365,8 +371,9 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	if self.Bone == self.RootBone then
 		self.TransformOffset = self.AnimatedWorldCFrame
 	else
-		self.TransformOffset = Root.AnimatedWorldCFrame * self.Transform
+		self.TransformOffset = Parent.AnimatedWorldCFrame * self.Transform
 	end
+
 	self.LocalTransformOffset = Root.Bone.CFrame * self.LocalTransform
 	debug.profileend()
 end
@@ -436,7 +443,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	self.Friction = 0
 
 	for _, HitPart in self.CollisionHits do
-		-- Use whatever object has the heigher friction
+		-- Use whatever object has the higher friction
 		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
 	end
 
