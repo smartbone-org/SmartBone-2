@@ -44,11 +44,10 @@ Wind can be controlled via GlobalWind (MatchWorkspaceWind must be true) or throu
 
 - \[*Vector3*\] WindDirection - The direction in which the wind travels, only important if MatchWorkspaceWind is false.
 
-WindStrength controls the amplitude of the wind,
-WindSpeed also controls the amplitude of the wind,
-WindSpeed controls the frequency of the wind,
+WindStrength controls the frequency of the wind,
+WindSpeed controls the amplitude of the wind,
 
-For example if you wanted more flowy wind you would have a lower wind speed with a higher wind strength.
+For example if you wanted more flowy wind you would have a medium wind speed with a lower wind strength.
 
 ---
 ### Attributes
