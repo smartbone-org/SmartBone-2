@@ -156,26 +156,24 @@ local function SolveWind(self, BoneTree)
 	end
 
 	local function SampleSin()
-		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = 0 --Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 2
+		local Freq = Settings.WindStrength ^ 0.8
+		local Power = Settings.WindSpeed * 2
 		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
-		local Sin2 = math.cos(TimeModifier * Freq) ^ 2 - 0.2
-		local Wave = (Sin1 > Sin2 and Sin1 or Sin2) * (Power + Amp)
+		local Sin2 = math.cos(TimeModifier * Freq) ^ 2
+		local Wave = (Sin1 + (Sin2 - Sin1) * Sin2) * Power
 		return Settings.WindDirection * Wave
 	end
 
 	local function SampleNoise(CustomAmp, Map)
 		CustomAmp = CustomAmp or 0
 
-		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = 0 --Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 2
+		local Freq = Settings.WindStrength ^ 0.8
+		local Power = Settings.WindSpeed * 2
 		local Seed = BoneTree.WindOffset
 
-		local X = GetNoise(Freq, 0, Seed, Map) * (Power + Amp + CustomAmp)
-		local Y = GetNoise(0, Freq, Seed, Map) * (Power + Amp + CustomAmp)
-		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + Amp + CustomAmp)
+		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
+		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
+		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
 
 		return Settings.WindDirection * Vector3.new(X, Y, Z)
 	end
@@ -292,8 +290,7 @@ local Class = {}
 Class.__index = Class
 
 function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
-	-- CFrame of the parent bone or the root bone
-	local ParentCFrame = Bone.Parent:IsA("Bone") and Bone.Parent.TransformedWorldCFrame or RootBone.TransformedWorldCFrame
+	local ParentCFrame = Bone.Parent:IsA("Bone") and Bone.Parent.TransformedWorldCFrame or RootPart.CFrame
 
 	local self = setmetatable({
 		Bone = Bone,
@@ -369,7 +366,16 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	end
 
 	if self.Bone == self.RootBone then
-		self.TransformOffset = self.AnimatedWorldCFrame
+		-- Curse Non-SmartBone Objects!
+		local ParentCFrame
+
+		if self.Bone.Parent:IsA("Bone") then
+			ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(self.Bone.Parent)
+		else
+			ParentCFrame = self.RootPart.CFrame
+		end
+
+		self.TransformOffset = ParentCFrame * self.Transform
 	else
 		self.TransformOffset = Parent.AnimatedWorldCFrame * self.Transform
 	end

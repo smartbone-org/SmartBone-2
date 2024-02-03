@@ -54,7 +54,7 @@ local function ClosestPointFunc(cframe, size, point)
 
 	-- Shouldnt reach
 	warn("CLOSEST POINT ON BOX FAIL")
-	return
+	return false, cframe.Position, Vector3.zero
 end
 
 return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
