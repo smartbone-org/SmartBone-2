@@ -91,6 +91,11 @@ function module.ClosestPointInBox(cframe, size, point): (boolean, Vector3, Vecto
 	local rx, ry, rz = rel.x, rel.y, rel.z
 
 	-- constrain to within the box
+
+	if rel ~= rel or size ~= size then -- // NaN
+		return false, Vector3.zero, Vector3.yAxis
+	end
+
 	local cx = math.clamp(rx, -sx * 0.5, sx * 0.5)
 	local cy = math.clamp(ry, -sy * 0.5, sy * 0.5)
 	local cz = math.clamp(rz, -sz * 0.5, sz * 0.5)

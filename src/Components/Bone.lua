@@ -185,9 +185,9 @@ local function SolveWind(self, BoneTree)
 		WindMove *= 0.5
 	end
 
-	WindMove /= self.FreeLength
+	WindMove /= math.clamp(self.FreeLength,1,self.FreeLength+1)
 	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
-	WindMove *= self.Weight
+	WindMove *= math.clamp(self.Weight,1,self.Weight+1)
 
 	return WindMove
 end
@@ -289,7 +289,7 @@ end
 local Class = {}
 Class.__index = Class
 
-function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
+function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 	local self = setmetatable({
 		Bone = Bone,
 		FreeLength = -1,
@@ -338,20 +338,20 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		end
 	end)
 
-	return self
+	return self :: IBone
 end
 
 --- @within Bone
 --- @param Position Vector3
 --- @param Vector Vector3
 --- Clips velocity on specified vector, Position is where we are at our current physics step (Before we set self.Position)
-function Class:ClipVelocity(Position, Vector)
+function Class:ClipVelocity(Position, Vector: Vector3): ()
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
 --- @within Bone
 --- @param BoneTree BoneTree
-function Class:PreUpdate(BoneTree) -- Parallel safe
+function Class:PreUpdate(BoneTree): () -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local RootPart = self.RootPart
 	local Root = BoneTree.Bones[1]
@@ -473,15 +473,18 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 
 	if ParentBone and BoneParent then
 		local ReferenceCFrame = ParentBone.TransformOffset
-		local v1 = self.Position - ParentBone.Position
-		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
+		local v1: Vector3 = self.Position - ParentBone.Position
+		local Rotation: CFrame = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
 
-		local factor = 0.00001
-		local alpha = (1 - factor ^ Delta)
+		local factor: number = 0.00001
+		local alpha: number = (1 - factor ^ Delta)
 
-		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
-
-		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
+		local NewWorldCFrame: CFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		if IsNaN(NewWorldCFrame) then
+			SB_ASSERT_CB(false, warn, "If you see this report this as a bug, (NaN Calc world cframe)")
+		else
+			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		end
 	end
 	debug.profileend()
 end
@@ -529,36 +532,36 @@ end
 --- @param DRAW_AXIS_LIMITS any
 function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
 	debug.profilebegin("Bone::DrawDebug")
-	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
-	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
-	local BONE_POSITION_RAY_COLOR = Color3.fromRGB(234, 1, 255)
-	local BONE_SPHERE_COLOR = Color3.fromRGB(0, 255, 255)
-	local BONE_FRONT_ARROW_COLOR = Color3.fromRGB(255, 0, 0)
-	local BONE_UP_ARROW_COLOR = Color3.fromRGB(0, 255, 0)
-	local BONE_RIGHT_ARROW_COLOR = Color3.fromRGB(0, 0, 255)
-	local AXIS_X_COLOR = Color3.fromRGB(255, 0, 0)
-	local AXIS_Y_COLOR = Color3.fromRGB(0, 255, 0)
-	local AXIS_Z_COLOR = Color3.fromRGB(0, 0, 255)
-	local AXIS_ARROW_RADIUS = 0.05
-	local AXIS_ARROW_LENGTH = 0.15
+	local BONE_POSITION_COLOR: Color3 = Color3.fromRGB(255, 0, 0)
+	local BONE_LAST_POSITION_COLOR: Color3 = Color3.fromRGB(255, 94, 0)
+	local BONE_POSITION_RAY_COLOR: Color3 = Color3.fromRGB(234, 1, 255)
+	local BONE_SPHERE_COLOR: Color3 = Color3.fromRGB(0, 255, 255)
+	local BONE_FRONT_ARROW_COLOR: Color3 = Color3.fromRGB(255, 0, 0)
+	local BONE_UP_ARROW_COLOR: Color3 = Color3.fromRGB(0, 255, 0)
+	local BONE_RIGHT_ARROW_COLOR: Color3 = Color3.fromRGB(0, 0, 255)
+	local AXIS_X_COLOR: Color3 = Color3.fromRGB(255, 0, 0)
+	local AXIS_Y_COLOR: Color3 = Color3.fromRGB(0, 255, 0)
+	local AXIS_Z_COLOR: Color3 = Color3.fromRGB(0, 0, 255)
+	local AXIS_ARROW_RADIUS: number = 0.05
+	local AXIS_ARROW_LENGTH: number = 0.15
 
-	local COLLISION_CONTACT_SPHERE_COLOR = Color3.fromRGB(28, 41, 224)
-	local COLLISION_CONTACT_NORMAL_COLOR = Color3.fromRGB(255, 27, 27)
-	local COLLISION_CONTACT_SPHERE_RADIUS = 0.08
-	local COLLISION_CONTACT_ARROW_LENGTH = 0.15
-	local COLLISION_CONTACT_ARROW_RADIUS = 0.05
-	local COLLISION_CONTACT_ARROW_EXPANSION = 0.5
+	local COLLISION_CONTACT_SPHERE_COLOR: Color3 = Color3.fromRGB(28, 41, 224)
+	local COLLISION_CONTACT_NORMAL_COLOR: Color3 = Color3.fromRGB(255, 27, 27)
+	local COLLISION_CONTACT_SPHERE_RADIUS: number = 0.08
+	local COLLISION_CONTACT_ARROW_LENGTH: number = 0.15
+	local COLLISION_CONTACT_ARROW_RADIUS: number = 0.05
+	local COLLISION_CONTACT_ARROW_EXPANSION: number = 0.5
 
-	local BONE_ARROW_LENGTH = 0.05
-	local BONE_ARROW_RADIUS = 0.015
-	local BONE_CYLINDER_RADIUS = 0.005
-	local BONE_ARROW_EXPANSION = 0.25
-	local BONE_RADIUS = 0.08
+	local BONE_ARROW_LENGTH: number = 0.05
+	local BONE_ARROW_RADIUS: number = 0.015
+	local BONE_CYLINDER_RADIUS: number = 0.005
+	local BONE_ARROW_EXPANSION: number = 0.25
+	local BONE_RADIUS: number = 0.08
 
-	local BoneCFrame = self.AnimatedWorldCFrame
-	local BonePosition = BoneCFrame.Position
-	local BonePositionCFrame = CFrame.new(self.Position)
-	local BoneLastPositionCFrame = CFrame.new(self.LastPosition)
+	local BoneCFrame: CFrame = self.AnimatedWorldCFrame
+	local BonePosition: Vector3 = BoneCFrame.Position
+	local BonePositionCFrame: CFrame = CFrame.new(self.Position)
+	local BoneLastPositionCFrame: CFrame = CFrame.new(self.LastPosition)
 
 	-- Draw our internal bone
 
@@ -585,9 +588,9 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 		local RootPart = self.RootPart
 		local Offset = RootPart.CFrame:PointToObjectSpace(BonePosition)
 
-		local XVector = RootPart.CFrame.RightVector
-		local YVector = RootPart.CFrame.UpVector
-		local ZVector = RootPart.CFrame.LookVector
+		local XVector: Vector3 = RootPart.CFrame.RightVector
+		local YVector: Vector3 = RootPart.CFrame.UpVector
+		local ZVector: Vector3 = RootPart.CFrame.LookVector
 
 		local Size = Vector3.new(5, 5, 0)
 
@@ -595,8 +598,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 			Gizmo.PushProperty("Color3", AXIS_X_COLOR)
 			Gizmo.Arrow:Draw(BonePosition - XVector * 2, BonePosition + XVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
-			local MinXLimit = self.XAxisLimits.Min - Offset.X
-			local MaxXLimit = self.XAxisLimits.Max - Offset.X
+			local MinXLimit: number = self.XAxisLimits.Min - Offset.X
+			local MaxXLimit: number = self.XAxisLimits.Max - Offset.X
 
 			Gizmo.Plane:Draw(BonePosition + XVector * MinXLimit, XVector, Size)
 			Gizmo.Plane:Draw(BonePosition + XVector * MaxXLimit, XVector, Size)
@@ -606,8 +609,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 			Gizmo.PushProperty("Color3", AXIS_Y_COLOR)
 			Gizmo.Arrow:Draw(BonePosition - YVector * 2, BonePosition + YVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
-			local MinYLimit = self.YAxisLimits.Min - Offset.Y
-			local MaxYLimit = self.YAxisLimits.Max - Offset.Y
+			local MinYLimit: number = self.YAxisLimits.Min - Offset.Y
+			local MaxYLimit: number = self.YAxisLimits.Max - Offset.Y
 
 			Gizmo.Plane:Draw(BonePosition + YVector * MinYLimit, YVector, Size)
 			Gizmo.Plane:Draw(BonePosition + YVector * MaxYLimit, YVector, Size)
@@ -617,8 +620,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 			Gizmo.PushProperty("Color3", AXIS_Z_COLOR)
 			Gizmo.Arrow:Draw(BonePosition - ZVector * 2, BonePosition + ZVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
 
-			local MinZLimit = self.ZAxisLimits.Min - Offset.Z
-			local MaxZLimit = self.ZAxisLimits.Max - Offset.Z
+			local MinZLimit: number = self.ZAxisLimits.Min - Offset.Z
+			local MaxZLimit: number = self.ZAxisLimits.Max - Offset.Z
 
 			Gizmo.Plane:Draw(BonePosition - ZVector * MinZLimit, ZVector, Size)
 			Gizmo.Plane:Draw(BonePosition - ZVector * MaxZLimit, ZVector, Size)
@@ -683,7 +686,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	debug.profileend()
 end
 
-function Class:Destroy()
+function Class:Destroy(): ()
 	self.AttributeConnection:Disconnect()
 
 	setmetatable(self, nil)
