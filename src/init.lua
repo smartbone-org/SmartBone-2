@@ -23,6 +23,13 @@ local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 	end
 end
 
+export type IBoneTree = BoneTreeClass.IBoneTree
+export type IBone = BoneClass.IBone
+export type IColliderObject = ColliderObjectClass.IColliderObject
+export type IColliderTable = ColliderObjectClass.IColliderTable
+
+type bool = boolean
+
 local SB_INDENT_LOG = Utilities.SB_INDENT_LOG
 local SB_UNINDENT_LOG = Utilities.SB_UNINDENT_LOG
 -- local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
@@ -78,7 +85,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Used to add a bone to the provided bone tree
-function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
+function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
 	local Settings = Utilities.GatherBoneSettings(BoneObject)
 	local Bone: BoneClass.IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
@@ -211,7 +218,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Constrains each bone in the provided bone tree and cleans up colliders
-function Class:m_ConstrainBoneTree(BoneTree: BoneTreeClass.IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
+function Class:m_ConstrainBoneTree(BoneTree: IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
 	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
 
 	BoneTree:Constrain(self.ColliderObjects, Delta)
@@ -228,7 +235,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Updates the provided bone tree with all optimizations
-function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
+function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
 	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
 
 	if BoneTree.Destroyed then
@@ -364,7 +371,7 @@ end
 --- @param ColliderData table
 --- @param Object BasePart
 --- Loads the raw collider data onto the provided object
-function Class:LoadRawCollider(ColliderData: {}, Object: BasePart)
+function Class:LoadRawCollider(ColliderData: IColliderTable, Object: BasePart)
 	local ColliderObject = ColliderObjectClass.new(ColliderData, Object)
 
 	table.insert(self.ColliderObjects, ColliderObject)
@@ -383,7 +390,7 @@ end
 --- @within SmartBone
 --- @param Delta number
 --- Updates all bone trees
-function Class:StepBoneTrees(Delta)
+function Class:StepBoneTrees(Delta: number)
 	if self:m_CheckDestroy() then
 		return
 	end
@@ -411,18 +418,18 @@ end
 --- @param DRAW_ROTATION_LIMITS boolean
 --- Draws the debug gizmos
 function Class:DrawDebug(
-	DRAW_COLLIDERS,
-	DRAW_CONTACTS,
-	DRAW_PHYSICAL_BONE,
-	DRAW_BONE,
-	DRAW_AXIS_LIMITS,
-	DRAW_ROOT_PART,
-	DRAW_FILL_COLLIDERS,
-	DRAW_COLLIDER_INFLUENCE,
-	DRAW_COLLIDER_AWAKE,
-	DRAW_COLLIDER_BROADPHASE,
-	DRAW_BOUNDING_BOX,
-	DRAW_ROTATION_LIMITS
+	DRAW_COLLIDERS: bool,
+	DRAW_CONTACTS: bool,
+	DRAW_PHYSICAL_BONE: bool,
+	DRAW_BONE: bool,
+	DRAW_AXIS_LIMITS: bool,
+	DRAW_ROOT_PART: bool,
+	DRAW_FILL_COLLIDERS: bool,
+	DRAW_COLLIDER_INFLUENCE: bool,
+	DRAW_COLLIDER_AWAKE: bool,
+	DRAW_COLLIDER_BROADPHASE: bool,
+	DRAW_BOUNDING_BOX: bool,
+	DRAW_ROTATION_LIMITS: bool
 )
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS)

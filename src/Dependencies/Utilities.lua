@@ -43,7 +43,7 @@ function module.GetCFrameAxis(Transform: CFrame, Axis: string)
 	return nil
 end
 
-function module.GatherObjectSettings(Object)
+function module.GatherObjectSettings(Object: BasePart)
 	local Settings = {}
 
 	for k, v in DefaultObjectSettings do
@@ -54,7 +54,7 @@ function module.GatherObjectSettings(Object)
 	return Settings
 end
 
-function module.GatherBoneSettings(Bone)
+function module.GatherBoneSettings(Bone: Bone)
 	local XAxisLocked = Bone:GetAttribute("XAxisLocked") or false
 	local YAxisLocked = Bone:GetAttribute("YAxisLocked") or false
 	local ZAxisLocked = Bone:GetAttribute("ZAxisLocked") or false
@@ -79,7 +79,7 @@ function module.GatherBoneSettings(Bone)
 	return Settings
 end
 
-function module.ClosestPointOnLine(p0, d0, len, p1): Vector3
+function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Vector3): Vector3
 	local v = p1 - p0
 	local k = v:Dot(d0)
 	k = math.clamp(k, -len, len)
@@ -87,10 +87,10 @@ function module.ClosestPointOnLine(p0, d0, len, p1): Vector3
 end
 
 -- IsInside, ClosestPoint, Normal
-function module.ClosestPointInBox(cframe, size, point): (boolean, Vector3, Vector3)
-	local rel = cframe:pointToObjectSpace(point)
-	local sx, sy, sz = size.x, size.y, size.z
-	local rx, ry, rz = rel.x, rel.y, rel.z
+function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3): (boolean, Vector3, Vector3)
+	local rel = cframe:PointToObjectSpace(point)
+	local sx, sy, sz = size.X, size.X, size.Z
+	local rx, ry, rz = rel.X, rel.Y, rel.Z
 
 	if rel ~= rel or size ~= size then -- NaN
 		return false, cframe.Position, Vector3.yAxis

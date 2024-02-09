@@ -22,6 +22,8 @@ local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
+type bool = boolean
+
 export type IBone = {
 	Bone: Bone,
 	FreeLength: number,
@@ -33,8 +35,8 @@ export type IBone = {
 	Radius: number,
 	Friction: number,
 
-	SolvedAnimatedCFrame: boolean,
-	HasChild: boolean,
+	SolvedAnimatedCFrame: bool,
+	HasChild: bool,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -45,8 +47,8 @@ export type IBone = {
 	Position: Vector3,
 	LastPosition: Vector3,
 
-	Anchored: boolean,
-	AxisLocked: { [number]: boolean },
+	Anchored: bool,
+	AxisLocked: { [number]: bool },
 	XAxisLimits: NumberRange,
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
@@ -54,7 +56,7 @@ export type IBone = {
 	CollisionHits: { [number]: BasePart },
 }
 
-local function IsNaN(Value: any): boolean
+local function IsNaN(Value: any): bool
 	if Value ~= Value then
 		return true
 	end
@@ -81,7 +83,7 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
-local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
+local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrame")
 	Bone.SolvedAnimatedCFrame = true
 
@@ -103,7 +105,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
-local function ClipVector(LastPosition, Position, Vector)
+local function ClipVector(LastPosition: Vector3, Position: Vector3, Vector: Vector3): Vector3
 	LastPosition *= (Vector3.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
@@ -122,7 +124,7 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self, BoneTree)
+local function SolveWind(self: IBone, BoneTree): Vector3
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
@@ -188,9 +190,9 @@ local function SolveWind(self, BoneTree)
 		WindMove *= 0.5
 	end
 
-	WindMove /= self.FreeLength
+	WindMove /= math.min(self.FreeLength, 1)
 	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
-	WindMove *= self.Weight
+	WindMove *= math.min(self.Weight, 1)
 
 	return WindMove
 end
@@ -289,7 +291,7 @@ end
 local Class = {}
 Class.__index = Class
 
-function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
+function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 	local ParentCFrame = Bone.Parent:IsA("Bone") and Bone.Parent.TransformedWorldCFrame or RootPart.CFrame
 
 	local self = setmetatable({
@@ -341,14 +343,14 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		end
 	end)
 
-	return self
+	return self :: IBone
 end
 
 --- @within Bone
 --- @param Position Vector3
 --- @param Vector Vector3
 --- Clips velocity on specified vector, Position is where we are at our current physics step (Before we set self.Position)
-function Class:ClipVelocity(Position, Vector)
+function Class:ClipVelocity(Position: Vector3, Vector: Vector3)
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
@@ -388,7 +390,7 @@ end
 --- @param BoneTree BoneTree
 --- @param Force Vector3
 --- Force passed in via BoneTree:StepPhysics()
-function Class:StepPhysics(BoneTree, Force) -- Parallel safe
+function Class:StepPhysics(BoneTree, Force: Vector3) -- Parallel safe
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
 		self.LastPosition = self.AnimatedWorldCFrame.Position
@@ -414,7 +416,7 @@ end
 --- @param BoneTree BoneTree
 --- @param ColliderObjects Vector3
 --- @param Delta number -- Δt
-function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
+function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
 	if self.Anchored then
 		debug.profileend()
@@ -474,7 +476,7 @@ end
 --- @param BoneTree BoneTree
 --- @param Delta number -- Δt
 --- Solves the cframe of the bones
-function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
+function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::SolveTransform")
 	if self.ParentIndex < 1 then
 		debug.profileend()
@@ -544,7 +546,7 @@ end
 --- @param DRAW_BONE boolean
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROTATION_LIMIT boolean
-function Class:DrawDebug(BoneTree, DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROTATION_LIMIT)
+function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROTATION_LIMIT: bool)
 	debug.profilebegin("Bone::DrawDebug")
 	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)

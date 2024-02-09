@@ -36,7 +36,9 @@ export type IBoneTree = {
 	ObjectPreviousPosition: Vector3,
 }
 
-local function SafeUnit(v3)
+type bool = boolean
+
+local function SafeUnit(v3: Vector3): Vector3
 	if v3.Magnitude == 0 then
 		--warn("Vector was saved")
 		return Vector3.zero
@@ -45,7 +47,7 @@ local function SafeUnit(v3)
 	return v3.Unit
 end
 
-local function map(n, start, stop, newStart, newStop, withinBounds)
+local function map(n: number, start: number, stop: number, newStart: number, newStop: number, withinBounds: bool): number
 	local value = ((n - start) / (stop - start)) * (newStop - newStart) + newStart
 
 	--// Returns basic value
@@ -176,7 +178,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		self.Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
 
-	return self
+	return self :: IBoneTree
 end
 
 --- @within BoneTree
@@ -218,7 +220,7 @@ end
 --- @within BoneTree
 --- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
 --- Called in BoneTree:PreUpdate()
-function Class:UpdateThrottling(RootPosition)
+function Class:UpdateThrottling(RootPosition: Vector3)
 	debug.profilebegin("BoneTree::UpdateThrottling")
 	local Settings = self.Settings
 
@@ -258,7 +260,7 @@ end
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates forces and updates wind. Also calls Bone:StepPhysics()
-function Class:StepPhysics(Delta)
+function Class:StepPhysics(Delta: number)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
 	local Force = Settings.Gravity
@@ -290,7 +292,7 @@ end
 --- @within BoneTree
 --- @param ColliderObjects table
 --- @param Delta number -- Δt
-function Class:Constrain(ColliderObjects, Delta)
+function Class:Constrain(ColliderObjects, Delta: number)
 	debug.profilebegin("BoneTree::Constrain")
 	for _, Bone in self.Bones do
 		Bone:Constrain(self, ColliderObjects, Delta)
@@ -312,7 +314,7 @@ end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
-function Class:SolveTransform(Delta)
+function Class:SolveTransform(Delta: number)
 	debug.profilebegin("BoneTree::SolveTransform")
 	for _, Bone in self.Bones do
 		Bone:SolveTransform(self, Delta)
@@ -340,7 +342,7 @@ end
 --- @param DRAW_ROOT_PART boolean
 --- @param DRAW_BOUNDING_BOX boolean
 --- @param DRAW_ROTATION_LIMITS boolean
-function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS)
+function Class:DrawDebug(DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROOT_PART: bool, DRAW_BOUNDING_BOX: bool, DRAW_ROTATION_LIMITS: bool)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
