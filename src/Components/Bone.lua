@@ -190,9 +190,9 @@ local function SolveWind(self: IBone, BoneTree): Vector3
 		WindMove *= 0.5
 	end
 
-	WindMove /= math.min(self.FreeLength, 1)
+	WindMove /= math.max(self.FreeLength, 0.01)
 	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
-	WindMove *= math.min(self.Weight, 1)
+	WindMove *= self.Weight
 
 	return WindMove
 end
