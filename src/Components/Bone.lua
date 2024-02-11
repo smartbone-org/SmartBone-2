@@ -403,7 +403,7 @@ function Class:StepPhysics(BoneTree, Force: Vector3) -- Parallel safe
 	local Settings = BoneTree.Settings
 
 	local Velocity = (self.Position - self.LastPosition)
-	local Move = (BoneTree.ObjectMove * Settings.Inertia)
+	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
 	local WindMove = SolveWind(self, BoneTree)
 
 	self.LastPosition = self.Position

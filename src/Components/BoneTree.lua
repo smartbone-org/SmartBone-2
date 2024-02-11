@@ -33,6 +33,8 @@ export type IBoneTree = {
 
 	Force: Vector3,
 	ObjectMove: Vector3,
+	ObjectVelocity: Vector3,
+	ObjectAcceleration: Vector3,
 	ObjectPreviousPosition: Vector3,
 }
 
@@ -135,6 +137,10 @@ end
 --- Difference between root parts last position and current position
 
 --- @within BoneTree
+--- @prop ObjectVelocity Vector3
+--- Velocity at which the root part is traveling at, calculated via object move.
+
+--- @within BoneTree
 --- @prop ObjectPreviousPosition Vector3
 --- Root parts previous position
 
@@ -164,6 +170,8 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 
 		Force = Vector3.zero,
 		ObjectMove = Vector3.zero,
+		ObjectVelocity = Vector3.zero,
+		ObjectAcceleration = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
@@ -239,13 +247,18 @@ function Class:UpdateThrottling(RootPosition: Vector3)
 end
 
 --- @within BoneTree
+--- @param Delta number -- Δt
 --- Calculates object move, gravity and throttled update rate. Also calls Bone:PreUpdate()
-function Class:PreUpdate()
+function Class:PreUpdate(Delta: number)
 	debug.profilebegin("BoneTree::PreUpdate")
 	local RootPartCFrame = self.RootPart.CFrame
 	local RootPartPosition = RootPartCFrame.Position
 
+	local PreviousVelocity = self.ObjectVelocity
+
 	self.ObjectMove = (RootPartPosition - self.ObjectPreviousPosition)
+	self.ObjectVelocity = self.ObjectVelocity:Lerp((self.ObjectMove / Delta) / 4, math.min(Delta * 10, 1))
+	self.ObjectAcceleration = (PreviousVelocity - self.ObjectVelocity) * Delta
 	self.ObjectPreviousPosition = RootPartPosition
 
 	self:UpdateThrottling(RootPartPosition)
@@ -342,11 +355,28 @@ end
 --- @param DRAW_ROOT_PART boolean
 --- @param DRAW_BOUNDING_BOX boolean
 --- @param DRAW_ROTATION_LIMITS boolean
-function Class:DrawDebug(DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROOT_PART: bool, DRAW_BOUNDING_BOX: bool, DRAW_ROTATION_LIMITS: bool)
+--- @param DRAW_ACCELERATION_INFO boolean
+function Class:DrawDebug(DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROOT_PART: bool, DRAW_BOUNDING_BOX: bool, DRAW_ROTATION_LIMITS: bool, DRAW_ACCELERATION_INFO: bool)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
 	local ROOT_PART_FILL_COLOR = Color3.fromRGB(255, 89, 89)
+	local OBJECT_MOVE_COLOR = Color3.new(1, 0, 0)
+	local OBJECT_VELOCITY_COLOR = Color3.new(0, 1, 0)
+	local OBJECT_ACCELERATION_COLOR = Color3.new(0, 0, 1)
+
+	if DRAW_ACCELERATION_INFO then
+		local Raised = self.RootPart.Position + Vector3.new(0, self.RootPart.Size.Y / 2 + 1, 0)
+
+		Gizmo.SetStyle(OBJECT_MOVE_COLOR, 0, true)
+		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectMove, 0.025, 0.1, 6)
+
+		Gizmo.SetStyle(OBJECT_VELOCITY_COLOR, 0, true)
+		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectVelocity, 0.025, 0.1, 6)
+
+		Gizmo.SetStyle(OBJECT_ACCELERATION_COLOR, 0, true)
+		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectAcceleration, 0.025, 0.1, 6)
+	end
 
 	Gizmo.PushProperty("AlwaysOnTop", false)
 

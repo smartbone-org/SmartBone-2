@@ -246,7 +246,7 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		return
 	end
 
-	BoneTree:PreUpdate() -- Pre update MUST be called before we call SkipUpdate!
+	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
 	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
 		local AlreadySkipped = BoneTree.FirstSkipUpdate
@@ -416,6 +416,7 @@ end
 --- @param DRAW_COLLIDER_BROADPHASE boolean
 --- @param DRAW_BOUNDING_BOX boolean
 --- @param DRAW_ROTATION_LIMITS boolean
+--- @param DRAW_ACCELERATION_INFO boolean
 --- Draws the debug gizmos
 function Class:DrawDebug(
 	DRAW_COLLIDERS: bool,
@@ -429,10 +430,11 @@ function Class:DrawDebug(
 	DRAW_COLLIDER_AWAKE: bool,
 	DRAW_COLLIDER_BROADPHASE: bool,
 	DRAW_BOUNDING_BOX: bool,
-	DRAW_ROTATION_LIMITS: bool
+	DRAW_ROTATION_LIMITS: bool,
+	DRAW_ACCELERATION_INFO: bool
 )
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS)
+		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS, DRAW_ACCELERATION_INFO)
 	end
 
 	if DRAW_COLLIDERS then

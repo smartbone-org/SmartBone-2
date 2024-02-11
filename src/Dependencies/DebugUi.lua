@@ -178,6 +178,11 @@ return function(Iris, RootObject, DebugState)
 	Iris.End()
 
 	Iris.SameLine()
+	Iris.Checkbox({ "Draw Acceleration Info" }, { isChecked = DebugState.DRAW_ACCELERATION_INFO })
+	helpMarker(Iris, "Draws the acceleration and the required values to derive it.")
+	Iris.End()
+
+	Iris.SameLine()
 	Iris.Checkbox({ "Draw Colliders" }, { isChecked = DebugState.DRAW_COLLIDERS })
 	helpMarker(Iris, "Draws all the colliders this root object can collide with.")
 	Iris.End()

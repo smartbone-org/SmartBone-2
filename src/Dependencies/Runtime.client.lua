@@ -63,6 +63,7 @@ if ShouldDebug then
 		DRAW_FILL_COLLIDERS = Iris.State(false),
 		DRAW_CONTACTS = Iris.State(false),
 		DRAW_ROTATION_LIMITS = Iris.State(false),
+		DRAW_ACCELERATION_INFO = Iris.State(false),
 	}
 end
 
@@ -122,7 +123,8 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 				DebugState.DRAW_COLLIDER_AWAKE:get(),
 				DebugState.DRAW_COLLIDER_BROADPHASE:get(),
 				DebugState.DRAW_BOUNDING_BOX:get(),
-				DebugState.DRAW_ROTATION_LIMITS:get()
+				DebugState.DRAW_ROTATION_LIMITS:get(),
+				DebugState.DRAW_ACCELERATION_INFO:get()
 			)
 		end
 	end
