@@ -17,7 +17,7 @@ sidebar_position: 2
 
 - Make sure you don’t add any spaces or characters unless they are part of the name of the bone(s) you want to be included
 
-Note: Reparenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
+Note: Re parenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
 This is due to Roblox not adding a .Destroying signal or something similar, if you'd like for the object to continue simulating you would have to remove the SmartBone tag and add it again.
 
 ### Friction
@@ -30,7 +30,7 @@ Each constraint has it's own purpose,
 
 - Spring will return the bone to its rest position sort of like jelly
 
-- Distance will keep the bones at a fixed distance from eachother and is always pulled downwards
+- Distance will keep the bones at a fixed distance from each other and is always pulled downwards
 
 - Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
 
@@ -78,7 +78,7 @@ For example if you wanted more flowy wind you would have a medium wind speed wit
 
 - \[*String*\] ColliderKey - If this attribute is set then the object will only collide with colliders that have the same collider key.
 
-- \[*Number*\] AnchorDepth – This will determine how far down in heirarchy from the Root that bones will be Anchored.
+- \[*Number*\] AnchorDepth – This will determine how far down in hierarchy from the Root that bones will be Anchored.
 
 - \[*Boolean*\] AnchorsRotate – If true, the root bone(s) will rotate along with the rest of the bone(s), but remain in static position. If false, the root bone(s) will remain completely static in both Position and Orientation.
 
