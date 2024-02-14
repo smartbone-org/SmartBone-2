@@ -316,8 +316,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		TransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity,
-		RestPosition = Bone.TransformedCFrame.Position,
-		RestCFrame = Bone.TransformedCFrame,
+		RestPosition = Vector3.zero,
 		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
 		Position = Bone.TransformedWorldCFrame.Position,
@@ -359,7 +358,7 @@ end
 
 --- @within Bone
 --- @param BoneTree BoneTree
-function Class:PreUpdate(BoneTree, TransformMutationFactor) -- Parallel safe
+function Class:PreUpdate(BoneTree) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local Root = BoneTree.Bones[1]
 	local Parent = BoneTree.Bones[self.ParentIndex]
@@ -369,12 +368,6 @@ function Class:PreUpdate(BoneTree, TransformMutationFactor) -- Parallel safe
 	if self.ParentIndex < 1 then -- Force anchor the root bone
 		self.Anchored = true
 	end
-
-	local c = self.Bone.Parent:IsA("Bone") and QueryTransformedWorldCFrameNonSmartbone(self.Bone.Parent) or self.RootPart.CFrame
-
-	local WorldTransform = c * CFrame.new(self.RestCFrame * c:VectorToObjectSpace(TransformMutationFactor)) * self.RestCFrame.Rotation
-
-	self.Transform = WorldTransform:ToObjectSpace(c):Inverse()
 
 	if self.Bone == self.RootBone then
 		-- Curse Non-SmartBone Objects!
