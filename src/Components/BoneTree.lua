@@ -264,8 +264,19 @@ function Class:PreUpdate(Delta: number)
 	self:UpdateThrottling(RootPartPosition)
 	self:UpdateBoundingBox()
 
+	local BoneMultiplicationFactor = Vector3.one
+
+	-- Size change, mutate bone transforms
+	--if self.RootPart.Size ~= self.RootPartSize then
+		BoneMultiplicationFactor += (self.RootPart.Size - self.RootPartSize)
+
+		--self.RootPartSize = self.RootPart.Size
+	--end
+
+	--print(BoneMultiplicationFactor)
+
 	for _, Bone in self.Bones do
-		Bone:PreUpdate(self)
+		Bone:PreUpdate(self, BoneMultiplicationFactor)
 	end
 	debug.profileend()
 end

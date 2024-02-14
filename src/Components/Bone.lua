@@ -26,6 +26,8 @@ type bool = boolean
 
 export type IBone = {
 	Bone: Bone,
+	RootBone: Bone,
+	RootPart: BasePart,
 	FreeLength: number,
 	Weight: number,
 	ParentIndex: number,
@@ -69,7 +71,7 @@ end
 -- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
-	local Parent = OriginBone.Parent
+	local Parent = OriginBone.Parent :: Bone | BasePart
 	local ParentCFrame
 
 	if Parent:IsA("Bone") then
@@ -124,7 +126,7 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self: IBone, BoneTree): Vector3
+local function SolveWind(self: IBone, BoneTree: any): Vector3
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
@@ -314,7 +316,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		TransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity,
-		RestPosition = Vector3.zero,
+		RestPosition = Bone.TransformedCFrame.Position,
+		RestCFrame = Bone.TransformedCFrame,
 		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
 		Position = Bone.TransformedWorldCFrame.Position,
@@ -356,7 +359,7 @@ end
 
 --- @within Bone
 --- @param BoneTree BoneTree
-function Class:PreUpdate(BoneTree) -- Parallel safe
+function Class:PreUpdate(BoneTree, TransformMutationFactor) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
 	local Root = BoneTree.Bones[1]
 	local Parent = BoneTree.Bones[self.ParentIndex]
@@ -366,6 +369,12 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	if self.ParentIndex < 1 then -- Force anchor the root bone
 		self.Anchored = true
 	end
+
+	local c = self.Bone.Parent:IsA("Bone") and QueryTransformedWorldCFrameNonSmartbone(self.Bone.Parent) or self.RootPart.CFrame
+
+	local WorldTransform = c * CFrame.new(self.RestCFrame * c:VectorToObjectSpace(TransformMutationFactor)) * self.RestCFrame.Rotation
+
+	self.Transform = WorldTransform:ToObjectSpace(c):Inverse()
 
 	if self.Bone == self.RootBone then
 		-- Curse Non-SmartBone Objects!
