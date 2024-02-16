@@ -46,8 +46,20 @@ end
 function module.GatherObjectSettings(Object: BasePart)
 	local Settings = {}
 
+	local function Expect(Value: any, Type: string, Name: string)
+		if typeof(Value) ~= Type then
+			warn(`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(Value)}`)
+		end
+	end
+
 	for k, v in DefaultObjectSettings do
 		local Attrib = Object:GetAttribute(k)
+
+		if Attrib ~= nil then
+			Expect(Attrib, typeof(v), k)
+			Attrib = nil
+		end
+
 		Settings[k] = Attrib == nil and v or Attrib
 	end
 
@@ -55,17 +67,48 @@ function module.GatherObjectSettings(Object: BasePart)
 end
 
 function module.GatherBoneSettings(Bone: Bone)
-	local XAxisLocked = Bone:GetAttribute("XAxisLocked") or false
-	local YAxisLocked = Bone:GetAttribute("YAxisLocked") or false
-	local ZAxisLocked = Bone:GetAttribute("ZAxisLocked") or false
+	local function Attrib(Name: string): any?
+		return Bone:GetAttribute(Name)
+	end
 
-	local XAxisLimits = Bone:GetAttribute("XAxisLimits") or NumberRange.new(-math.huge, math.huge)
-	local YAxisLimits = Bone:GetAttribute("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
-	local ZAxisLimits = Bone:GetAttribute("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local function Expect(Value: any, Type: string, Name: string)
+		if typeof(Value) ~= Type then
+			warn(`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(Value)}`)
+		end
+	end
 
-	local Radius = Bone:GetAttribute("Radius") or 0.25
+	local XAxisLocked = Attrib("XAxisLocked") or false
+	local YAxisLocked = Attrib("YAxisLocked") or false
+	local ZAxisLocked = Attrib("ZAxisLocked") or false
 
-	local RotationLimit = Bone:GetAttribute("RotationLimit") or 180
+	local XAxisLimits = Attrib("XAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local YAxisLimits = Attrib("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local ZAxisLimits = Attrib("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
+
+	local Radius = Attrib("Radius") or 0.25
+
+	local RotationLimit = Attrib("RotationLimit") or 180
+
+	local Force = Attrib("Force")
+	local Gravity = Attrib("Gravity")
+
+	Expect(XAxisLocked, "boolean", "XAxisLocked")
+	Expect(YAxisLocked, "boolean", "YAxisLocked")
+	Expect(ZAxisLocked, "boolean", "ZAxisLocked")
+
+	Expect(XAxisLimits, "NumberRange", "XAxisLimits")
+	Expect(YAxisLimits, "NumberRange", "YAxisLimits")
+	Expect(ZAxisLimits, "NumberRange", "ZAxisLimits")
+
+	Expect(Radius, "number", "Radius")
+	Expect(RotationLimit, "number", "RotationLimit")
+
+	if Force ~= nil then
+		Expect(Force, "Vector3", "Force")
+	end
+	if Gravity ~= nil then
+		Expect(Gravity, "Vector3", "Gravity")
+	end
 
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },
@@ -74,6 +117,8 @@ function module.GatherBoneSettings(Bone: Bone)
 		ZAxisLimits = ZAxisLimits,
 		RotationLimit = RotationLimit,
 		Radius = Radius,
+		Force = Force,
+		Gravity = Gravity,
 	}
 
 	return Settings
