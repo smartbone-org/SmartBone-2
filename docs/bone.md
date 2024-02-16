@@ -22,3 +22,7 @@ sidebar_position: 5
 - \[*Number*\] Radius - The radius of the bone, default is 0.25.
 
 - \[*Number*\] RotationLimit - The maximum rotated offset a bone can be from its parent, default is 180°.
+
+- \[*Vector3*\] Force - Overrides the force attribute on the root object
+
+- \[*Vector3*\] Gravity - Overrides the gravity attribute on the root object
