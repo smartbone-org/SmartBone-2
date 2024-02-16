@@ -13,10 +13,10 @@ jobs:
       - name: Checkout Main
         uses: actions/checkout@v3
 
-      - name: Setup Foreman
-        uses: Roblox/setup-foreman@v1
-        with: 
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Setup Aftman
+        uses: ok-nick/setup-aftman@v0.4.2
+        with:
+          token: ${{ github.token }}
 
       - name: Install Aftman Toolchains
         run: aftman install
@@ -24,28 +24,12 @@ jobs:
       - name: Install Dependencies
         run: wally install
 
-      - name: Create Packages Directory
-        run: mkdir -p Packages
-
-      - name: Run Stylua
-        run: stylua lib --check
-
-      - name: Run Selene
-        run : selene lib
-
-      - name: Edit Wally Release
-        uses: ciiiii/toml-editor@1.0.0
-        with:
-          file: "wally.toml"
-          key: "package.version"
-          value: ${{ github.event.release.tag_name }}
-
-      # - name: Log in to wally
-      #   env:
-      #     WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
-      #   run: |
-      #     mkdir ~/.wally
-      #     printenv WALLY_AUTH > ~/.wally/auth.toml
+      - name: Log in to wally
+        env:
+          WALLY_AUTH: ${{ secrets.WALLY_AUTH }}
+        run: |
+          mkdir ~/.wally
+          printenv WALLY_AUTH > ~/.wally/auth.toml
           
-      # - name: Push update to wally
-      #   run: wally publish
+      - name: Push update to wally
+        run: wally publish
