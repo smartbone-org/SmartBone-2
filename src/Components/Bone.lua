@@ -42,6 +42,9 @@ export type IBone = {
 	LocalTransform: CFrame,
 	Radius: number,
 	Friction: number,
+	RotationLimit: number,
+	Force: Vector3?,
+	Gravity: Vector3?,
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
@@ -75,11 +78,20 @@ local function IsNaN(Value: any): bool
 	return false
 end
 
+local SolvedTransformedCFrames = {}
+
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 -- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
 -- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
+	local Solved = SolvedTransformedCFrames[OriginBone]
+	if Solved then
+		if Solved.Frame == shared.FrameCounter then
+			return Solved.CFrame
+		end
+	end
+
 	local Parent = OriginBone.Parent :: Bone | BasePart
 	local ParentCFrame
 
@@ -89,8 +101,12 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 		ParentCFrame = Parent.CFrame
 	end
 
+	local Result = ParentCFrame * OriginBone.TransformedCFrame
+
+	SolvedTransformedCFrames[OriginBone] = {Frame = shared.FrameCounter, CFrame = Result}
+
 	debug.profileend()
-	return ParentCFrame * OriginBone.TransformedCFrame
+	return Result
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
@@ -318,6 +334,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		Radius = 0,
 		Friction = 0,
 		RotationLimit = 0,
+		Force = nil,
+		Gravity = nil,
 
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
@@ -349,12 +367,15 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		CollisionsData = {},
 	}, Class)
 
-	self.AttributeConnection = Bone.AttributeChanged:Connect(function()
+
+
+	self.AttributeConnection = Bone.AttributeChanged:Connect(function(Attribute)
 		-- Do this cause of axis lock
 		local Settings = Utilities.GatherBoneSettings(Bone)
 
 		for k, v in Settings do
-			self[k] = v
+			-- ¬ represents a nil value
+			self[k] = (v ~= "¬") and v or nil
 		end
 	end)
 
@@ -426,8 +447,9 @@ end
 --- @within Bone
 --- @param BoneTree BoneTree
 --- @param Force Vector3
+--- @param Delta number -- Δt
 --- Force passed in via BoneTree:StepPhysics()
-function Class:StepPhysics(BoneTree, Force: Vector3) -- Parallel safe
+function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
 		self.LastPosition = self.AnimatedWorldCFrame.Position
@@ -435,6 +457,13 @@ function Class:StepPhysics(BoneTree, Force: Vector3) -- Parallel safe
 
 		debug.profileend()
 		return
+	end
+
+	-- Custom forces per bone
+	if self.Force or self.Gravity then
+		Force = (self.Gravity or BoneTree.Settings.Gravity)
+
+		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
 	end
 
 	local Settings = BoneTree.Settings
@@ -812,6 +841,14 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 		Overlay.Text(`Active Weld: {self.ActiveWeld}`)
 		Overlay.Text(`Rigid Weld: {self.RigidWeld}`)
 		Overlay.Text(`Weld Position: {string.format("%.3f, %.3f, %.3f", self.WeldPosition.X, self.WeldPosition.Y, self.WeldPosition.Z)}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_FORCES then
+		local Force = self.Force and string.format("%.3f, %.3f, %.3f", self.Force.X, self.Force.Y, self.Force.Z) or "-, -, -"
+		local Gravity = self.Gravity and string.format("%.3f, %.3f, %.3f", self.Gravity.X, self.Gravity.Y, self.Gravity.Z) or "-, -, -"
+
+		Overlay.Text(`Force: {Force}`)
+		Overlay.Text(`Gravity: {Gravity}`)
 	end
 end
 

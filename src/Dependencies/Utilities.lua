@@ -46,18 +46,22 @@ end
 function module.GatherObjectSettings(Object: BasePart)
 	local Settings = {}
 
-	local function Expect(Value: any, Type: string, Name: string)
+	local function Expect(Value: any, Type: string, Name: string): boolean
 		if typeof(Value) ~= Type then
 			warn(`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(Value)}`)
+			return false
 		end
+
+		return true
 	end
 
 	for k, v in DefaultObjectSettings do
 		local Attrib = Object:GetAttribute(k)
 
 		if Attrib ~= nil then
-			Expect(Attrib, typeof(v), k)
-			Attrib = nil
+			if not Expect(Attrib, typeof(v), k) then
+				Attrib = nil
+			end
 		end
 
 		Settings[k] = Attrib == nil and v or Attrib
@@ -89,8 +93,8 @@ function module.GatherBoneSettings(Bone: Bone)
 
 	local RotationLimit = Attrib("RotationLimit") or 180
 
-	local Force = Attrib("Force")
-	local Gravity = Attrib("Gravity")
+	local Force = Attrib("Force") or "¬"
+	local Gravity = Attrib("Gravity") or "¬"
 
 	Expect(XAxisLocked, "boolean", "XAxisLocked")
 	Expect(YAxisLocked, "boolean", "YAxisLocked")
@@ -103,10 +107,10 @@ function module.GatherBoneSettings(Bone: Bone)
 	Expect(Radius, "number", "Radius")
 	Expect(RotationLimit, "number", "RotationLimit")
 
-	if Force ~= nil then
+	if Force ~= "¬" then
 		Expect(Force, "Vector3", "Force")
 	end
-	if Gravity ~= nil then
+	if Force ~= "¬" then
 		Expect(Gravity, "Vector3", "Gravity")
 	end
 

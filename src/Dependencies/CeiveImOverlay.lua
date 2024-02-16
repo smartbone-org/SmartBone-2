@@ -14,6 +14,7 @@ export type ImOverlay = {
 }
 
 local Font = Font.new("rbxasset://fonts/families/PressStart2P.json")
+local UseScrollingFrame = false
 
 local ImOverlay = {}
 ImOverlay.__index = ImOverlay
@@ -35,7 +36,7 @@ function ImOverlay.new(DefaultY: number?, TextSize: number?, UseInset: boolean?)
 	self.DefaultY = DefaultY
 	self.TextSize = TextSize
 
-	self.BackFrame = Instance.new("Frame")
+	self.BackFrame = UseScrollingFrame and Instance.new("ScrollingFrame") or Instance.new("Frame")
 	self.BackFrame.Position = (UseInset and InsetPosition or DefaultPosition)
 	self.BackFrame.Size = (UseInset and InsetSize or DefaultSize)
 	self.BackFrame.Name = "BackFrame"

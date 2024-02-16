@@ -25,20 +25,6 @@ local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 	end
 end
 
-if Config.DEBUG_OVERLAY_ENABLED then
-	ImOverlay = CeiveImOverlay.new()
-
-	local PlayerGui = Players.LocalPlayer.PlayerGui
-
-	local DebugGui = Instance.new("ScreenGui")
-	DebugGui.Name = "SmartBoneDebugOverlay"
-	DebugGui.IgnoreGuiInset = true
-	DebugGui.ResetOnSpawn = false
-	DebugGui.Parent = PlayerGui
-
-	ImOverlay.BackFrame.Parent = DebugGui
-end
-
 export type IBoneTree = BoneTreeClass.IBoneTree
 export type IBone = BoneClass.IBone
 export type IColliderObject = ColliderObjectClass.IColliderObject
@@ -109,10 +95,11 @@ end
 --- Used to add a bone to the provided bone tree
 function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
 	local Settings = Utilities.GatherBoneSettings(BoneObject)
-	local Bone: BoneClass.IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
+	local Bone: IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
 	for k, v in Settings do
-		Bone[k] = v
+		-- ¬ represents a nil value
+		Bone[k] = (v ~= "¬") and v or nil
 	end
 
 	local ParentBone = BoneTree.Bones[ParentIndex]
@@ -276,12 +263,12 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		BoneTree:SkipUpdate()
 
 		if not AlreadySkipped then
+			debug.profileend()
+
 			task.synchronize()
 			BoneTree:ApplyTransform()
 
 			SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
-		else
-			debug.profileend() -- Stop warnings about unable to end debug tag
 		end
 
 		return
@@ -481,6 +468,7 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	local ROOT_TEXT_COLOR = Color3.new(1, 1, 1)
 
 	Overlay.Begin(`SmartBone Instance ID: {self.ID}`, INSTANCE_BACKGROUND_COLOR, INSTANCE_TEXT_COLOR)
+	Overlay.Text(`Frame Counter: {shared.FrameCounter}`)
 
 	if Config.DEBUG_OVERLAY_TREE then
 		for i, BoneTree in self.BoneTrees do
@@ -646,6 +634,18 @@ function Class.Start()
 	end
 
 	if Config.DEBUG_OVERLAY_ENABLED then
+		ImOverlay = CeiveImOverlay.new()
+
+		local PlayerGui = Players.LocalPlayer.PlayerGui
+
+		local DebugGui = Instance.new("ScreenGui")
+		DebugGui.Name = "SmartBoneDebugOverlay"
+		DebugGui.IgnoreGuiInset = true
+		DebugGui.ResetOnSpawn = false
+		DebugGui.Parent = PlayerGui
+
+		ImOverlay.BackFrame.Parent = DebugGui
+
 		RunService.RenderStepped:Connect(function()
 			ImOverlay:Render()
 		end)

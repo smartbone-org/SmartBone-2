@@ -304,7 +304,7 @@ function Class:StepPhysics(Delta: number)
 	Settings.WindStrength = WindStrength
 
 	for _, Bone in self.Bones do
-		Bone:StepPhysics(self, Force)
+		Bone:StepPhysics(self, Force, Delta)
 	end
 	debug.profileend()
 end

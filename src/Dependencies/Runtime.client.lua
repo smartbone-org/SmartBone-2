@@ -46,6 +46,10 @@ local ImOverlay = {
 	end,
 }
 
+-- Frame counter for getting animatedworldcframe
+shared.FrameCounter = 0
+local FrameCounterOverflow = 2^17
+
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)
 	if not Iris.HasInit() then
@@ -110,6 +114,12 @@ end)
 local Connection
 
 Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
+	shared.FrameCounter += 1
+
+	if shared.FrameCounter > FrameCounterOverflow then
+		shared.FrameCounter = 0
+	end
+
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
