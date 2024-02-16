@@ -12,6 +12,9 @@ There are multiple ways to work with SmartBone, here I will cover the basic side
 
 First of all you need to setup SmartBone! You can find the latest release with a rbxm, rbxl and source code zip [here](https://github.com/CelnakRBLX/SmartBone-2/releases)
 
+If your using wally you can install via:
+`smartbone-2 = "jakeywastaken/smartbone-2@^0.3.0"`
+
 If you're working in studio you will want to download the rbxm and drag it into your game. If you just want to play around with a demo then open the rbxl file. If you're using rojo or something similar then you can use the source code (.zip)
 
 ### Basic Setup
@@ -26,13 +29,13 @@ SmartBone.Start() -- Start the runtime
 
 This is all you have to do for coding, now we just setup your mesh with the tags and attributes.
 
-- Select any MeshPart with Bones under it
+- Select any [MeshPart](https://create.roblox.com/docs/reference/engine/classes/MeshPart) with Bones under it
 
-- Add the tag “SmartBone” to the MeshPart.
+- Add the tag “SmartBone” to the [MeshPart](https://create.roblox.com/docs/reference/engine/classes/MeshPart).
 
-- Add a string attribute called “Roots” to the MeshPart and fill it with the name(s) of the bone(s) you want to be root(s).
+- Add a string attribute called “Roots” to the [MeshPart](https://create.roblox.com/docs/reference/engine/classes/MeshPart) and fill it with the name(s) of the bone(s) you want to be root(s).
 
-- Separate each bone name with “,” and the Module will automatically sort your bone(s) into a list.
+- Separate each [Bone](https://create.roblox.com/docs/reference/engine/classes/MeshPart) name with “,” and the Module will automatically sort your bone(s) into a list.
 
 - An example of a SmartBone object with multiple roots would have a Roots attribute that looks like this: “Root1,Root2,Root3”
 
@@ -58,6 +61,13 @@ You can limit a bone to moving between 0 studs and 5 studs on the x axis relativ
 Colliders can be setup via a tag with the name "SmartCollider", you can optimize colliders using a collider key, create a string attribute called "ColliderKey" on your root part and your collider. Now only colliders with that collider key can collide with your object.
 
 You can also manually change the shape of a collider using a string attribute called "ColliderShape" with an option of "Box", "Capsule", "Cylinder" and "Sphere".
+
+### Plugins
+
+The plugins streamline a lot of this process they can be found here:
+
+- [Collider Creator](https://create.roblox.com/store/asset/15539103407/Collider-Creator) \[Free\]
+- [Smartbone Editor](https://create.roblox.com/store/asset/15539148341/SmartBone-Editor) \[150 Robux\]
 
 ## Update Flow Chart
 ![](assets/flowchart.png)

@@ -34,6 +34,8 @@ Each constraint has it's own purpose,
 
 - Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
 
+- Rotation, details can be found [here](bone.md)
+
 ### Wind
 
 Wind can be controlled via GlobalWind (MatchWorkspaceWind must be true) or through attributes in Lighting.
