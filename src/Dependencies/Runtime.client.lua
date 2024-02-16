@@ -31,6 +31,20 @@ local Iris
 local Utilities = require(Dependencies.Utilities)
 local Config = require(Dependencies.Config)
 local ShouldDebug = RunService:IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
+local OverlayEvent = SmartboneModule:WaitForChild("OverlayEvent")
+
+-- So much work for such a basic debug tool
+local ImOverlay = {
+	Begin = function(...)
+		OverlayEvent:Fire("Begin", ...)
+	end,
+	End = function(...)
+		OverlayEvent:Fire("End", ...)
+	end,
+	Text = function(...)
+		OverlayEvent:Fire("Text", ...)
+	end,
+}
 
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)
@@ -126,6 +140,8 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 				DebugState.DRAW_ROTATION_LIMITS:get(),
 				DebugState.DRAW_ACCELERATION_INFO:get()
 			)
+
+			BonePhysics:DrawOverlay(ImOverlay)
 		end
 	end
 end)

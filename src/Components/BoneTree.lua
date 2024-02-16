@@ -38,6 +38,12 @@ export type IBoneTree = {
 	ObjectPreviousPosition: Vector3,
 }
 
+type ImOverlay = {
+    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+    End: () -> (),
+    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+}
+
 type bool = boolean
 
 local function SafeUnit(v3: Vector3): Vector3
@@ -348,6 +354,7 @@ function Class:ApplyTransform()
 	debug.profileend()
 end
 
+--- @client
 --- @within BoneTree
 --- @param DRAW_CONTACTS boolean
 --- @param DRAW_PHYSICAL_BONE boolean
@@ -408,6 +415,45 @@ function Class:DrawDebug(DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BON
 		end
 	end
 	debug.profileend()
+end
+
+--- @client
+--- @within SmartBone
+--- @param Overlay ImOverlay
+function Class:DrawOverlay(Overlay: ImOverlay)
+	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_OBJECTS then
+		Overlay.Text(`Root Part: {self.RootPart.Name}`)
+		Overlay.Text(`Root Bone: {self.Root.Name}`)
+		Overlay.Text(`Root Part Size: {string.format("%.3f, %.3f, %.3f", self.RootPart.Size.X, self.RootPart.Size.Y, self.RootPart.Size.Z)}`)
+	end
+
+	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_NUMERICS then
+		Overlay.Text(`Update Rate: {string.format("%.3f", self.UpdateRate)}`)
+		Overlay.Text(`In View: {self.InView}`)
+		Overlay.Text(`Accumulated Delta: {string.format("%.3f", self.AccumulatedDelta)}`)
+		Overlay.Text(`Force: {string.format("%.3f, %.3f, %.3f", self.Force.X, self.Force.Y, self.Force.Z)}`)
+	end
+
+	local ROOT_BACKGROUND_COLOR = Color3.new(0.486275, 0.431373, 1.000000)
+	local ROOT_TEXT_COLOR = Color3.new(1, 1, 1)
+
+	if Config.DEBUG_OVERLAY_BONE then
+		for i, Bone in self.Bones do
+			if Config.DEBUG_OVERLAY_MAX_BONES > 0 then
+				if Config.DEBUG_OVERLAY_BONE_OFFSET + Config.DEBUG_OVERLAY_MAX_BONES <= i then
+					break
+				end
+			end
+
+			if Config.DEBUG_OVERLAY_BONE_OFFSET > i then
+				continue
+			end
+
+			Overlay.Begin(`Bone {i}`, ROOT_BACKGROUND_COLOR, ROOT_TEXT_COLOR)
+			Bone:DrawOverlay(Overlay)
+			Overlay.End()
+		end
+	end
 end
 
 function Class:Destroy()

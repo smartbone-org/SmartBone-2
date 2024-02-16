@@ -10,6 +10,8 @@ local Dependencies = script:WaitForChild("Dependencies")
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 local Config = require(Dependencies:WaitForChild("Config"))
+local CeiveImOverlay = require(Dependencies:WaitForChild("CeiveImOverlay"))
+local ImOverlay
 
 local BoneClass = require(Components:WaitForChild("Bone"))
 local BoneTreeClass = require(Components:WaitForChild("BoneTree"))
@@ -23,10 +25,30 @@ local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 	end
 end
 
+if Config.DEBUG_OVERLAY_ENABLED then
+	ImOverlay = CeiveImOverlay.new()
+
+	local PlayerGui = Players.LocalPlayer.PlayerGui
+
+	local DebugGui = Instance.new("ScreenGui")
+	DebugGui.Name = "SmartBoneDebugOverlay"
+	DebugGui.IgnoreGuiInset = true
+	DebugGui.ResetOnSpawn = false
+	DebugGui.Parent = PlayerGui
+
+	ImOverlay.BackFrame.Parent = DebugGui
+end
+
 export type IBoneTree = BoneTreeClass.IBoneTree
 export type IBone = BoneClass.IBone
 export type IColliderObject = ColliderObjectClass.IColliderObject
 export type IColliderTable = ColliderObjectClass.IColliderTable
+
+type ImOverlay = {
+    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+    End: () -> (),
+    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+}
 
 type bool = boolean
 
@@ -444,6 +466,43 @@ function Class:DrawDebug(
 	end
 end
 
+--- @client
+--- @within SmartBone
+--- @param Overlay ImOverlay
+--- Draws the debug overlay
+function Class:DrawOverlay(Overlay: ImOverlay)
+	if not Config.DEBUG_OVERLAY_ENABLED then
+		return
+	end
+
+	local INSTANCE_BACKGROUND_COLOR = Color3.new(1.000000, 0.431373, 0.713725)
+	local INSTANCE_TEXT_COLOR = Color3.new(1, 1, 1)
+	local ROOT_BACKGROUND_COLOR = Color3.new(0.486275, 0.431373, 1.000000)
+	local ROOT_TEXT_COLOR = Color3.new(1, 1, 1)
+
+	Overlay.Begin(`SmartBone Instance ID: {self.ID}`, INSTANCE_BACKGROUND_COLOR, INSTANCE_TEXT_COLOR)
+
+	if Config.DEBUG_OVERLAY_TREE then
+		for i, BoneTree in self.BoneTrees do
+			if Config.DEBUG_OVERLAY_MAX_TREES > 0 then
+				if Config.DEBUG_OVERLAY_TREE_OFFSET + Config.DEBUG_OVERLAY_MAX_TREES <= i then
+					break
+				end
+			end
+
+			if Config.DEBUG_OVERLAY_TREE_OFFSET > i then
+				continue
+			end
+
+			Overlay.Begin(`Bone Tree {i}`, ROOT_BACKGROUND_COLOR, ROOT_TEXT_COLOR)
+			BoneTree:DrawOverlay(Overlay)
+			Overlay.End()
+		end
+	end
+
+	Overlay.End()
+end
+
 --- @within SmartBone
 --- Destroys the root and all its children
 function Class:Destroy()
@@ -474,7 +533,9 @@ function Class.Start()
 		return
 	end
 
-	SB_VERBOSE_LOG(".Start()")
+	if Config.STARTUP_PRINT_ENABLED or Config.LOG_VERBOSE then
+		print(`SmartBone2 v{Config.VERSION} Starting`)
+	end
 
 	Class.Running = true
 
@@ -484,6 +545,24 @@ function Class.Start()
 	local ActorFolder = Instance.new("Folder")
 	ActorFolder.Name = "SmartBone-Actors"
 	ActorFolder.Parent = PlayerScripts
+
+	local OverlayEvent = Instance.new("BindableEvent")
+	OverlayEvent.Name = "OverlayEvent"
+	OverlayEvent.Parent = script
+
+	OverlayEvent.Event:Connect(function(Type, ...)
+		if not Config.DEBUG_OVERLAY_ENABLED then
+			return
+		end
+
+		if Type == "Text" then
+			ImOverlay:Text(...)
+		elseif Type == "Begin" then
+			ImOverlay:Begin(...)
+		elseif Type == "End" then
+			ImOverlay:End()
+		end
+	end)
 
 	local function GatherColliders()
 		local ColliderObjects = {
@@ -564,6 +643,12 @@ function Class.Start()
 
 	for _, Object in CollectionService:GetTagged("SmartBone") do
 		SetupObject(Object)
+	end
+
+	if Config.DEBUG_OVERLAY_ENABLED then
+		RunService.RenderStepped:Connect(function()
+			ImOverlay:Render()
+		end)
 	end
 end
 

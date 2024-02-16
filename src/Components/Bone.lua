@@ -24,6 +24,12 @@ local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 type bool = boolean
 
+type ImOverlay = {
+    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+    End: () -> (),
+    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+}
+
 export type IBone = {
 	Bone: Bone,
 	RootBone: Bone,
@@ -48,6 +54,9 @@ export type IBone = {
 
 	Position: Vector3,
 	LastPosition: Vector3,
+
+	ActiveWeld: bool,
+	WeldPosition: Vector3,
 
 	Anchored: bool,
 	AxisLocked: { [number]: bool },
@@ -322,6 +331,10 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		Position = Bone.TransformedWorldCFrame.Position,
 		LastPosition = Bone.TransformedWorldCFrame.Position,
 
+		WeldPosition = Vector3.zero,
+		ActiveWeld = false,
+		RigidWeld = false,
+
 		Anchored = false,
 		AxisLocked = { false, false, false },
 		XAxisLimits = NumberRange.new(-math.huge, math.huge),
@@ -364,6 +377,28 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 	local Parent = BoneTree.Bones[self.ParentIndex]
 
 	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, self)
+
+	local SmartWeld = self.Bone:FindFirstChild("SmartWeld")
+
+	-- Pyramid of weld
+	self.ActiveWeld = false
+	if SmartWeld then
+		if SmartWeld:IsA("ObjectValue") then
+			local WeldTo = SmartWeld.Value
+
+			self.RigidWeld = (SmartWeld:GetAttribute("Rigid") == true) or false
+
+			if WeldTo then
+				if WeldTo:IsA("Attachment") then -- Attachment also covers bones
+					self.WeldPosition = WeldTo.WorldPosition
+					self.ActiveWeld = true
+				elseif WeldTo:IsA("BasePart") then
+					self.WeldPosition = WeldTo.Position
+					self.ActiveWeld = true
+				end
+			end
+		end
+	end
 
 	if self.ParentIndex < 1 then -- Force anchor the root bone
 		self.Anchored = true
@@ -437,7 +472,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 	end
 
 	if BoneTree.Settings.Constraint == "Spring" then
-		Position = SpringConstraint(self, Position, BoneTree, Delta)
+		Position = SpringConstraint(self, Position, nil, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
 	elseif BoneTree.Settings.Constraint == "Rope" then
@@ -449,6 +484,15 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
 	Position = RotationConstraint(self, Position, BoneTree)
+
+	if self.ActiveWeld then
+		if self.RigidWeld then
+			Position = self.WeldPosition
+			Position = DistanceConstraint(self, Position, BoneTree)
+		else
+			Position = SpringConstraint(self, Position, self.WeldPosition, BoneTree, Delta)
+		end
+	end
 
 	self.Friction = 0
 
@@ -496,9 +540,13 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
 
 		local factor = 0.00001
-		local alpha = (1 - factor ^ Delta)
+		local alpha = math.min(1 - factor ^ Delta, 1)
 
-		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
+			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
+		else
+			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		end
 
 		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
 	end
@@ -541,6 +589,7 @@ function Class:ApplyTransform(BoneTree)
 	debug.profileend()
 end
 
+--- @client
 --- @within Bone
 --- @param BoneTree any
 --- @param DRAW_CONTACTS boolean
@@ -734,6 +783,36 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 	end
 
 	debug.profileend()
+end
+
+--- @client
+--- @within Bone
+function Class:DrawOverlay(Overlay: ImOverlay)
+	Overlay.Text(`Bone: {self.Bone.Name}`)
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_NUMERICS then
+		Overlay.Text(`Free Length: {self.FreeLength}`)
+		Overlay.Text(`Weight: {self.Weight}`)
+		Overlay.Text(`Parent Index: {self.ParentIndex}`)
+		Overlay.Text(`Heirarchy Length: {self.HeirarchyLength}`)
+		Overlay.Text(`Radius: {self.Radius}`)
+		Overlay.Text(`Friction: {self.Friction}`)
+		Overlay.Text(`Rotation Limit: {self.RotationLimit}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_CONSTRAIN then
+		Overlay.Text(`Anchored: {self.Anchored}`)
+		Overlay.Text(`Axis Locked: {self.AxisLocked[1]}, {self.AxisLocked[2]}, {self.AxisLocked[3]}`)
+		Overlay.Text(`X Axis Limit: {self.XAxisLimits}`)
+		Overlay.Text(`Y Axis Limit: {self.YAxisLimits}`)
+		Overlay.Text(`Z Axis Limit: {self.ZAxisLimits}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_WELD then
+		Overlay.Text(`Active Weld: {self.ActiveWeld}`)
+		Overlay.Text(`Rigid Weld: {self.RigidWeld}`)
+		Overlay.Text(`Weld Position: {string.format("%.3f, %.3f, %.3f", self.WeldPosition.X, self.WeldPosition.Y, self.WeldPosition.Z)}`)
+	end
 end
 
 function Class:Destroy()

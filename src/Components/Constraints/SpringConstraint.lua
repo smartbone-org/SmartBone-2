@@ -1,6 +1,7 @@
 --!native
-return function(self, Position, BoneTree, Delta)
+return function(self, Position, RestPosition, BoneTree, Delta)
 	debug.profilebegin("Spring Constraint")
+
 	local Settings = BoneTree.Settings
 	local Stiffness = Settings.Stiffness
 	local Elasticity = Settings.Elasticity
@@ -12,7 +13,7 @@ return function(self, Position, BoneTree, Delta)
 
 		if Stiffness > 0 or Elasticity > 0 then
 			local ParentBoneCFrame = CFrame.new(ParentBone.Position) * ParentBone.TransformOffset.Rotation
-			local RestPosition = (ParentBoneCFrame * CFrame.new(self.LocalTransformOffset.Position)).Position
+			RestPosition = RestPosition or (ParentBoneCFrame * CFrame.new(self.LocalTransformOffset.Position)).Position
 
 			local ElasticDifference = RestPosition - Position
 			Position += ElasticDifference * (Elasticity * Delta)
