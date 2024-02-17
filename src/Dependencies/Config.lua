@@ -15,7 +15,7 @@ return {
     -- Enable or disable the startup print
     STARTUP_PRINT_ENABLED = true,
     -- Overlay config, not meant for end users
-    DEBUG_OVERLAY_ENABLED = true, -- enable or disable when debug is enabled
+    DEBUG_OVERLAY_ENABLED = false, -- enable or disable when debug is enabled
     DEBUG_OVERLAY_TREE = true, -- enable tree debug
     DEBUG_OVERLAY_TREE_INFO = false,
     DEBUG_OVERLAY_TREE_OBJECTS = false,
