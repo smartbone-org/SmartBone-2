@@ -1,6 +1,7 @@
 --!native
 local Dependencies = script.Parent
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
 
 local Class = {}
 
@@ -85,7 +86,7 @@ function Class.ObjectInFrustum(
 	local Size = Object.Size
 
 	-- Allows for really big root parts to still be checked correctly
-	local HalfFarPlane = Utilities.FarPlane * 0.5
+	local HalfFarPlane = Config.FAR_PLANE * 0.5
 	local LinePosition = cameraCFrame.Position + (cameraCFrame.LookVector * HalfFarPlane)
 
 	local Closest = Utilities.ClosestPointOnLine(LinePosition, cameraCFrame.LookVector, HalfFarPlane, CF.Position)

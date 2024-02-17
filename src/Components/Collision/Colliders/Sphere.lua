@@ -1,7 +1,15 @@
 --!native
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 local function ClosestPointFunc(position, radius, point)
 	local distance = (position - point).Magnitude
-	local normal = (point - position).Unit
+	local normal = SafeUnit(point - position)
 	local is_inside = (distance <= radius)
 
 	return is_inside, position + (normal * radius), normal

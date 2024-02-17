@@ -5,7 +5,6 @@ return {
 	Stiffness = 0.2,
 	Inertia = 0,
 	Elasticity = 3,
-	BlendWeight = 1,
 	AnchorDepth = 0,
 
 	AnchorsRotate = false,

@@ -9,6 +9,9 @@ local Dependencies = script:WaitForChild("Dependencies")
 
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
+local CeiveImOverlay = require(Dependencies:WaitForChild("CeiveImOverlay"))
+local ImOverlay
 
 local BoneClass = require(Components:WaitForChild("Bone"))
 local BoneTreeClass = require(Components:WaitForChild("BoneTree"))
@@ -21,6 +24,19 @@ local function CopyPasteAttributes(Object1: BasePart, Object2: BasePart)
 		Object2:SetAttribute(k, v)
 	end
 end
+
+export type IBoneTree = BoneTreeClass.IBoneTree
+export type IBone = BoneClass.IBone
+export type IColliderObject = ColliderObjectClass.IColliderObject
+export type IColliderTable = ColliderObjectClass.IColliderTable
+
+type ImOverlay = {
+    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+    End: () -> (),
+    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+}
+
+type bool = boolean
 
 local SB_INDENT_LOG = Utilities.SB_INDENT_LOG
 local SB_UNINDENT_LOG = Utilities.SB_UNINDENT_LOG
@@ -77,12 +93,13 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Used to add a bone to the provided bone tree
-function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
+function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: number, HeirarchyLength: number)
 	local Settings = Utilities.GatherBoneSettings(BoneObject)
-	local Bone: BoneClass.IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
+	local Bone: IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
 	for k, v in Settings do
-		Bone[k] = v
+		-- ¬ represents a nil value
+		Bone[k] = (v ~= "¬") and v or nil
 	end
 
 	local ParentBone = BoneTree.Bones[ParentIndex]
@@ -92,6 +109,8 @@ function Class:m_AppendBone(BoneTree: BoneTreeClass.IBoneTree, BoneObject: Bone,
 		Bone.FreeLength = BoneLength
 		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
 		Bone.HeirarchyLength = HeirarchyLength
+
+		ParentBone.HasChild = true
 	end
 
 	if HeirarchyLength <= BoneTree.Settings.AnchorDepth then
@@ -114,7 +133,7 @@ end
 --- Creates a bone tree from the RootPart and RootBone and then adds all child bones via m_AppendBone
 function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 	local Settings = Utilities.GatherObjectSettings(RootPart)
-	local BoneTree = BoneTreeClass.new(RootBone, RootPart, Settings.Gravity)
+	local BoneTree = BoneTreeClass.new(RootBone, RootPart)
 
 	BoneTree.Settings = Settings
 
@@ -170,7 +189,7 @@ end
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
 	debug.profilebegin("BonePhysics::m_UpdateViewFrustum")
-	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Utilities.FarPlane) -- Hard coded 500 stud limit on any object
+	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
 		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
@@ -208,7 +227,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Constrains each bone in the provided bone tree and cleans up colliders
-function Class:m_ConstrainBoneTree(BoneTree: BoneTreeClass.IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
+function Class:m_ConstrainBoneTree(BoneTree: IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
 	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
 
 	BoneTree:Constrain(self.ColliderObjects, Delta)
@@ -225,7 +244,7 @@ end
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
 --- Updates the provided bone tree with all optimizations
-function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
+function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
 	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
 
 	if BoneTree.Destroyed then
@@ -236,7 +255,7 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 		return
 	end
 
-	BoneTree:PreUpdate() -- Pre update MUST be called before we call SkipUpdate!
+	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
 	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
 		local AlreadySkipped = BoneTree.FirstSkipUpdate
@@ -244,10 +263,12 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 		BoneTree:SkipUpdate()
 
 		if not AlreadySkipped then
+			debug.profileend()
+
 			task.synchronize()
 			BoneTree:ApplyTransform()
-		else
-			debug.profileend()
+
+			SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
 		end
 
 		return
@@ -263,7 +284,7 @@ function Class:m_UpdateBoneTree(BoneTree, Index, Delta)
 	local DidUpdate = false
 
 	BoneTree.AccumulatedDelta += Delta
-	while BoneTree.AccumulatedDelta > 0 do
+	while BoneTree.AccumulatedDelta > UpdateHz do
 		BoneTree.AccumulatedDelta -= UpdateHz
 
 		DidUpdate = true
@@ -359,7 +380,7 @@ end
 --- @param ColliderData table
 --- @param Object BasePart
 --- Loads the raw collider data onto the provided object
-function Class:LoadRawCollider(ColliderData: {}, Object: BasePart)
+function Class:LoadRawCollider(ColliderData: IColliderTable, Object: BasePart)
 	local ColliderObject = ColliderObjectClass.new(ColliderData, Object)
 
 	table.insert(self.ColliderObjects, ColliderObject)
@@ -378,7 +399,7 @@ end
 --- @within SmartBone
 --- @param Delta number
 --- Updates all bone trees
-function Class:StepBoneTrees(Delta)
+function Class:StepBoneTrees(Delta: number)
 	if self:m_CheckDestroy() then
 		return
 	end
@@ -403,22 +424,26 @@ end
 --- @param DRAW_COLLIDER_AWAKE boolean
 --- @param DRAW_COLLIDER_BROADPHASE boolean
 --- @param DRAW_BOUNDING_BOX boolean
+--- @param DRAW_ROTATION_LIMITS boolean
+--- @param DRAW_ACCELERATION_INFO boolean
 --- Draws the debug gizmos
 function Class:DrawDebug(
-	DRAW_COLLIDERS,
-	DRAW_CONTACTS,
-	DRAW_PHYSICAL_BONE,
-	DRAW_BONE,
-	DRAW_AXIS_LIMITS,
-	DRAW_ROOT_PART,
-	DRAW_FILL_COLLIDERS,
-	DRAW_COLLIDER_INFLUENCE,
-	DRAW_COLLIDER_AWAKE,
-	DRAW_COLLIDER_BROADPHASE,
-	DRAW_BOUNDING_BOX
+	DRAW_COLLIDERS: bool,
+	DRAW_CONTACTS: bool,
+	DRAW_PHYSICAL_BONE: bool,
+	DRAW_BONE: bool,
+	DRAW_AXIS_LIMITS: bool,
+	DRAW_ROOT_PART: bool,
+	DRAW_FILL_COLLIDERS: bool,
+	DRAW_COLLIDER_INFLUENCE: bool,
+	DRAW_COLLIDER_AWAKE: bool,
+	DRAW_COLLIDER_BROADPHASE: bool,
+	DRAW_BOUNDING_BOX: bool,
+	DRAW_ROTATION_LIMITS: bool,
+	DRAW_ACCELERATION_INFO: bool
 )
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX)
+		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS, DRAW_ACCELERATION_INFO)
 	end
 
 	if DRAW_COLLIDERS then
@@ -426,6 +451,44 @@ function Class:DrawDebug(
 			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS, DRAW_COLLIDER_INFLUENCE, DRAW_COLLIDER_AWAKE, DRAW_COLLIDER_BROADPHASE)
 		end
 	end
+end
+
+--- @client
+--- @within SmartBone
+--- @param Overlay ImOverlay
+--- Draws the debug overlay
+function Class:DrawOverlay(Overlay: ImOverlay)
+	if not Config.DEBUG_OVERLAY_ENABLED then
+		return
+	end
+
+	local INSTANCE_BACKGROUND_COLOR = Color3.new(1.000000, 0.431373, 0.713725)
+	local INSTANCE_TEXT_COLOR = Color3.new(1, 1, 1)
+	local ROOT_BACKGROUND_COLOR = Color3.new(0.486275, 0.431373, 1.000000)
+	local ROOT_TEXT_COLOR = Color3.new(1, 1, 1)
+
+	Overlay.Begin(`SmartBone Instance ID: {self.ID}`, INSTANCE_BACKGROUND_COLOR, INSTANCE_TEXT_COLOR)
+	Overlay.Text(`Frame Counter: {shared.FrameCounter}`)
+
+	if Config.DEBUG_OVERLAY_TREE then
+		for i, BoneTree in self.BoneTrees do
+			if Config.DEBUG_OVERLAY_MAX_TREES > 0 then
+				if Config.DEBUG_OVERLAY_TREE_OFFSET + Config.DEBUG_OVERLAY_MAX_TREES <= i then
+					break
+				end
+			end
+
+			if Config.DEBUG_OVERLAY_TREE_OFFSET > i then
+				continue
+			end
+
+			Overlay.Begin(`Bone Tree {i}`, ROOT_BACKGROUND_COLOR, ROOT_TEXT_COLOR)
+			BoneTree:DrawOverlay(Overlay)
+			Overlay.End()
+		end
+	end
+
+	Overlay.End()
 end
 
 --- @within SmartBone
@@ -458,7 +521,9 @@ function Class.Start()
 		return
 	end
 
-	SB_VERBOSE_LOG(".Start()")
+	if Config.STARTUP_PRINT_ENABLED or Config.LOG_VERBOSE then
+		print(`SmartBone2 v{Config.VERSION} Starting`)
+	end
 
 	Class.Running = true
 
@@ -468,6 +533,24 @@ function Class.Start()
 	local ActorFolder = Instance.new("Folder")
 	ActorFolder.Name = "SmartBone-Actors"
 	ActorFolder.Parent = PlayerScripts
+
+	local OverlayEvent = Instance.new("BindableEvent")
+	OverlayEvent.Name = "OverlayEvent"
+	OverlayEvent.Parent = script
+
+	OverlayEvent.Event:Connect(function(Type, ...)
+		if not Config.DEBUG_OVERLAY_ENABLED then
+			return
+		end
+
+		if Type == "Text" then
+			ImOverlay:Text(...)
+		elseif Type == "Begin" then
+			ImOverlay:Begin(...)
+		elseif Type == "End" then
+			ImOverlay:End()
+		end
+	end)
 
 	local function GatherColliders()
 		local ColliderObjects = {
@@ -495,7 +578,9 @@ function Class.Start()
 			SB_VERBOSE_LOG(`Adding collider: {Object.Name}, Collider Key: {ColliderKey}`)
 			table.insert(ColliderObjects.Raw, Object)
 
-			-- task.wait()
+			if Config.YIELD_ON_COLLIDER_GATHER then
+				task.wait()
+			end
 		end
 
 		return ColliderObjects
@@ -546,6 +631,24 @@ function Class.Start()
 
 	for _, Object in CollectionService:GetTagged("SmartBone") do
 		SetupObject(Object)
+	end
+
+	if Config.DEBUG_OVERLAY_ENABLED then
+		ImOverlay = CeiveImOverlay.new()
+
+		local PlayerGui = Players.LocalPlayer.PlayerGui
+
+		local DebugGui = Instance.new("ScreenGui")
+		DebugGui.Name = "SmartBoneDebugOverlay"
+		DebugGui.IgnoreGuiInset = true
+		DebugGui.ResetOnSpawn = false
+		DebugGui.Parent = PlayerGui
+
+		ImOverlay.BackFrame.Parent = DebugGui
+
+		RunService.RenderStepped:Connect(function()
+			ImOverlay:Render()
+		end)
 	end
 end
 

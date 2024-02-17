@@ -3,9 +3,10 @@
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
+local Config = require(Dependencies:WaitForChild("Config"))
 local IsStudio = game:GetService("RunService"):IsStudio()
 
-if IsStudio then
+if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
 	Gizmo.Init()
 end
 
@@ -16,22 +17,37 @@ local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"
 local FrictionConstraint = require(Constraints:WaitForChild("FrictionConstraint"))
 local RopeConstraint = require(Constraints:WaitForChild("RopeConstraint"))
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
+local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+
+type bool = boolean
+
+type ImOverlay = {
+    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+    End: () -> (),
+    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+}
 
 export type IBone = {
 	Bone: Bone,
+	RootBone: Bone,
+	RootPart: BasePart,
 	FreeLength: number,
 	Weight: number,
 	ParentIndex: number,
 	HeirarchyLength: number,
 	Transform: CFrame,
 	LocalTransform: CFrame,
-	RootTransform: CFrame,
 	Radius: number,
 	Friction: number,
+	RotationLimit: number,
+	Force: Vector3?,
+	Gravity: Vector3?,
 
-	SolvedAnimatedCFrame: boolean,
+	SolvedAnimatedCFrame: bool,
+	HasChild: bool,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -42,8 +58,11 @@ export type IBone = {
 	Position: Vector3,
 	LastPosition: Vector3,
 
-	Anchored: boolean,
-	AxisLocked: { [number]: boolean },
+	ActiveWeld: bool,
+	WeldPosition: Vector3,
+
+	Anchored: bool,
+	AxisLocked: { [number]: bool },
 	XAxisLimits: NumberRange,
 	YAxisLimits: NumberRange,
 	ZAxisLimits: NumberRange,
@@ -51,7 +70,7 @@ export type IBone = {
 	CollisionHits: { [number]: BasePart },
 }
 
-local function IsNaN(Value: any): boolean
+local function IsNaN(Value: any): bool
 	if Value ~= Value then
 		return true
 	end
@@ -59,31 +78,46 @@ local function IsNaN(Value: any): boolean
 	return false
 end
 
+local SolvedTransformedCFrames = {}
+
 -- I beg roblox to make TransformedWorldCFrame parallel safe
+-- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
+-- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
-	local Parent = OriginBone.Parent
+	local Solved = SolvedTransformedCFrames[OriginBone]
+	if Solved then
+		if Solved.Frame == shared.FrameCounter then
+			return Solved.CFrame
+		end
+	end
+
+	local Parent = OriginBone.Parent :: Bone | BasePart
 	local ParentCFrame
 
 	if Parent:IsA("Bone") then
 		ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(Parent)
-	else -- Hope it's a BasePart (Should be unless someone has done some weird source editing)
+	else -- This should always be a basepart unless someone has the weirdest model setup ever. If that person is you, why?
 		ParentCFrame = Parent.CFrame
 	end
 
+	local Result = ParentCFrame * OriginBone.TransformedCFrame
+
+	SolvedTransformedCFrames[OriginBone] = {Frame = shared.FrameCounter, CFrame = Result}
+
 	debug.profileend()
-	return ParentCFrame * OriginBone.TransformedCFrame
+	return Result
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
-local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
+local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrame")
 	Bone.SolvedAnimatedCFrame = true
 
 	local ParentIndex = Bone.ParentIndex
 	local BoneObject = Bone.Bone
 
-	if ParentIndex < 1 then
+	if ParentIndex < 1 then -- We are no longer in the smartbone tree
 		debug.profileend()
 		return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
@@ -98,7 +132,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone)
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
-local function ClipVector(LastPosition, Position, Vector)
+local function ClipVector(LastPosition: Vector3, Position: Vector3, Vector: Vector3): Vector3
 	LastPosition *= (Vector3.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
@@ -117,7 +151,7 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self, BoneTree)
+local function SolveWind(self: IBone, BoneTree: any): Vector3
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
@@ -151,26 +185,24 @@ local function SolveWind(self, BoneTree)
 	end
 
 	local function SampleSin()
-		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 2
+		local Freq = Settings.WindStrength ^ 0.8
+		local Power = Settings.WindSpeed * 2
 		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
-		local Sin2 = math.cos(TimeModifier * Freq) ^ 2 - 0.2
-		local Wave = (Sin1 > Sin2 and Sin1 or Sin2) * (Power + Amp)
+		local Sin2 = math.cos(TimeModifier * Freq) ^ 2
+		local Wave = (Sin1 + (Sin2 - Sin1) * Sin2) * Power
 		return Settings.WindDirection * Wave
 	end
 
 	local function SampleNoise(CustomAmp, Map)
 		CustomAmp = CustomAmp or 0
 
-		local Freq = Settings.WindSpeed ^ 0.8
-		local Power = Settings.WindSpeed ^ 0.9
-		local Amp = Settings.WindStrength * 2
+		local Freq = Settings.WindStrength ^ 0.8
+		local Power = Settings.WindSpeed * 2
 		local Seed = BoneTree.WindOffset
 
-		local X = GetNoise(Freq, 0, Seed, Map) * (Power + Amp + CustomAmp)
-		local Y = GetNoise(0, Freq, Seed, Map) * (Power + Amp + CustomAmp)
-		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + Amp + CustomAmp)
+		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
+		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
+		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
 
 		return Settings.WindDirection * Vector3.new(X, Y, Z)
 	end
@@ -185,7 +217,7 @@ local function SolveWind(self, BoneTree)
 		WindMove *= 0.5
 	end
 
-	WindMove /= self.FreeLength
+	WindMove /= math.max(self.FreeLength, 0.01)
 	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
 
@@ -221,9 +253,6 @@ end
 
 --- @within Bone
 --- @prop LocalTransform CFrame
-
---- @within Bone
---- @prop RootTransform CFrame
 
 --- @within Bone
 --- @readonly
@@ -289,31 +318,40 @@ end
 local Class = {}
 Class.__index = Class
 
-function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
+function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
+	local ParentCFrame = Bone.Parent:IsA("Bone") and Bone.Parent.TransformedWorldCFrame or RootPart.CFrame
+
 	local self = setmetatable({
 		Bone = Bone,
 		FreeLength = -1,
 		Weight = 1 * 0.7,
 		ParentIndex = -1,
 		HeirarchyLength = 0,
-		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(RootBone.TransformedWorldCFrame):Inverse(),
-		LocalTransform = Bone.CFrame:ToObjectSpace(RootBone.CFrame):Inverse(),
-		RootTransform = RootBone.WorldCFrame:ToObjectSpace(RootPart.CFrame):Inverse(),
+		Transform = Bone.TransformedWorldCFrame:ToObjectSpace(ParentCFrame):Inverse(),
+		LocalTransform = Bone.TransformedCFrame:ToObjectSpace(RootBone.TransformedCFrame):Inverse(),
 		RootPart = RootPart,
 		RootBone = RootBone,
 		Radius = 0,
 		Friction = 0,
+		RotationLimit = 0,
+		Force = nil,
+		Gravity = nil,
 
 		SolvedAnimatedCFrame = false,
+		HasChild = false,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
-		TransformOffset = CFrame.identity, -- If this bone is the root part then this is our cframe relative to root part if it isnt root then its relative to its parent (AT THE START OF THE SIMULATION)
-		LocalTransformOffset = CFrame.identity, -- Our CFrame relative to the root bone when we first start the simulation
+		TransformOffset = CFrame.identity,
+		LocalTransformOffset = CFrame.identity,
 		RestPosition = Vector3.zero,
 		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
 		Position = Bone.TransformedWorldCFrame.Position,
 		LastPosition = Bone.TransformedWorldCFrame.Position,
+
+		WeldPosition = Vector3.zero,
+		ActiveWeld = false,
+		RigidWeld = false,
 
 		Anchored = false,
 		AxisLocked = { false, false, false },
@@ -329,23 +367,26 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart)
 		CollisionsData = {},
 	}, Class)
 
-	self.AttributeConnection = Bone.AttributeChanged:Connect(function()
+
+
+	self.AttributeConnection = Bone.AttributeChanged:Connect(function(Attribute)
 		-- Do this cause of axis lock
 		local Settings = Utilities.GatherBoneSettings(Bone)
 
 		for k, v in Settings do
-			self[k] = v
+			-- ¬ represents a nil value
+			self[k] = (v ~= "¬") and v or nil
 		end
 	end)
 
-	return self
+	return self :: IBone
 end
 
 --- @within Bone
 --- @param Position Vector3
 --- @param Vector Vector3
 --- Clips velocity on specified vector, Position is where we are at our current physics step (Before we set self.Position)
-function Class:ClipVelocity(Position, Vector)
+function Class:ClipVelocity(Position: Vector3, Vector: Vector3)
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
@@ -353,20 +394,52 @@ end
 --- @param BoneTree BoneTree
 function Class:PreUpdate(BoneTree) -- Parallel safe
 	debug.profilebegin("Bone::PreUpdate")
-	local RootPart = self.RootPart
 	local Root = BoneTree.Bones[1]
+	local Parent = BoneTree.Bones[self.ParentIndex]
 
 	self.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, self)
+
+	local SmartWeld = self.Bone:FindFirstChild("SmartWeld")
+
+	-- Pyramid of weld
+	self.ActiveWeld = false
+	if SmartWeld then
+		if SmartWeld:IsA("ObjectValue") then
+			local WeldTo = SmartWeld.Value
+
+			self.RigidWeld = (SmartWeld:GetAttribute("Rigid") == true) or false
+
+			if WeldTo then
+				if WeldTo:IsA("Attachment") then -- Attachment also covers bones
+					self.WeldPosition = WeldTo.WorldPosition
+					self.ActiveWeld = true
+				elseif WeldTo:IsA("BasePart") then
+					self.WeldPosition = WeldTo.Position
+					self.ActiveWeld = true
+				end
+			end
+		end
+	end
 
 	if self.ParentIndex < 1 then -- Force anchor the root bone
 		self.Anchored = true
 	end
 
 	if self.Bone == self.RootBone then
-		self.TransformOffset = RootPart.CFrame * self.RootTransform
+		-- Curse Non-SmartBone Objects!
+		local ParentCFrame
+
+		if self.Bone.Parent:IsA("Bone") then
+			ParentCFrame = QueryTransformedWorldCFrameNonSmartbone(self.Bone.Parent)
+		else
+			ParentCFrame = self.RootPart.CFrame
+		end
+
+		self.TransformOffset = ParentCFrame * self.Transform
 	else
-		self.TransformOffset = Root.AnimatedWorldCFrame * self.Transform
+		self.TransformOffset = Parent.AnimatedWorldCFrame * self.Transform
 	end
+
 	self.LocalTransformOffset = Root.Bone.CFrame * self.LocalTransform
 	debug.profileend()
 end
@@ -374,8 +447,9 @@ end
 --- @within Bone
 --- @param BoneTree BoneTree
 --- @param Force Vector3
+--- @param Delta number -- Δt
 --- Force passed in via BoneTree:StepPhysics()
-function Class:StepPhysics(BoneTree, Force) -- Parallel safe
+function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::StepPhysics")
 	if self.Anchored then
 		self.LastPosition = self.AnimatedWorldCFrame.Position
@@ -385,10 +459,17 @@ function Class:StepPhysics(BoneTree, Force) -- Parallel safe
 		return
 	end
 
+	-- Custom forces per bone
+	if self.Force or self.Gravity then
+		Force = (self.Gravity or BoneTree.Settings.Gravity)
+
+		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
+	end
+
 	local Settings = BoneTree.Settings
 
 	local Velocity = (self.Position - self.LastPosition)
-	local Move = (BoneTree.ObjectMove * Settings.Inertia)
+	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
 	local WindMove = SolveWind(self, BoneTree)
 
 	self.LastPosition = self.Position
@@ -401,7 +482,7 @@ end
 --- @param BoneTree BoneTree
 --- @param ColliderObjects Vector3
 --- @param Delta number -- Δt
-function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
+function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
 	if self.Anchored then
 		debug.profileend()
@@ -420,7 +501,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	end
 
 	if BoneTree.Settings.Constraint == "Spring" then
-		Position = SpringConstraint(self, Position, BoneTree, Delta)
+		Position = SpringConstraint(self, Position, nil, BoneTree, Delta)
 	elseif BoneTree.Settings.Constraint == "Distance" then
 		Position = DistanceConstraint(self, Position, BoneTree)
 	elseif BoneTree.Settings.Constraint == "Rope" then
@@ -431,11 +512,21 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta) -- Parallel safe
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+	Position = RotationConstraint(self, Position, BoneTree)
+
+	if self.ActiveWeld then
+		if self.RigidWeld then
+			Position = self.WeldPosition
+			Position = DistanceConstraint(self, Position, BoneTree)
+		else
+			Position = SpringConstraint(self, Position, self.WeldPosition, BoneTree, Delta)
+		end
+	end
 
 	self.Friction = 0
 
 	for _, HitPart in self.CollisionHits do
-		-- Pretty much just if objfriction > friction then friction = objfriction end
+		-- Use whatever object has the higher friction
 		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
 	end
 
@@ -446,8 +537,9 @@ end
 --- @within Bone
 --- Returns bone to rest position
 function Class:SkipUpdate()
-	if self.FirstSkipUpdate == false then
-		self.Position = self.TransformOffset.Position
+	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
+		SB_VERBOSE_LOG("Skipping bone, resetting transform.")
+		self.CalculatedWorldCFrame = self.AnimatedWorldCFrame
 		self.FirstSkipUpdate = true
 	end
 
@@ -459,7 +551,7 @@ end
 --- @param BoneTree BoneTree
 --- @param Delta number -- Δt
 --- Solves the cframe of the bones
-function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
+function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::SolveTransform")
 	if self.ParentIndex < 1 then
 		debug.profileend()
@@ -468,7 +560,7 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 
 	self.FirstSkipUpdate = false
 
-	local ParentBone = BoneTree.Bones[self.ParentIndex]
+	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent then
@@ -477,9 +569,13 @@ function Class:SolveTransform(BoneTree, Delta) -- Parallel safe
 		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
 
 		local factor = 0.00001
-		local alpha = (1 - factor ^ Delta)
+		local alpha = math.min(1 - factor ^ Delta, 1)
 
-		ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
+			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
+		else
+			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+		end
 
 		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
 	end
@@ -522,12 +618,15 @@ function Class:ApplyTransform(BoneTree)
 	debug.profileend()
 end
 
+--- @client
 --- @within Bone
---- @param DRAW_CONTACTS any
---- @param DRAW_PHYSICAL_BONE any
---- @param DRAW_BONE any
---- @param DRAW_AXIS_LIMITS any
-function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS)
+--- @param BoneTree any
+--- @param DRAW_CONTACTS boolean
+--- @param DRAW_PHYSICAL_BONE boolean
+--- @param DRAW_BONE boolean
+--- @param DRAW_AXIS_LIMITS boolean
+--- @param DRAW_ROTATION_LIMIT boolean
+function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROTATION_LIMIT: bool)
 	debug.profilebegin("Bone::DrawDebug")
 	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
@@ -536,6 +635,7 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local BONE_FRONT_ARROW_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_UP_ARROW_COLOR = Color3.fromRGB(0, 255, 0)
 	local BONE_RIGHT_ARROW_COLOR = Color3.fromRGB(0, 0, 255)
+	local ROTATION_CONE_COLOR = Color3.fromRGB(0, 183, 255)
 	local AXIS_X_COLOR = Color3.fromRGB(255, 0, 0)
 	local AXIS_Y_COLOR = Color3.fromRGB(0, 255, 0)
 	local AXIS_Z_COLOR = Color3.fromRGB(0, 0, 255)
@@ -554,6 +654,8 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 	local BONE_CYLINDER_RADIUS = 0.005
 	local BONE_ARROW_EXPANSION = 0.25
 	local BONE_RADIUS = 0.08
+
+	local ROTATION_CONE_LENGTH = 1
 
 	local BoneCFrame = self.AnimatedWorldCFrame
 	local BonePosition = BoneCFrame.Position
@@ -680,7 +782,74 @@ function Class:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS
 		end
 	end
 
+	-- Draw rotation limit
+
+	if DRAW_ROTATION_LIMIT and self.RotationLimit < 180 and self.RotationLimit > 0 and self.ParentIndex > 0 and self.HasChild then
+		local ConeRadius
+		local InverseDirection = 1
+		if self.RotationLimit < 89.5 then
+			ConeRadius = ROTATION_CONE_LENGTH * math.tan(math.rad(self.RotationLimit))
+		elseif self.RotationLimit > 90 then
+			InverseDirection = -1
+			ConeRadius = ROTATION_CONE_LENGTH * math.tan(math.rad(180 - self.RotationLimit))
+		else
+			ROTATION_CONE_LENGTH = 0
+			ConeRadius = 5
+		end
+
+		ConeRadius = math.min(ConeRadius, 5)
+
+		if ConeRadius == 5 then
+			ROTATION_CONE_LENGTH = 0
+		end
+
+		local ConeDirection = (self.Position - BoneTree.Bones[self.ParentIndex].Position).Unit * InverseDirection
+
+		local NewBoneCFrame = CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH / 2), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
+
+		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
+		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
+	end
+
 	debug.profileend()
+end
+
+--- @client
+--- @within Bone
+function Class:DrawOverlay(Overlay: ImOverlay)
+	Overlay.Text(`Bone: {self.Bone.Name}`)
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_NUMERICS then
+		Overlay.Text(`Free Length: {self.FreeLength}`)
+		Overlay.Text(`Weight: {self.Weight}`)
+		Overlay.Text(`Parent Index: {self.ParentIndex}`)
+		Overlay.Text(`Heirarchy Length: {self.HeirarchyLength}`)
+		Overlay.Text(`Radius: {self.Radius}`)
+		Overlay.Text(`Friction: {self.Friction}`)
+		Overlay.Text(`Rotation Limit: {self.RotationLimit}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_CONSTRAIN then
+		Overlay.Text(`Anchored: {self.Anchored}`)
+		Overlay.Text(`Axis Locked: {self.AxisLocked[1]}, {self.AxisLocked[2]}, {self.AxisLocked[3]}`)
+		Overlay.Text(`X Axis Limit: {self.XAxisLimits}`)
+		Overlay.Text(`Y Axis Limit: {self.YAxisLimits}`)
+		Overlay.Text(`Z Axis Limit: {self.ZAxisLimits}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_WELD then
+		Overlay.Text(`Active Weld: {self.ActiveWeld}`)
+		Overlay.Text(`Rigid Weld: {self.RigidWeld}`)
+		Overlay.Text(`Weld Position: {string.format("%.3f, %.3f, %.3f", self.WeldPosition.X, self.WeldPosition.Y, self.WeldPosition.Z)}`)
+	end
+
+	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_FORCES then
+		local Force = self.Force and string.format("%.3f, %.3f, %.3f", self.Force.X, self.Force.Y, self.Force.Z) or "-, -, -"
+		local Gravity = self.Gravity and string.format("%.3f, %.3f, %.3f", self.Gravity.X, self.Gravity.Y, self.Gravity.Z) or "-, -, -"
+
+		Overlay.Text(`Force: {Force}`)
+		Overlay.Text(`Gravity: {Gravity}`)
+	end
 end
 
 function Class:Destroy()

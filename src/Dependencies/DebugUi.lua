@@ -26,6 +26,9 @@ local function BoneEditor(Iris, BoneObject)
 	local Radius = Iris.InputNum({ "Radius", 0.1, 0, math.huge, "%.3f" }, { number = BoneObject.Radius })
 	BoneObject.Radius = Radius.number.value
 
+	local RotationLimit = Iris.InputNum({ "Rotation Limit", 0.1, 0, 180, "%.3f" }, { number = BoneObject.RotationLimit })
+	BoneObject.RotationLimit = RotationLimit.number.value
+
 	local IsAnchored = Iris.Checkbox({ "Anchored" }, { isChecked = BoneObject.Anchored })
 	BoneObject.Anchored = IsAnchored.isChecked.value
 
@@ -167,6 +170,16 @@ return function(Iris, RootObject, DebugState)
 	Iris.SameLine()
 	Iris.Checkbox({ "Draw Axis Limits" }, { isChecked = DebugState.DRAW_AXIS_LIMITS })
 	helpMarker(Iris, "Draws the axis limits for each bone.")
+	Iris.End()
+
+	Iris.SameLine()
+	Iris.Checkbox({ "Draw Rotation Limits" }, { isChecked = DebugState.DRAW_ROTATION_LIMITS })
+	helpMarker(Iris, "Draws the rotation limits for each bone.")
+	Iris.End()
+
+	Iris.SameLine()
+	Iris.Checkbox({ "Draw Acceleration Info" }, { isChecked = DebugState.DRAW_ACCELERATION_INFO })
+	helpMarker(Iris, "Draws the acceleration and the required values to derive it.")
 	Iris.End()
 
 	Iris.SameLine()

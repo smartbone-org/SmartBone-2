@@ -17,7 +17,16 @@ type IRawCollider = {
 	RotationZ: number,
 }
 
-type IColliderTable = { [number]: IRawCollider }
+type bool = boolean
+
+export type IColliderTable = { [number]: IRawCollider }
+export type IColliderObject = {
+	m_Object: BasePart,
+	m_Awake: bool,
+	m_LastSleepCycle: number,
+	Destroyed: bool,
+	Colliders: IColliderTable
+}
 
 --- @class ColliderObject
 --- Internal class for collider
@@ -45,7 +54,7 @@ Class.__index = Class
 --- @param ColliderTable {[number]: {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}}
 --- @param Object BasePart
 --- @return ColliderObject
-function Class.new(ColliderTable: IColliderTable, Object: BasePart)
+function Class.new(ColliderTable: IColliderTable, Object: BasePart): IColliderObject
 	local self = setmetatable({
 		m_Object = Object,
 		m_Awake = true,
@@ -62,7 +71,7 @@ function Class.new(ColliderTable: IColliderTable, Object: BasePart)
 		end
 	end)
 
-	return self
+	return self :: IColliderObject
 end
 
 --- @within ColliderObject

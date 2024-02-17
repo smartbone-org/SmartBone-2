@@ -17,7 +17,7 @@ sidebar_position: 2
 
 - Make sure you don’t add any spaces or characters unless they are part of the name of the bone(s) you want to be included
 
-Note: Reparenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
+Note: Re parenting a SmartBone object might cause a lag spike and if you parent to nil and then re-parent the object will no longer have SmartBone acting on it.
 This is due to Roblox not adding a .Destroying signal or something similar, if you'd like for the object to continue simulating you would have to remove the SmartBone tag and add it again.
 
 ### Friction
@@ -30,9 +30,26 @@ Each constraint has it's own purpose,
 
 - Spring will return the bone to its rest position sort of like jelly
 
-- Distance will keep the bones at a fixed distance from eachother and is always pulled downwards
+- Distance will keep the bones at a fixed distance from each other and is always pulled downwards
 
 - Rope will keep the bones distance between 0 and their rest length and is always pulled downwards
+
+- Rotation, details can be found [here](bone.md)
+
+### Wind
+
+Wind can be controlled via GlobalWind (MatchWorkspaceWind must be true) or through attributes in Lighting.
+
+- \[*Number*\] WindStrength - The "density" of the air, this is used regardless of MatchWorkspaceWind.
+
+- \[*Number*\] WindSpeed - The speed which wind travels at, only important if MatchWorkspaceWind is false.
+
+- \[*Vector3*\] WindDirection - The direction in which the wind travels, only important if MatchWorkspaceWind is false.
+
+WindStrength controls the frequency of the wind,
+WindSpeed controls the amplitude of the wind,
+
+For example if you wanted more flowy wind you would have a medium wind speed with a lower wind strength.
 
 ---
 ### Attributes
@@ -61,15 +78,9 @@ Each constraint has it's own purpose,
 
 - \[*Number*\] WindInfluence – How much influence wind has on the SmartBone object.
 
-- \[*Number*\] WindStrength - The "density" of the air.
-
-- \[*Number*\] WindSpeed - The speed which wind travels at, only important if MatchWorkspaceWind is false.
-
-- \[*Vector3*\] WindDirection - The direction in which the wind travels, only important if MatchWorkspaceWind is false.
-
 - \[*String*\] ColliderKey - If this attribute is set then the object will only collide with colliders that have the same collider key.
 
-- \[*Number*\] AnchorDepth – This will determine how far down in heirarchy from the Root that bones will be Anchored.
+- \[*Number*\] AnchorDepth – This will determine how far down in hierarchy from the Root that bones will be Anchored.
 
 - \[*Boolean*\] AnchorsRotate – If true, the root bone(s) will rotate along with the rest of the bone(s), but remain in static position. If false, the root bone(s) will remain completely static in both Position and Orientation.
 

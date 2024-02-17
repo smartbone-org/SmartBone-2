@@ -1,5 +1,6 @@
 local HttpService = game:GetService("HttpService")
 local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
+local Config = require(script.Parent:WaitForChild("Config"))
 
 local ColliderTranslations = {
 	Block = "Box",
@@ -19,9 +20,7 @@ local function SafeUnit(Vector: Vector3): Vector3
 end
 
 local module = {}
-module.LogVerbose = false
 module.LogIndent = 0
-module.FarPlane = 500
 
 function module.GetRotationBetween(U: Vector3, V: Vector3)
 	local Cos = U:Dot(V)
@@ -44,40 +43,92 @@ function module.GetCFrameAxis(Transform: CFrame, Axis: string)
 	return nil
 end
 
-function module.GatherObjectSettings(Object)
+function module.GatherObjectSettings(Object: BasePart)
 	local Settings = {}
+
+	local function Expect(Value: any, Type: string, Name: string): boolean
+		if typeof(Value) ~= Type then
+			warn(`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(Value)}`)
+			return false
+		end
+
+		return true
+	end
 
 	for k, v in DefaultObjectSettings do
 		local Attrib = Object:GetAttribute(k)
+
+		if Attrib ~= nil then
+			if not Expect(Attrib, typeof(v), k) then
+				Attrib = nil
+			end
+		end
+
 		Settings[k] = Attrib == nil and v or Attrib
 	end
 
 	return Settings
 end
 
-function module.GatherBoneSettings(Bone)
-	local XAxisLocked = Bone:GetAttribute("XAxisLocked") or false
-	local YAxisLocked = Bone:GetAttribute("YAxisLocked") or false
-	local ZAxisLocked = Bone:GetAttribute("ZAxisLocked") or false
+function module.GatherBoneSettings(Bone: Bone)
+	local function Attrib(Name: string): any?
+		return Bone:GetAttribute(Name)
+	end
 
-	local XAxisLimits = Bone:GetAttribute("XAxisLimits") or NumberRange.new(-math.huge, math.huge)
-	local YAxisLimits = Bone:GetAttribute("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
-	local ZAxisLimits = Bone:GetAttribute("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local function Expect(Value: any, Type: string, Name: string)
+		if typeof(Value) ~= Type then
+			warn(`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(Value)}`)
+		end
+	end
 
-	local Radius = Bone:GetAttribute("Radius") or 0.25
+	local XAxisLocked = Attrib("XAxisLocked") or false
+	local YAxisLocked = Attrib("YAxisLocked") or false
+	local ZAxisLocked = Attrib("ZAxisLocked") or false
+
+	local XAxisLimits = Attrib("XAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local YAxisLimits = Attrib("YAxisLimits") or NumberRange.new(-math.huge, math.huge)
+	local ZAxisLimits = Attrib("ZAxisLimits") or NumberRange.new(-math.huge, math.huge)
+
+	local Radius = Attrib("Radius") or 0.25
+
+	local RotationLimit = Attrib("RotationLimit") or 180
+
+	local Force = Attrib("Force") or "¬"
+	local Gravity = Attrib("Gravity") or "¬"
+
+	Expect(XAxisLocked, "boolean", "XAxisLocked")
+	Expect(YAxisLocked, "boolean", "YAxisLocked")
+	Expect(ZAxisLocked, "boolean", "ZAxisLocked")
+
+	Expect(XAxisLimits, "NumberRange", "XAxisLimits")
+	Expect(YAxisLimits, "NumberRange", "YAxisLimits")
+	Expect(ZAxisLimits, "NumberRange", "ZAxisLimits")
+
+	Expect(Radius, "number", "Radius")
+	Expect(RotationLimit, "number", "RotationLimit")
+
+	if Force ~= "¬" then
+		Expect(Force, "Vector3", "Force")
+	end
+	if Force ~= "¬" then
+		Expect(Gravity, "Vector3", "Gravity")
+	end
 
 	local Settings = {
 		AxisLocked = { XAxisLocked, YAxisLocked, ZAxisLocked },
 		XAxisLimits = XAxisLimits,
 		YAxisLimits = YAxisLimits,
 		ZAxisLimits = ZAxisLimits,
+		RotationLimit = RotationLimit,
 		Radius = Radius,
+		Force = Force,
+		Gravity = Gravity,
 	}
 
 	return Settings
 end
 
-function module.ClosestPointOnLine(p0, d0, len, p1): Vector3
+function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Vector3): Vector3
 	local v = p1 - p0
 	local k = v:Dot(d0)
 	k = math.clamp(k, -len, len)
@@ -85,10 +136,14 @@ function module.ClosestPointOnLine(p0, d0, len, p1): Vector3
 end
 
 -- IsInside, ClosestPoint, Normal
-function module.ClosestPointInBox(cframe, size, point): (boolean, Vector3, Vector3)
-	local rel = cframe:pointToObjectSpace(point)
-	local sx, sy, sz = size.x, size.y, size.z
-	local rx, ry, rz = rel.x, rel.y, rel.z
+function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3): (boolean, Vector3, Vector3)
+	local rel = cframe:PointToObjectSpace(point)
+	local sx, sy, sz = size.X, size.X, size.Z
+	local rx, ry, rz = rel.X, rel.Y, rel.Z
+
+	if rel ~= rel or size ~= size then -- NaN
+		return false, cframe.Position, Vector3.yAxis
+	end
 
 	-- constrain to within the box
 	local cx = math.clamp(rx, -sx * 0.5, sx * 0.5)
@@ -208,7 +263,7 @@ function module.SB_ASSERT_CB(condition, callback, ...)
 end
 
 function module.SB_VERBOSE_LOG(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 
@@ -218,7 +273,7 @@ function module.SB_VERBOSE_LOG(message: string)
 end
 
 function module.SB_VERBOSE_WARN(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 
@@ -228,7 +283,7 @@ function module.SB_VERBOSE_WARN(message: string)
 end
 
 function module.SB_VERBOSE_ERROR(message: string)
-	if not module.LogVerbose then
+	if not Config.LOG_VERBOSE then
 		return
 	end
 

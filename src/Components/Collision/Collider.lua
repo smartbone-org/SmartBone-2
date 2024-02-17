@@ -10,14 +10,15 @@ local CylinderSolver = require(CollisionSolvers:WaitForChild("Cylinder"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
 
 local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
+local Config = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Config"))
 
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 local Radians = 0.017453
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
-local IsStudio = game:GetService("RunService"):IsStudio()
+local IsStudio = game:GetService("RunService"):IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
 
-if IsStudio then
+if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
 	Gizmo.Init()
 end
 

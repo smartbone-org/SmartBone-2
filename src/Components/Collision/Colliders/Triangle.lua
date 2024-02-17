@@ -9,6 +9,14 @@ local dot = Vector3.new().Dot
 local cross = Vector3.new().Cross
 local clamp = math.clamp
 
+local function SafeUnit(v3)
+	if v3.Magnitude == 0 then
+		return Vector3.zero
+	end
+
+	return v3.Unit
+end
+
 local function ClosestPointOnLineSegment(A, B, P)
 	local AB = B - A
 	local t = dot(P - A, AB) / dot(AB, AB)
@@ -47,7 +55,7 @@ local function ClosestPointOnTri(v0, v1, v2, point) -- ClosestPoint, Normal
 	local Edge1 = ClosestPointOnLineSegment(v1, v2, point)
 	local Edge2 = ClosestPointOnLineSegment(v2, v0, point)
 
-	local Normal = cross(v1 - v0, v2 - v0).Unit
+	local Normal = SafeUnit(cross(v1 - v0, v2 - v0))
 	local Center = (v0 + v1 + v2) * 0.3333
 	local Projected = ProjectOnPlane(Center, Normal, point)
 

@@ -6,6 +6,9 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 			return
 		end
 		local PopupScreenGui = Iris._rootInstance:FindFirstChild("PopupScreenGui")
+		if not PopupScreenGui then
+			return
+		end
 		local TooltipContainer = PopupScreenGui.TooltipContainer
 		local mouseLocation = widgets.getMouseLocation()
 		local newPosition = widgets.findBestWindowPosForPopup(

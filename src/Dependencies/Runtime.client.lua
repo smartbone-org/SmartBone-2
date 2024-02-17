@@ -29,7 +29,26 @@ local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris
 local Utilities = require(Dependencies.Utilities)
-local ShouldDebug = RunService:IsStudio()
+local Config = require(Dependencies.Config)
+local ShouldDebug = RunService:IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
+local OverlayEvent = SmartboneModule:WaitForChild("OverlayEvent")
+
+-- So much work for such a basic debug tool
+local ImOverlay = {
+	Begin = function(...)
+		OverlayEvent:Fire("Begin", ...)
+	end,
+	End = function(...)
+		OverlayEvent:Fire("End", ...)
+	end,
+	Text = function(...)
+		OverlayEvent:Fire("Text", ...)
+	end,
+}
+
+-- Frame counter for getting animatedworldcframe
+shared.FrameCounter = 0
+local FrameCounterOverflow = 2^17
 
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)
@@ -61,6 +80,8 @@ if ShouldDebug then
 		DRAW_COLLIDER_BROADPHASE = Iris.State(false),
 		DRAW_FILL_COLLIDERS = Iris.State(false),
 		DRAW_CONTACTS = Iris.State(false),
+		DRAW_ROTATION_LIMITS = Iris.State(false),
+		DRAW_ACCELERATION_INFO = Iris.State(false),
 	}
 end
 
@@ -93,6 +114,12 @@ end)
 local Connection
 
 Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
+	shared.FrameCounter += 1
+
+	if shared.FrameCounter > FrameCounterOverflow then
+		shared.FrameCounter = 0
+	end
+
 	BonePhysics:StepBoneTrees(deltaTime)
 
 	if BonePhysics.ShouldDestroy then
@@ -119,8 +146,12 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 				DebugState.DRAW_COLLIDER_INFLUENCE:get(),
 				DebugState.DRAW_COLLIDER_AWAKE:get(),
 				DebugState.DRAW_COLLIDER_BROADPHASE:get(),
-				DebugState.DRAW_BOUNDING_BOX:get()
+				DebugState.DRAW_BOUNDING_BOX:get(),
+				DebugState.DRAW_ROTATION_LIMITS:get(),
+				DebugState.DRAW_ACCELERATION_INFO:get()
 			)
+
+			BonePhysics:DrawOverlay(ImOverlay)
 		end
 	end
 end)
