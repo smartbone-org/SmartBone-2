@@ -32,4 +32,6 @@ jobs:
       #     printenv WALLY_AUTH > ~/.wally/auth.toml
 
       - name: Push update to wally
-        run: wally publish --token ${{ secrets.WALLY_AUTH_TOKEN }}
+        env:
+          WALLY_AUTH: ${{ secrets.WALLY_AUTH_TOKEN }}
+        run: wally publish --token WALLY_AUTH
