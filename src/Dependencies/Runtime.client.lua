@@ -120,7 +120,9 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 		shared.FrameCounter = 0
 	end
 
-	BonePhysics:StepBoneTrees(deltaTime)
+	if deltaTime ~= 0 then
+		BonePhysics:StepBoneTrees(deltaTime)
+	end
 
 	if BonePhysics.ShouldDestroy then
 		BonePhysics:Destroy()
