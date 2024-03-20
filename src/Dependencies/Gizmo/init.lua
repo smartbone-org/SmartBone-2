@@ -5,7 +5,7 @@
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local Terrain = workspace:WaitForChild("Terrain",10)
+local Terrain = workspace:WaitForChild("Terrain",5)
 
 assert(Terrain, "No terrain object found under workspace...")
 
