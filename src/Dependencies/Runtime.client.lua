@@ -28,8 +28,8 @@ local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris
-local Utilities = require(Dependencies.Utilities)
 local Config = require(Dependencies.Config)
+local Utilities = require(Dependencies.Utilities)
 local ShouldDebug = RunService:IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
 local OverlayEvent = SmartboneModule:WaitForChild("OverlayEvent")
 
@@ -48,7 +48,7 @@ local ImOverlay = {
 
 -- Frame counter for getting animatedworldcframe
 shared.FrameCounter = 0
-local FrameCounterOverflow = 2^17
+local FrameCounterOverflow = 2 ^ 17
 
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)

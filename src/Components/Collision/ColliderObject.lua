@@ -25,7 +25,7 @@ export type IColliderObject = {
 	m_Awake: bool,
 	m_LastSleepCycle: number,
 	Destroyed: bool,
-	Colliders: IColliderTable
+	Colliders: IColliderTable,
 }
 
 --- @class ColliderObject

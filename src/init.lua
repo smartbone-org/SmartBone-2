@@ -7,10 +7,10 @@ local RunService = game:GetService("RunService")
 local Components = script:WaitForChild("Components")
 local Dependencies = script:WaitForChild("Dependencies")
 
+local CeiveImOverlay = require(Dependencies:WaitForChild("CeiveImOverlay"))
+local Config = require(Dependencies:WaitForChild("Config"))
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local Config = require(Dependencies:WaitForChild("Config"))
-local CeiveImOverlay = require(Dependencies:WaitForChild("CeiveImOverlay"))
 local ImOverlay
 
 local BoneClass = require(Components:WaitForChild("Bone"))
@@ -31,9 +31,9 @@ export type IColliderObject = ColliderObjectClass.IColliderObject
 export type IColliderTable = ColliderObjectClass.IColliderTable
 
 type ImOverlay = {
-    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
-    End: () -> (),
-    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	End: () -> (),
+	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 }
 
 type bool = boolean
@@ -98,7 +98,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 	local Bone: IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
 	for k, v in Settings do
-		-- ¬ represents a nil value
+		-- "¬" represents a nil value
 		Bone[k] = (v ~= "¬") and v or nil
 	end
 
@@ -404,6 +404,11 @@ function Class:StepBoneTrees(Delta: number)
 		return
 	end
 
+	if Delta <= 0 then
+		SB_VERBOSE_WARN("DeltaTime is zero or sub zero, not updating.")
+		return
+	end
+
 	self:m_CleanColliders()
 	self:m_UpdateViewFrustum()
 	for i, BoneTree in self.BoneTrees do
@@ -443,7 +448,16 @@ function Class:DrawDebug(
 	DRAW_ACCELERATION_INFO: bool
 )
 	for _, BoneTree in self.BoneTrees do
-		BoneTree:DrawDebug(DRAW_CONTACTS, DRAW_PHYSICAL_BONE, DRAW_BONE, DRAW_AXIS_LIMITS, DRAW_ROOT_PART, DRAW_BOUNDING_BOX, DRAW_ROTATION_LIMITS, DRAW_ACCELERATION_INFO)
+		BoneTree:DrawDebug(
+			DRAW_CONTACTS,
+			DRAW_PHYSICAL_BONE,
+			DRAW_BONE,
+			DRAW_AXIS_LIMITS,
+			DRAW_ROOT_PART,
+			DRAW_BOUNDING_BOX,
+			DRAW_ROTATION_LIMITS,
+			DRAW_ACCELERATION_INFO
+		)
 	end
 
 	if DRAW_COLLIDERS then

@@ -6,10 +6,10 @@ local WIND_RNG = Random.new(WIND_SEED)
 local Lighting = game:GetService("Lighting")
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local BoneClass = require(script.Parent:WaitForChild("Bone"))
+local Config = require(Dependencies:WaitForChild("Config"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local Config = require(Dependencies:WaitForChild("Config"))
 local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
 local IsStudio = game:GetService("RunService"):IsStudio()
 
@@ -39,9 +39,9 @@ export type IBoneTree = {
 }
 
 type ImOverlay = {
-    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
-    End: () -> (),
-    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	End: () -> (),
+	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 }
 
 type bool = boolean
@@ -364,7 +364,16 @@ end
 --- @param DRAW_BOUNDING_BOX boolean
 --- @param DRAW_ROTATION_LIMITS boolean
 --- @param DRAW_ACCELERATION_INFO boolean
-function Class:DrawDebug(DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROOT_PART: bool, DRAW_BOUNDING_BOX: bool, DRAW_ROTATION_LIMITS: bool, DRAW_ACCELERATION_INFO: bool)
+function Class:DrawDebug(
+	DRAW_CONTACTS: bool,
+	DRAW_PHYSICAL_BONE: bool,
+	DRAW_BONE: bool,
+	DRAW_AXIS_LIMITS: bool,
+	DRAW_ROOT_PART: bool,
+	DRAW_BOUNDING_BOX: bool,
+	DRAW_ROTATION_LIMITS: bool,
+	DRAW_ACCELERATION_INFO: bool
+)
 	debug.profilebegin("BoneTree::DrawDebug")
 	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)

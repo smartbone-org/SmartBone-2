@@ -9,8 +9,8 @@ local CapsuleSolver = require(CollisionSolvers:WaitForChild("Capsule"))
 local CylinderSolver = require(CollisionSolvers:WaitForChild("Cylinder"))
 local SphereSolver = require(CollisionSolvers:WaitForChild("Sphere"))
 
-local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
 local Config = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Config"))
+local Utilities = require(script.Parent.Parent.Parent:WaitForChild("Dependencies"):WaitForChild("Utilities"))
 
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
