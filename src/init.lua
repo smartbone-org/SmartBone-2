@@ -251,7 +251,6 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		BoneTree:Destroy()
 		table.remove(self.BoneTrees, Index)
 
-		debug.profileend()
 		return
 	end
 
