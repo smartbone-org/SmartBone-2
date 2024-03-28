@@ -6,6 +6,18 @@ local SmartboneClass
 
 local Setup = false
 
+local CONNECTIONS = {}
+
+local function c(Conn: RBXScriptConnection)
+	table.insert(CONNECTIONS, Conn)
+end
+
+local function cleanup()
+	for _, Conn: RBXScriptConnection in CONNECTIONS do
+		Conn:Disconnect()
+	end
+end
+
 local Bind
 Bind = Actor:BindToMessage("Setup", function(m_Object, m_ColliderDescriptions, m_SmartBone)
 	RootObject = m_Object
@@ -28,10 +40,12 @@ local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
 local DebugUi = require(Dependencies.DebugUi)
 local Iris
-local Utilities = require(Dependencies.Utilities)
 local Config = require(Dependencies.Config)
+local Utilities = require(Dependencies.Utilities)
 local ShouldDebug = RunService:IsStudio() or Config.ALLOW_LIVE_GAME_DEBUG
 local OverlayEvent = SmartboneModule:WaitForChild("OverlayEvent")
+
+local ForceDestroy = false
 
 -- So much work for such a basic debug tool
 local ImOverlay = {
@@ -48,7 +62,7 @@ local ImOverlay = {
 
 -- Frame counter for getting animatedworldcframe
 shared.FrameCounter = 0
-local FrameCounterOverflow = 2^17
+local FrameCounterOverflow = 2 ^ 17 -- Maximum number frame counter can go to before it resets to 0 =(131072)
 
 if ShouldDebug then
 	Iris = require(Dependencies.Iris)
@@ -94,7 +108,7 @@ if ShouldDebug then
 	end)
 end
 
-CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Object: BasePart)
+c(CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Object: BasePart)
 	if not Object:IsA("BasePart") then
 		return
 	end
@@ -109,11 +123,13 @@ CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(function(Objec
 	local ColliderObject = Utilities.GetCollider(Object)
 
 	BonePhysics:LoadRawCollider(ColliderObject, Object)
-end)
+end))
 
-local Connection
+c(Actor:BindToMessage("Destroy", function()
+	ForceDestroy = true
+end))
 
-Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
+c(RunService.Heartbeat:ConnectParallel(function(deltaTime)
 	shared.FrameCounter += 1
 
 	if shared.FrameCounter > FrameCounterOverflow then
@@ -122,11 +138,11 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 
 	BonePhysics:StepBoneTrees(deltaTime)
 
-	if BonePhysics.ShouldDestroy then
+	if BonePhysics.ShouldDestroy or ForceDestroy then
 		BonePhysics:Destroy()
 
 		task.synchronize()
-		Connection:Disconnect()
+		cleanup()
 		Actor:Destroy()
 		return
 	end
@@ -154,4 +170,4 @@ Connection = RunService.Heartbeat:ConnectParallel(function(deltaTime)
 			BonePhysics:DrawOverlay(ImOverlay)
 		end
 	end
-end)
+end))

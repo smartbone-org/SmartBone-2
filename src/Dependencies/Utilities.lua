@@ -1,6 +1,6 @@
 local HttpService = game:GetService("HttpService")
-local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
 local Config = require(script.Parent:WaitForChild("Config"))
+local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
 
 local ColliderTranslations = {
 	Block = "Box",

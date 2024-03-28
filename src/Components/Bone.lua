@@ -1,9 +1,9 @@
 --!nocheck
 --!native
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
+local Config = require(Dependencies:WaitForChild("Config"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local Config = require(Dependencies:WaitForChild("Config"))
 local IsStudio = game:GetService("RunService"):IsStudio()
 
 if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
@@ -16,8 +16,8 @@ local CollisionConstraint = require(Constraints:WaitForChild("CollisionConstrain
 local DistanceConstraint = require(Constraints:WaitForChild("DistanceConstraint"))
 local FrictionConstraint = require(Constraints:WaitForChild("FrictionConstraint"))
 local RopeConstraint = require(Constraints:WaitForChild("RopeConstraint"))
-local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"))
+local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
@@ -25,9 +25,9 @@ local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 type bool = boolean
 
 type ImOverlay = {
-    Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
-    End: () -> (),
-    Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
+	End: () -> (),
+	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 }
 
 export type IBone = {
@@ -103,7 +103,7 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 
 	local Result = ParentCFrame * OriginBone.TransformedCFrame
 
-	SolvedTransformedCFrames[OriginBone] = {Frame = shared.FrameCounter, CFrame = Result}
+	SolvedTransformedCFrames[OriginBone] = { Frame = shared.FrameCounter, CFrame = Result }
 
 	debug.profileend()
 	return Result
@@ -341,6 +341,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		HasChild = false,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
+		StartingCFrame = Bone.TransformedCFrame,
 		TransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity,
 		RestPosition = Vector3.zero,
@@ -366,8 +367,6 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		-- Debug
 		CollisionsData = {},
 	}, Class)
-
-
 
 	self.AttributeConnection = Bone.AttributeChanged:Connect(function(Attribute)
 		-- Do this cause of axis lock
@@ -805,7 +804,8 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 
 		local ConeDirection = (self.Position - BoneTree.Bones[self.ParentIndex].Position).Unit * InverseDirection
 
-		local NewBoneCFrame = CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH / 2), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
+		local NewBoneCFrame =
+			CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH / 2), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
 
 		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
 		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
@@ -853,6 +853,11 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 end
 
 function Class:Destroy()
+	if Config.RESET_BONE_ON_DESTROY then
+		task.synchronize()
+		self.Bone.CFrame = self.StartingCFrame
+	end
+
 	self.AttributeConnection:Disconnect()
 
 	setmetatable(self, nil)

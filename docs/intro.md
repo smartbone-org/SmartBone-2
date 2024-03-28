@@ -25,6 +25,15 @@ Take the SmartBone module and move it into ReplicatedStorage, and script in Star
 local SmartBone = require(game:GetService("ReplicatedStorage"):WaitForChild("SmartBone"))
 
 SmartBone.Start() -- Start the runtime
+
+--[[
+
+You can also do something like this:
+
+local SmartBoneInstance = SmartBone.Start()
+SmartBoneInstance.Stop() -- Removes all actors and resets bones back to rest position.
+
+]]
 ```
 
 This is all you have to do for coding, now we just setup your mesh with the tags and attributes.
