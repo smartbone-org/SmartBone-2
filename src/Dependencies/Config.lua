@@ -1,7 +1,7 @@
 -- Configuration
 
 return {
-	VERSION = "0.3.0",
+	VERSION = "0.3.1",
 	-- Controls if when an object is out of activation distance / fov if its bones should be sent back to their rest location.
 	RESET_TRANSFORM_ON_SKIP = true,
 	-- Wouldn't recommend enabling, controls if we should wait after each collider setup.
@@ -12,6 +12,8 @@ return {
 	FAR_PLANE = 500,
 	-- Debug info in output, can lag the game.
 	LOG_VERBOSE = false,
+	-- Controls if we should reset bone positions when .Stop() is called
+	RESET_BONE_ON_DESTROY = true,
 	-- Enable or disable the startup print
 	STARTUP_PRINT_ENABLED = true,
 	-- Overlay config, not meant for end users

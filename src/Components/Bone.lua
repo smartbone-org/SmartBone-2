@@ -341,6 +341,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		HasChild = false,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
+		StartingCFrame = Bone.TransformedCFrame,
 		TransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity,
 		RestPosition = Vector3.zero,
@@ -852,6 +853,11 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 end
 
 function Class:Destroy()
+	if Config.RESET_BONE_ON_DESTROY then
+		task.synchronize()
+		self.Bone.CFrame = self.StartingCFrame
+	end
+
 	self.AttributeConnection:Disconnect()
 
 	setmetatable(self, nil)

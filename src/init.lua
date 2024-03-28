@@ -188,7 +188,7 @@ end
 --- :::
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
-	debug.profilebegin("BonePhysics::m_UpdateViewFrustum")
+	debug.profilebegin("SmartBone2::m_UpdateViewFrustum")
 	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
@@ -228,7 +228,7 @@ end
 --- :::
 --- Constrains each bone in the provided bone tree and cleans up colliders
 function Class:m_ConstrainBoneTree(BoneTree: IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
-	debug.profilebegin("BonePhysics::m_ConstrainBoneTree")
+	debug.profilebegin("SmartBone2::m_ConstrainBoneTree")
 
 	BoneTree:Constrain(self.ColliderObjects, Delta)
 
@@ -245,7 +245,7 @@ end
 --- :::
 --- Updates the provided bone tree with all optimizations
 function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
-	debug.profilebegin("BonePhysics::m_UpdateBoneTree")
+	debug.profilebegin("SmartBone2::m_UpdateBoneTree")
 
 	if BoneTree.Destroyed then
 		BoneTree:Destroy()
@@ -327,7 +327,7 @@ function Class:LoadObject(Object: BasePart)
 	local RootAttribute = Object:GetAttribute("Roots")
 
 	if not RootAttribute then
-		warn(`[BonePhysics::LoadObject] Cannot load an object with no roots defined {Object.Name}`)
+		warn(`[SmartBone2::LoadObject] Cannot load an object with no roots defined {Object.Name}`)
 		return
 	end
 
@@ -341,7 +341,7 @@ function Class:LoadObject(Object: BasePart)
 		end
 
 		if Bones[Descendant.Name] then
-			warn(`[BonePhysics::LoadObject] Duplicate bones of name: {Descendant.Name} in RootPart: {Object.Name}`)
+			warn(`[SmartBone2::LoadObject] Duplicate bones of name: {Descendant.Name} in RootPart: {Object.Name}`)
 			continue
 		end
 
@@ -352,7 +352,7 @@ function Class:LoadObject(Object: BasePart)
 	for _, Name in RootNames do
 		local RootBone = Bones[Name]
 		if not RootBone then
-			warn(`[BonePhysics::LoadObject] Couldn't find Root Bone of name: {Name} in RootPart: {Object.Name}`)
+			warn(`[SmartBone2::LoadObject] Couldn't find Root Bone of name: {Name} in RootPart: {Object.Name}`)
 			continue
 		end
 
@@ -365,7 +365,7 @@ end
 --- @param Object BasePart
 --- Loads the provided collider module onto the provided object
 function Class:LoadColliderModule(ColliderModule: ModuleScript, Object: BasePart)
-	assert(ColliderModule, "[BonePhysics::LoadColliderModule] No collider module passed in")
+	assert(ColliderModule, "[SmartBone2::LoadColliderModule] No collider module passed in")
 
 	local RawColliderData = require(ColliderModule)
 	local ColliderData = HttpService:JSONDecode(RawColliderData)
@@ -388,7 +388,7 @@ end
 --- @within SmartBone
 --- Resets all bone trees to their rest position
 function Class:SkipUpdate()
-	debug.profilebegin("BonePhysics::SkipUpdate")
+	debug.profilebegin("SmartBone2::SkipUpdate")
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:SkipUpdate()
 	end
@@ -522,8 +522,9 @@ end
 
 --- @client
 --- @within SmartBone
+--- @return {Stop: () -> ()}
 --- Collects all SmartBone objects and SmartBone colliders and starts running physics + collision on them
-function Class.Start()
+function Class.Start(): { Stop: () -> () }
 	if not RunService:IsClient() then
 		warn("Smartbone.Start() can only be called in client context.")
 		return
@@ -663,6 +664,19 @@ function Class.Start()
 			ImOverlay:Render()
 		end)
 	end
+
+	return {
+		Stop = function()
+			if not Config.RESET_BONE_ON_DESTROY then
+				ActorFolder:Destroy()
+				return
+			end
+
+			for _, Actor: Actor in ActorFolder:GetChildren() do
+				Actor:SendMessage("Destroy")
+			end
+		end,
+	}
 end
 
 return Class
