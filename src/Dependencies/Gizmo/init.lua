@@ -5,7 +5,7 @@
 
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
-local Terrain = workspace:FindFirstChild("Terrain")
+local Terrain = workspace:WaitForChild("Terrain")
 
 assert(Terrain, "No terrain object found under workspace...")
 
@@ -376,7 +376,15 @@ type IVolumeCylinder = {
 }
 
 type IVolumeArrow = {
-	Draw: (self: IVolumeArrow, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
+	Draw: (
+		self: IVolumeArrow,
+		Origin: Vector3,
+		End: Vector3,
+		CylinderRadius: number,
+		ConeRadius: number,
+		Length: number,
+		UseCylinder: boolean?
+	) -> (),
 	Create: (
 		self: IVolumeArrow,
 		Origin: Vector3,
