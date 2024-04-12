@@ -21,12 +21,14 @@ There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) wh
 
 You can find the plugins here:
 [Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)
+
 [SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)
 
 ## Contributing
 
 Preferably you follow this [Commit Convention](https://www.conventionalcommits.org/en/v1.0.0/)
 And detail your thought process and reasoning in pr's.
+You can also find out what is being worked on in the [trello](https://trello.com/b/BN2jeG8L/smartbone-v2)
 
 ## Issues
 
