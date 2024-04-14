@@ -7,3 +7,7 @@ classOrder = [
     "ColliderObject",
     "Collider"
 ]
+
+[docusaurus]
+url = "https://smartbone.org"
+baseUrl = "/SmartBone2"
