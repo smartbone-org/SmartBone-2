@@ -205,6 +205,8 @@ end
 
 function Class:m_CleanColliders()
 	debug.profilebegin("Clean Colliders")
+	local DidDestroy = false
+
 	if #self.ColliderObjects ~= 0 then -- Micro optimizations
 		for i, ColliderObject in self.ColliderObjects do
 			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
@@ -213,10 +215,15 @@ function Class:m_CleanColliders()
 				ColliderObject:Destroy()
 				SB_UNINDENT_LOG()
 				table.remove(self.ColliderObjects, i)
+
+				DidDestroy = true
 			end
 		end
 	end
-	debug.profileend()
+
+	if not DidDestroy then -- Prevent warning because we left parallel
+		debug.profileend()
+	end
 end
 
 --- @private
