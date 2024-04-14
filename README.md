@@ -1,6 +1,6 @@
 # SmartBone 2
 
-You can find out more info in the [documentation](https://celnakrblx.github.io/SmartBone-2/docs/intro)
+You can find out more info in the [documentation](https://smartbone.org/docs/intro)
 
 The wally package can be found [here](https://wally.run/package/jakeywastaken/smartbone-2)
 
@@ -20,6 +20,7 @@ The wally package can be found [here](https://wally.run/package/jakeywastaken/sm
 There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) which has colliders and over 170 SmartBone objects setup.
 
 You can find the plugins here:
+
 [Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)
 
 [SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)
@@ -33,4 +34,4 @@ You can also find out what is being worked on in the [trello](https://trello.com
 ## Issues
 
 When creating an issue if you can provide a reproduction file or reproduction steps it would be greatly appreciated.
-Feature requests via issues are also helpful, a good example of a well structured feature request is [this](https://github.com/CelnakRBLX/SmartBone-2/issues/16)
+Feature requests via issues are also helpful, a good example of a well structured feature request is [this](https://github.com/smartbone-org/SmartBone-2/issues/16)
