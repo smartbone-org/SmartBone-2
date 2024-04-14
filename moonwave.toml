@@ -10,4 +10,4 @@ classOrder = [
 
 [docusaurus]
 url = "https://smartbone.org"
-baseUrl = "/SmartBone2"
+baseUrl = "/"
