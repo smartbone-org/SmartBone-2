@@ -83,7 +83,7 @@ The plugins streamline a lot of this process they can be found here:
 
 ## Related Documentation
 
-[API](/SmartBone-2/api/)
+[API](/api/)
 
 [SmartBone Attributes](smartbone.md)
 
