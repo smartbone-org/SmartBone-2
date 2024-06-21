@@ -34,6 +34,7 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeR
 	end
 
 	Ceive.VolumeCone:Draw(ArrowCFrame, ConeRadius, Length)
+	self.Ceive.ScheduleCleaning()
 end
 
 function Gizmo:Create(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?)

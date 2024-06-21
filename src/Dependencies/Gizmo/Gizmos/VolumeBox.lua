@@ -37,6 +37,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3)
 	Ceive.ActiveInstances += 1
 
 	self.Register(Box)
+	self.Ceive.ScheduleCleaning()
 end
 
 function Gizmo:Create(Transform: CFrame, Size: Vector3)

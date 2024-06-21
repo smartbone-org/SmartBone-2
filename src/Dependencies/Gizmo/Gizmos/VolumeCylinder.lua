@@ -40,6 +40,7 @@ function Gizmo:Draw(Transform: CFrame, Radius: number, Length: number, InnerRadi
 	Ceive.ActiveInstances += 1
 
 	self.Register(Cylinder)
+	self.Ceive.ScheduleCleaning()
 end
 
 function Gizmo:Create(Transform: CFrame, Radius: number, Length: number, InnerRadius: number?, Angle: number?)

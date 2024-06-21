@@ -37,6 +37,7 @@ function Gizmo:Draw(Transform: CFrame, Radius: number)
 	Ceive.ActiveInstances += 1
 
 	self.Register(Sphere)
+	self.Ceive.ScheduleCleaning()
 end
 
 function Gizmo:Create(Transform: CFrame, Radius: number)
