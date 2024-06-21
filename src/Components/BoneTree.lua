@@ -223,7 +223,7 @@ function Class:UpdateBoundingBox()
 	end
 	debug.profileend()
 
-	local CenterOfMass = (BottomCorner + TopCorner) / 2
+	local CenterOfMass = (BottomCorner + TopCorner) * 0.5
 
 	self.BoundingBoxCFrame = CFrame.new(CenterOfMass)
 	self.BoundingBoxSize = self.RootPartSize:Max(TopCorner - BottomCorner)
@@ -383,7 +383,7 @@ function Class:DrawDebug(
 	local OBJECT_ACCELERATION_COLOR = Color3.new(0, 0, 1)
 
 	if DRAW_ACCELERATION_INFO then
-		local Raised = self.RootPart.Position + Vector3.new(0, self.RootPart.Size.Y / 2 + 1, 0)
+		local Raised = self.RootPart.Position + Vector3.new(0, self.RootPart.Size.Y * 0.5 + 1, 0)
 
 		Gizmo.SetStyle(OBJECT_MOVE_COLOR, 0, true)
 		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectMove, 0.025, 0.1, 6)
