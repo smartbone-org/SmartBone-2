@@ -263,8 +263,8 @@ function Class:PreUpdate(Delta: number)
 	local PreviousVelocity = self.ObjectVelocity
 
 	self.ObjectMove = (RootPartPosition - self.ObjectPreviousPosition)
-	self.ObjectVelocity = self.ObjectVelocity:Lerp((self.ObjectMove / Delta) / 4, math.min(Delta * 10, 1))
-	self.ObjectAcceleration = (PreviousVelocity - self.ObjectVelocity) * Delta
+	self.ObjectVelocity = self.ObjectMove
+	self.ObjectAcceleration = (PreviousVelocity - self.ObjectVelocity)
 	self.ObjectPreviousPosition = RootPartPosition
 	self.RootPartSize = self.RootPart.Size
 
