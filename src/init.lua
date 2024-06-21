@@ -229,22 +229,6 @@ end
 --- @private
 --- @within SmartBone
 --- @param BoneTree table
---- @param Delta number
---- :::caution Caution:
---- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
---- :::
---- Constrains each bone in the provided bone tree and cleans up colliders
-function Class:m_ConstrainBoneTree(BoneTree: IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
-	debug.profilebegin("SmartBone2::m_ConstrainBoneTree")
-
-	BoneTree:Constrain(self.ColliderObjects, Delta)
-
-	debug.profileend()
-end
-
---- @private
---- @within SmartBone
---- @param BoneTree table
 --- @param Index number
 --- @param Delta number
 --- :::caution Caution:
@@ -296,7 +280,7 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		DidUpdate = true
 
 		BoneTree:StepPhysics(UpdateHz)
-		self:m_ConstrainBoneTree(BoneTree, Delta)
+		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
 		BoneTree:SolveTransform(UpdateHz)
 	end
 	debug.profileend()
