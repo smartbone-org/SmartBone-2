@@ -1,7 +1,7 @@
 -- Configuration
 
 return {
-	VERSION = "0.3.1",
+	VERSION = "0.4.0",
 	-- Controls if when an object is out of activation distance / fov if its bones should be sent back to their rest location.
 	RESET_TRANSFORM_ON_SKIP = true,
 	-- Wouldn't recommend enabling, controls if we should wait after each collider setup.
