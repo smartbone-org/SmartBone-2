@@ -20,7 +20,15 @@ local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
-local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+--local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+
+local function SafeUnit(Vector: Vector3): Vector3
+	if Vector.Magnitude == 0 then
+		return Vector3.zero
+	else
+		return Vector.Unit
+	end
+end
 
 type bool = boolean
 
@@ -151,7 +159,7 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self: IBone, BoneTree: any): Vector3
+local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
@@ -164,6 +172,23 @@ local function SolveWind(self: IBone, BoneTree: any): Vector3
 			((os.clock() - (self.HeirarchyLength * 0.2)) + (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude * 0.2) -- * 0.2 is / 5
 			* Settings.WindInfluence
 		)
+
+	-- Velocity multiplier
+	local WindDirection = Settings.WindDirection
+	local VelocityDirection = SafeUnit(Velocity)
+
+	-- If we are going the same direction as the wind
+	local InToWindDamper = 1 - (VelocityDirection:Dot(WindDirection) * 0.5 + 0.5)
+	InToWindDamper = InToWindDamper < 0.5 and 0.5 or WindDirection
+
+	local function EaseInExpo(x: number): number
+		return x == 0 and 0 or 2 ^ (10 * x - 10)
+	end
+
+	-- Minimum speed to where we start to increase time modifier
+	local MinSpeed = 2.5
+	local TimeMultiplier = math.max(EaseInExpo(Velocity.Magnitude / MinSpeed), 1)
+	TimeModifier *= TimeMultiplier
 
 	local WindMove
 
@@ -187,10 +212,14 @@ local function SolveWind(self: IBone, BoneTree: any): Vector3
 	local function SampleSin()
 		local Freq = Settings.WindStrength ^ 0.8
 		local Power = Settings.WindSpeed * 2
-		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
-		local Sin2 = math.cos(TimeModifier * Freq) ^ 2
-		local Wave = (Sin1 + (Sin2 - Sin1) * Sin2) * Power
-		return Settings.WindDirection * Wave
+
+		-- Multiple octaves of sin waves
+		local Sin0 = math.sin(TimeMultiplier * Freq)
+		local Sin1 = math.cos(TimeMultiplier / 10 * Freq)
+		local Sin2 = math.sin(TimeMultiplier * 2 * Freq)
+		local Sin3 = math.cos(TimeMultiplier * 3 * Freq)
+		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4 * (Power + 8)
+		return WindDirection * math.max(Wave * 0.5 + 0.5, Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
@@ -204,7 +233,7 @@ local function SolveWind(self: IBone, BoneTree: any): Vector3
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
 
-		return Settings.WindDirection * Vector3.new(X, Y, Z)
+		return WindDirection * Vector3.new(X, Y, Z)
 	end
 
 	if Settings.WindType == "Sine" then
@@ -469,7 +498,7 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 
 	local Velocity = (self.Position - self.LastPosition)
 	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
-	local WindMove = SolveWind(self, BoneTree)
+	local WindMove = SolveWind(self, BoneTree, Velocity)
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
