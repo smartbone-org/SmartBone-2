@@ -187,8 +187,19 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 
 	-- Minimum speed to where we start to increase time modifier
 	local MinSpeed = 2.5
-	local TimeMultiplier = math.max(EaseInExpo(Velocity.Magnitude / MinSpeed), 1)
+	local TimeMultiplier = EaseInExpo(Velocity.Magnitude / MinSpeed)
+	TimeMultiplier = TimeMultiplier < 1 and 1 or TimeMultiplier
 	TimeModifier *= TimeMultiplier
+
+	local WindSpeed = Settings.WindSpeed
+	local WindStrength = Settings.WindStrength
+
+	if WindSpeed < 1 and TimeMultiplier > 1 then
+		WindSpeed = 1 * TimeMultiplier
+	else
+		local Mult = TimeMultiplier / 2
+		WindSpeed = WindSpeed * (Mult < 1 and 1 or Mult)
+	end
 
 	local WindMove
 
@@ -210,8 +221,8 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	end
 
 	local function SampleSin()
-		local Freq = Settings.WindStrength ^ 0.8
-		local Power = Settings.WindSpeed * 2
+		local Freq = WindStrength ^ 0.8
+		local Power = WindSpeed * 2
 
 		-- Multiple octaves of sin waves
 		local Sin0 = math.sin(TimeMultiplier * Freq)
@@ -219,14 +230,15 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local Sin2 = math.sin(TimeMultiplier * 2 * Freq)
 		local Sin3 = math.cos(TimeMultiplier * 3 * Freq)
 		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4 * (Power + 8)
-		return WindDirection * math.max(Wave * 0.5 + 0.5, Wave)
+		local ScaledWave = Wave * 0.5 + 0.5
+		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
 		CustomAmp = CustomAmp or 0
 
-		local Freq = Settings.WindStrength ^ 0.8
-		local Power = Settings.WindSpeed * 2
+		local Freq = WindStrength ^ 0.8
+		local Power = WindSpeed * 2
 		local Seed = BoneTree.WindOffset
 
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
@@ -246,8 +258,8 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		WindMove *= 0.5
 	end
 
-	WindMove /= math.max(self.FreeLength, 0.01)
-	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
+	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
+	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
 
 	return WindMove
@@ -555,7 +567,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 
 	for _, HitPart in self.CollisionHits do
 		-- Use whatever object has the higher friction
-		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
+		local Friction = GetFriction(self.RootPart, HitPart)
+		self.Friction = Friction < self.Friction and self.Friction or Friction
 	end
 
 	self.Position = Position
