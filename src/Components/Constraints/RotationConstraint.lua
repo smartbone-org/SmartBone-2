@@ -16,6 +16,13 @@ return function(self, Position, BoneTree)
 		return Position
 	end
 
+	local ParentBoneLimit = ParentBone.RotationLimit
+
+	if ParentBoneLimit >= 180 then
+		debug.profileend()
+		return Position
+	end
+
 	local GrandParentBone = BoneTree.Bones[ParentBone.ParentIndex]
 
 	if not GrandParentBone then
@@ -23,17 +30,13 @@ return function(self, Position, BoneTree)
 		return Position
 	end
 
-	local ParentBoneLimit = ParentBone.RotationLimit
 	local ParentBonePosition = ParentBone.Position
 	local DefaultDirection = SafeUnit(ParentBone.Position - GrandParentBone.Position)
 
 	local DistanceToParent = (Position - ParentBonePosition).Magnitude
 	local DirectionToSelf = SafeUnit(Position - ParentBonePosition)
 
-	if ParentBoneLimit >= 180 then
-		debug.profileend()
-		return Position
-	elseif ParentBoneLimit <= 0 then
+	if ParentBoneLimit <= 0 then
 		debug.profileend()
 		return ParentBonePosition + DefaultDirection * DistanceToParent
 	end

@@ -23,7 +23,7 @@ local function ProjectOnPlane(pos, normal, point)
 end
 
 local function ClosestPointFunc(cframe, size, point)
-	local radius = math.min(size.Y, size.Z) * 0.5
+	local radius = (size.Y < size.Z and size.Y or size.Z) * 0.5
 	local length = size.X * 0.5
 	local l0, k = solve(cframe.Position, cframe.RightVector, length, point)
 
@@ -39,7 +39,7 @@ local function ClosestPointFunc(cframe, size, point)
 	local function GetFinalProj(proj, o)
 		local projDir = SafeUnit(proj - o)
 		local projDistance = (proj - o).Magnitude
-		return o + projDir * math.min(projDistance, radius)
+		return o + projDir * (projDistance < radius and projDistance or radius)
 	end
 
 	projEnd = GetFinalProj(projEnd, endPlane)

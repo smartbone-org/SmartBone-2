@@ -14,7 +14,7 @@ return function(self, Position, BoneTree)
 		local RestLength = self.FreeLength
 		local BoneSub = (Position - ParentBone.Position)
 		local BoneDirection = SafeUnit(BoneSub)
-		local BoneDistance = math.min(BoneSub.Magnitude, RestLength)
+		local BoneDistance = BoneSub.Magnitude < RestLength and BoneSub.Magnitude or RestLength
 
 		local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
 

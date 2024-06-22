@@ -26,7 +26,7 @@ end
 
 return function(CapsuleCFrame, CapsuleSize, Point, Radius)
 	debug.profilebegin("Capsule Testing")
-	local CapsuleRadius = math.min(CapsuleSize.Y, CapsuleSize.Z) * 0.5 -- Optomize
+	local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or CapsuleSize.Z) * 0.5
 	local CapsuleLength = CapsuleSize.X
 
 	CapsuleCFrame *= CFrame.Angles(math.rad(90), -math.rad(90), 0) -- Optomize

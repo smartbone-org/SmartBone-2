@@ -6,6 +6,8 @@ local function SafeUnit(v3)
 	return v3.Unit
 end
 
+local inf = math.huge
+
 return function(self, Position, LastPosition, RootCFrame)
 	debug.profilebegin("Axis Constraint")
 	local RootOffset = RootCFrame:Inverse() * Position
@@ -17,6 +19,12 @@ return function(self, Position, LastPosition, RootCFrame)
 	local XLimit = self.XAxisLimits
 	local YLimit = self.YAxisLimits
 	local ZLimit = self.ZAxisLimits
+
+	-- Most bones probably wont have an axis limit, this allows us to skip all the other stuff
+	if XLimit.Min == -inf and XLimit.Max == inf and YLimit.Min == -inf and YLimit.Max == inf and ZLimit.Min == -inf and ZLimit.Max == inf then
+		debug.profileend()
+		return Position
+	end
 
 	local XLock = self.AxisLocked[1] and 0 or 1
 	local YLock = self.AxisLocked[2] and 0 or 1
