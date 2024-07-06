@@ -19,11 +19,9 @@ The wally package can be found [here](https://wally.run/package/jakeywastaken/sm
 
 There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) which has colliders and over 170 SmartBone objects setup.
 
-You can find the plugins here:
-
-[Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)
-
-[SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)
+You can find the plugins here:<br />
+[Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)<br />
+[SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)<br />
 
 ## Contributing
 
