@@ -663,6 +663,8 @@ function Class.Start(): { Stop: () -> () }
 
 	return {
 		Stop = function()
+			Class.Running = false
+
 			if not Config.RESET_BONE_ON_DESTROY then
 				ActorFolder:Destroy()
 				return
