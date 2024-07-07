@@ -9,7 +9,7 @@ The wally package can be found [here](https://wally.run/package/jakeywastaken/sm
 * Support for animating bones
 * A more realistic and customizable wind solution
 * Support for global wind (MatchWorkspaceWind Attribute)
-* More accurate and faster frustum culling (Large root parts now have correct culling)
+* A faster, dynamic and more accurate frustum culling solution (The bounding box of all bones is now checked)
 * Detailed documentation and API
 * Runtime debug ui (Debug Attribute)
 * Cleaner code base
