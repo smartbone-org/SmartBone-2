@@ -188,6 +188,11 @@ end
 --- :::
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
+	-- Should we do frustum checks this frame, depends on config setting
+	if shared.FrameCounter % Config.FRUSTUM_FREQ ~= 0 then
+		return
+	end
+
 	debug.profilebegin("SmartBone2::m_UpdateViewFrustum")
 	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
