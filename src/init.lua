@@ -144,16 +144,18 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 		SB_VERBOSE_LOG(`Adding bone: {Bone.Name}; {ParentIndex}; {HeirarchyLength}`)
 		SB_INDENT_LOG()
 		local Children = Bone:GetChildren()
+		local HasBoneChild = false
 
 		for _, Child in Children do
 			if Child:IsA("Bone") then
 				self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
 
 				AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
+				HasBoneChild = true
 			end
 		end
 
-		if #Children == 0 then -- Add tail bone for transform calculations
+		if not HasBoneChild then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Parent = Bone.Parent
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
