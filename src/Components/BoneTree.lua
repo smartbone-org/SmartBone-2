@@ -23,13 +23,18 @@ export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
 	RootPart: BasePart,
-	Bones: { [number]: BoneClass.IBone },
+	RootPartSize: Vector3,
+	Bones: { BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
-	InView: boolean,
 	AccumulatedDelta: number,
+	BoundingBoxCFrame: CFrame,
+	BoundingBoxSize: Vector3,
 
-	Destroyed: boolean,
+	InView: bool,
+	Destroyed: bool,
+	IsSkippingUpdates: bool,
+	InWorkspace: bool,
 
 	Force: Vector3,
 	ObjectMove: Vector3,
@@ -131,8 +136,13 @@ end
 
 --- @within BoneTree
 --- @readonly
---- @prop FirstSkipUpdate boolean
---- False if the bone tree hasn't skipped an update this frame. True if it has
+--- @prop IsSkippingUpdates boolean
+--- True if the bone tree is currently skipping updates
+
+--- @within BoneTree
+--- @readonly
+--- @prop InWorkspace boolean
+--- Boolean describing if the rootpart is a descendant of workspace
 
 --- @within BoneTree
 --- @readonly
@@ -159,7 +169,7 @@ Class.__index = Class
 --- @return BoneTree
 function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 	local self = setmetatable({
-		WindOffset = WIND_RNG:NextNumber(0, 1000000),
+		WindOffset = WIND_RNG:NextNumber(0, 1e6),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
 		RootPartSize = RootPart.Size,
@@ -172,7 +182,8 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		BoundingBoxSize = RootPart.Size,
 
 		Destroyed = false,
-		FirstSkipUpdate = false,
+		IsSkippingUpdates = false,
+		InWorkspace = false,
 
 		Force = Vector3.zero,
 		ObjectMove = Vector3.zero,
@@ -181,13 +192,18 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
-	self.DestroyConnection = RootPart.AncestryChanged:Connect(function()
+	self.InWorkspace = RootPart:IsDescendantOf(workspace)
+
+	-- TODO: Revisit optimising :IsDescendantOf calls
+	self.DestroyConnection = RootPart.AncestryChanged:ConnectParallel(function()
 		if not RootPart:IsDescendantOf(game) then
 			self.Destroyed = true
 		end
+
+		self.InWorkspace = RootPart:IsDescendantOf(workspace)
 	end)
 
-	self.AttributeConnection = RootPart.AttributeChanged:Connect(function(Attribute)
+	self.AttributeConnection = RootPart.AttributeChanged:ConnectParallel(function(Attribute)
 		-- No need validating
 		self.Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
@@ -283,14 +299,12 @@ end
 function Class:StepPhysics(Delta: number)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
-	local Force = Settings.Gravity
-
-	Force = (Force + Settings.Force) * Delta -- Dont really want delta here but everything breaks if i remove it and i cant be bothered to fix it
+	local Force = (Settings.Gravity + Settings.Force) * Delta
 
 	if Settings.MatchWorkspaceWind == true then
-		local GW = workspace.GlobalWind
-		Settings.WindDirection = SafeUnit(GW)
-		Settings.WindSpeed = GW.Magnitude
+		local GlobalWind = workspace.GlobalWind
+		Settings.WindDirection = SafeUnit(GlobalWind)
+		Settings.WindSpeed = GlobalWind.Magnitude
 	else
 		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
 		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
@@ -328,7 +342,7 @@ function Class:SkipUpdate()
 		Bone:SkipUpdate()
 	end
 
-	self.FirstSkipUpdate = true
+	self.IsSkippingUpdates = true
 	debug.profileend()
 end
 
@@ -340,7 +354,7 @@ function Class:SolveTransform(Delta: number)
 		Bone:SolveTransform(self, Delta)
 	end
 
-	self.FirstSkipUpdate = false
+	self.IsSkippingUpdates = false
 	debug.profileend()
 end
 

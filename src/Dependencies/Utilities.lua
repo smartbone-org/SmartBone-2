@@ -110,6 +110,7 @@ function module.GatherBoneSettings(Bone: Bone)
 	if Force ~= "¬" then
 		Expect(Force, "Vector3", "Force")
 	end
+
 	if Force ~= "¬" then
 		Expect(Gravity, "Vector3", "Gravity")
 	end

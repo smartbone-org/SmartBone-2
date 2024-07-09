@@ -56,6 +56,7 @@ export type IBone = {
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
+	IsSkippingUpdates: bool,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -348,7 +349,7 @@ end
 --- @prop ZAxisLimits NumberRange
 
 --- @within Bone
---- @prop FirstSkipUpdate boolean
+--- @prop IsSkippingUpdates boolean
 
 --- @within Bone
 --- @prop CollisionHits {}
@@ -401,7 +402,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		YAxisLimits = NumberRange.new(-math.huge, math.huge),
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
 
-		FirstSkipUpdate = false,
+		IsSkippingUpdates = false,
 
 		CollisionHits = {},
 
@@ -414,7 +415,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		local Settings = Utilities.GatherBoneSettings(Bone)
 
 		for k, v in Settings do
-			-- ¬ represents a nil value
+			-- ¬ represents a nil value, this is done so we can delete attributes at runtime.
 			self[k] = (v ~= "¬") and v or nil
 		end
 	end)
@@ -578,14 +579,14 @@ end
 --- @within Bone
 --- Returns bone to rest position
 function Class:SkipUpdate()
-	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
-		SB_VERBOSE_LOG("Skipping bone, resetting transform.")
+	if self.IsSkippingUpdates == false and Config.RESET_TRANSFORM_ON_SKIP then
+		--SB_VERBOSE_LOG("Skipping bone, resetting transform.")
 		self.CalculatedWorldCFrame = self.AnimatedWorldCFrame
-		self.FirstSkipUpdate = true
+		self.IsSkippingUpdates = true
 	end
 
-	self.Position = self.Bone.WorldPosition
-	self.LastPosition = self.Position
+	self.LastPosition = self.AnimatedWorldCFrame.Position + (self.LastPosition - self.Position)
+	self.Position = self.AnimatedWorldCFrame.Position
 end
 
 --- @within Bone
@@ -599,7 +600,7 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		return
 	end
 
-	self.FirstSkipUpdate = false
+	self.IsSkippingUpdates = false
 
 	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone

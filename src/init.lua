@@ -98,7 +98,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 	local Bone: IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
 	for k, v in Settings do
-		-- "¬" represents a nil value
+		-- "¬" represents a nil value, this is done so we can delete attributes at runtime.
 		Bone[k] = (v ~= "¬") and v or nil
 	end
 
@@ -252,8 +252,8 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 
 	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
-	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
-		local AlreadySkipped = BoneTree.FirstSkipUpdate
+	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 or not BoneTree.InWorkspace then
+		local AlreadySkipped = BoneTree.IsSkippingUpdates
 
 		BoneTree:SkipUpdate()
 
