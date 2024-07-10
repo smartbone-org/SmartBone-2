@@ -687,19 +687,11 @@ function Class:ApplyTransform(BoneTree)
 	local BoneParent = ParentBone.Bone
 
 	if ParentBone and BoneParent then
-		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then
+		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then -- Anchored and anchors do not rotate
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		else
-			if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == true then
-				BoneParent.WorldCFrame = ParentBone.TransformOffset * ParentBone.CalculatedWorldCFrame.Rotation
-				debug.profileend()
-				return
-			elseif ParentBone.Anchored then
-				BoneParent.WorldCFrame = ParentBone.TransformOffset
-				debug.profileend()
-				return
-			end
-
+		elseif ParentBone.Anchored then -- Anchored and anchors rotate
+			BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
 	end
