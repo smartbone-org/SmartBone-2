@@ -144,16 +144,18 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 		SB_VERBOSE_LOG(`Adding bone: {Bone.Name}; {ParentIndex}; {HeirarchyLength}`)
 		SB_INDENT_LOG()
 		local Children = Bone:GetChildren()
+		local HasBoneChild = false
 
 		for _, Child in Children do
 			if Child:IsA("Bone") then
 				self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
 
 				AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
+				HasBoneChild = true
 			end
 		end
 
-		if #Children == 0 then -- Add tail bone for transform calculations
+		if not HasBoneChild then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Parent = Bone.Parent
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
@@ -252,8 +254,8 @@ if BoneTree.Destroyed then
 
 	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
-	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
-		local AlreadySkipped = BoneTree.FirstSkipUpdate
+	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 or not BoneTree.InWorkspace then
+		local AlreadySkipped = BoneTree.IsSkippingUpdates
 
 		BoneTree:SkipUpdate()
 
@@ -263,6 +265,9 @@ do end
 task.synchronize()
 			BoneTree:ApplyTransform()
 
+			print(
+				`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}, InWorkspace: {BoneTree.InWorkspace}`
+			)
 			--SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
 		end
 
@@ -293,9 +298,7 @@ do end
 if DidUpdate then
 		task.synchronize()
 		BoneTree:ApplyTransform()
-		--BoneTree:SkipUpdate()
-	
-end
+	end
 end
 
 --- @private

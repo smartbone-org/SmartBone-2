@@ -56,6 +56,7 @@ export type IBone = {
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
+	IsSkippingUpdates: bool,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -68,6 +69,7 @@ export type IBone = {
 
 	ActiveWeld: bool,
 	WeldPosition: Vector3,
+	WeldCFrame: CFrame,
 
 	Anchored: bool,
 	AxisLocked: { [number]: bool },
@@ -189,6 +191,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local MinSpeed = 2.5
 	local TimeMultiplier = EaseInExpo(Velocity.Magnitude / MinSpeed)
 	TimeMultiplier = TimeMultiplier < 1 and 1 or TimeMultiplier
+	TimeMultiplier = TimeMultiplier >= math.huge and 1 or TimeMultiplier
 	TimeModifier *= TimeMultiplier
 
 	local WindSpeed = Settings.WindSpeed
@@ -307,9 +310,31 @@ end
 --- @prop Radius number
 
 --- @within Bone
+--- @prop Friction number
+
+--- @within Bone
+--- @prop RotationLimit number
+
+--- @within Bone
+--- @prop Force Vector3?
+
+--- @within Bone
+--- @prop Gravity Vector3?
+
+--- @within Bone
+--- @prop SolvedAnimatedCFrame boolean
+--- Describes if this bone has already solved its animated world cframe, this is used for optimization.
+
+--- @within Bone
+--- @prop HasChild boolean
+
+--- @within Bone
 --- @readonly
 --- @prop AnimatedWorldCFrame CFrame
 --- Bone.TransformedWorldCFrame
+
+--- @within Bone
+--- @prop StartingCFrame CFrame
 
 --- @within Bone
 --- @readonly
@@ -332,6 +357,24 @@ end
 --- Internal representation of the bone
 
 --- @within Bone
+--- @prop LastPosition Vector3
+--- Internal representation of the bone's position last frame
+
+--- @within Bone
+--- @prop WeldPosition Vector3
+
+--- @within Bone
+--- @prop WeldCFrame CFrame
+
+--- @within Bone
+--- @prop ActiveWeld boolean
+--- Describes if this bone has a weld
+
+--- @within Bone
+--- @prop RigidWeld boolean
+--- If the bone has a weld, is it rigid
+
+--- @within Bone
 --- @prop Anchored boolean
 
 --- @within Bone
@@ -348,13 +391,14 @@ end
 --- @prop ZAxisLimits NumberRange
 
 --- @within Bone
---- @prop FirstSkipUpdate boolean
+--- @prop IsSkippingUpdates boolean
 
 --- @within Bone
 --- @prop CollisionHits {}
 
 --- @within Bone
 --- @prop CollisionData {}
+--- Debug property, holds information about the collisions that the bone had this frame
 
 local Class = {}
 Class.__index = Class
@@ -392,6 +436,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		LastPosition = Bone.TransformedWorldCFrame.Position,
 
 		WeldPosition = Vector3.zero,
+		WeldCFrame = CFrame.identity,
 		ActiveWeld = false,
 		RigidWeld = false,
 
@@ -401,7 +446,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		YAxisLimits = NumberRange.new(-math.huge, math.huge),
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
 
-		FirstSkipUpdate = false,
+		IsSkippingUpdates = false,
 
 		CollisionHits = {},
 
@@ -452,9 +497,11 @@ local Root = BoneTree.Bones[1]
 			if WeldTo then
 				if WeldTo:IsA("Attachment") then -- Attachment also covers bones
 					self.WeldPosition = WeldTo.WorldPosition
+					self.WeldCFrame = WeldTo.WorldCFrame
 					self.ActiveWeld = true
 				elseif WeldTo:IsA("BasePart") then
 					self.WeldPosition = WeldTo.Position
+					self.WeldCFrame = WeldTo.CFrame
 					self.ActiveWeld = true
 				end
 			end
@@ -502,6 +549,7 @@ return
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
 		Force = (self.Gravity or BoneTree.Settings.Gravity)
+
 		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
 	end
 
@@ -555,8 +603,8 @@ return
 
 	if self.ActiveWeld then
 		if self.RigidWeld then
+			-- Solve Transform has the rest of this implementation.
 			Position = self.WeldPosition
-			Position = DistanceConstraint(self, Position, BoneTree)
 		else
 			Position = SpringConstraint(self, Position, self.WeldPosition, BoneTree, Delta)
 		end
@@ -577,10 +625,10 @@ end
 --- @within Bone
 --- Returns bone to rest position
 function Class:SkipUpdate()
-	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
+	if self.IsSkippingUpdates == false and Config.RESET_TRANSFORM_ON_SKIP then
 		--SB_VERBOSE_LOG("Skipping bone, resetting transform.")
 		self.CalculatedWorldCFrame = self.AnimatedWorldCFrame
-		self.FirstSkipUpdate = true
+		self.IsSkippingUpdates = true
 	end
 
 	self.LastPosition = self.AnimatedWorldCFrame.Position + (self.LastPosition - self.Position)
@@ -598,7 +646,7 @@ do end
 return
 	end
 
-	self.FirstSkipUpdate = false
+	self.IsSkippingUpdates = false
 
 	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
@@ -612,7 +660,7 @@ return
 		local alpha = math.min(1 - factor ^ Delta, 1)
 
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
-			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
+			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
 		else
 			--ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
