@@ -179,27 +179,24 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 
 	-- If we are going the same direction as the wind
 	local InToWindDamper = 1 - (VelocityDirection:Dot(WindDirection) * 0.5 + 0.5)
-	InToWindDamper = InToWindDamper < 0.5 and 0.5 or WindDirection
+	InToWindDamper = InToWindDamper < 0.5 and 0.5 or InToWindDamper
 
 	local function EaseInExpo(x: number): number
 		return x == 0 and 0 or 2 ^ (10 * x - 10)
 	end
 
-	-- Minimum speed to where we start to increase time modifier
-	local MinSpeed = 2.5
-	local TimeMultiplier = EaseInExpo(Velocity.Magnitude / MinSpeed)
-	TimeMultiplier = TimeMultiplier < 1 and 1 or TimeMultiplier
-	TimeMultiplier = TimeMultiplier >= math.huge and 1 or TimeMultiplier
-	TimeModifier *= TimeMultiplier
+	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
+	local SpeedMultiplier = EaseInExpo(SpeedAlpha) * InToWindDamper
+	TimeModifier *= SpeedMultiplier
 
 	local WindSpeed = Settings.WindSpeed
 	local WindStrength = Settings.WindStrength
 
-	if WindSpeed < 1 and TimeMultiplier > 1 then
-		WindSpeed = 1 * TimeMultiplier
+	if WindSpeed < 1 then
+		WindSpeed *= SpeedMultiplier
 	else
-		local Mult = TimeMultiplier / 2
-		WindSpeed = WindSpeed * (Mult < 1 and 1 or Mult)
+		local Mult = SpeedMultiplier / 2
+		WindSpeed *= (Mult > 1 and Mult or 1)
 	end
 
 	local WindMove
@@ -226,10 +223,10 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local Power = WindSpeed * 2
 
 		-- Multiple octaves of sin waves
-		local Sin0 = math.sin(TimeMultiplier * Freq)
-		local Sin1 = math.cos(TimeMultiplier / 10 * Freq)
-		local Sin2 = math.sin(TimeMultiplier * 2 * Freq)
-		local Sin3 = math.cos(TimeMultiplier * 3 * Freq)
+		local Sin0 = math.sin(TimeModifier * Freq)
+		local Sin1 = math.cos(TimeModifier / 10 * Freq)
+		local Sin2 = math.sin(TimeModifier * 2 * Freq)
+		local Sin3 = math.cos(TimeModifier * 3 * Freq)
 		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4 * (Power + 8)
 		local ScaledWave = Wave * 0.5 + 0.5
 		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
