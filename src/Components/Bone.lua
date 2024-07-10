@@ -91,8 +91,6 @@ end
 local SolvedTransformedCFrames = {}
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
--- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
--- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
 	local Solved = SolvedTransformedCFrames[OriginBone]
