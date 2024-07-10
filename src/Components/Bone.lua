@@ -160,10 +160,12 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 end
 
 local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
+	debug.profilebegin("SolveWind")
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
+		debug.profileend()
 		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
@@ -176,11 +178,17 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local WindSpeed = Settings.WindSpeed
 	local WindStrength = Settings.WindStrength
 
+	if WindSpeed == Vector3.zero or WindStrength == 0 then
+		debug.profileend()
+		return Vector3.zero
+	end
+
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
 
 	-- If we are going the same direction as the wind
+	debug.profilebegin("Solve WindDamper")
 	local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
 
 	-- This section of code manages the following:
@@ -195,6 +203,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 			WindDamper *= SpeedMatch
 		end
 	end
+	debug.profileend()
 
 	WindSpeed *= WindDamper
 
@@ -216,13 +225,14 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local WindMove
 
 	local function GetNoise(X, Y, Z, Map) -- Returns noise between 0, 1
+		debug.profilebegin("GetNoise")
 		local Value = math.noise(X, Y, Z)
 		Value = math.clamp(Value, -1, 1)
 
 		if Map then
 			Value ^= 2
 		end
-
+		debug.profileend()
 		return Value
 	end
 
@@ -233,6 +243,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	end
 
 	local function SampleSin()
+		debug.profilebegin("SampleSin")
 		local Freq = WindStrength ^ 0.8
 		local Power = WindSpeed * 2
 
@@ -245,10 +256,12 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local ScaledWave = Wave * 0.5 + 0.5
 		Wave *= Power
 		ScaledWave *= Power
+		debug.profileend()
 		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
+		debug.profilebegin("SampleNoise")
 		CustomAmp = CustomAmp or 0
 
 		local Freq = WindStrength ^ 0.8
@@ -258,24 +271,33 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
-
+		debug.profileend()
 		return WindDirection * Vector3.new(X, Y, Z)
 	end
 
+	debug.profilebegin("Solve Wind from type")
 	if Settings.WindType == "Sine" then
+		debug.profilebegin("Sine")
 		WindMove = SampleSin() * SampleGust()
+		debug.profileend()
 	elseif Settings.WindType == "Noise" then
+		debug.profilebegin("Noise")
 		WindMove = SampleNoise(0, true) * SampleGust()
+		debug.profileend()
 	elseif Settings.WindType == "Hybrid" then
+		debug.profilebegin("Hybrid")
 		WindMove = SampleSin() * SampleGust()
 		WindMove += SampleNoise(0.5, true) * SampleGust()
 		WindMove *= 0.5
+		debug.profileend()
 	end
+	debug.profileend()
 
 	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
 	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
 
+	debug.profileend()
 	return WindMove
 end
 
@@ -559,11 +581,14 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
+		debug.profilebegin("Solve Force")
 		Force = (self.Gravity or BoneTree.Settings.Gravity)
 
 		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
+		debug.profileend()
 	end
 
+	debug.profilebegin("Update")
 	local Settings = BoneTree.Settings
 
 	local Velocity = (self.Position - self.LastPosition)
@@ -572,7 +597,7 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
-
+	debug.profileend()
 	debug.profileend()
 end
 
