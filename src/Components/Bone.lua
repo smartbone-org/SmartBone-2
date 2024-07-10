@@ -662,7 +662,8 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
 			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
 		else
-			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			--ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
 		end
 
 		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
