@@ -173,24 +173,38 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 			* Settings.WindInfluence
 		)
 
+	local WindSpeed = Settings.WindSpeed
+	local WindStrength = Settings.WindStrength
+
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
 
 	-- If we are going the same direction as the wind
-	local InToWindDamper = 1 - (VelocityDirection:Dot(WindDirection) * 0.5 + 0.5)
-	InToWindDamper = InToWindDamper < 0.5 and 0.5 or InToWindDamper
+	local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
+
+	-- This section of code manages the following:
+	-- If we are going into the wind then if our bone speed is the same as the wind speed then we should apply double the wind speed, contrary
+	-- If we are going with the wind if our bone speed is the same as the wind speed then we wind speed should be zero for this bone.
+	if WindSpeed > 0 then
+		if VelocityDirection:Dot(WindDirection) > 0 then -- Going with the wind
+			local SpeedMatch = 1 - Velocity.Magnitude / WindSpeed
+			WindDamper *= math.abs(SpeedMatch)
+		else -- Going against the wind
+			local SpeedMatch = 1 + Velocity.Magnitude / WindSpeed
+			WindDamper *= SpeedMatch
+		end
+	end
+
+	WindSpeed *= WindDamper
 
 	local function EaseInExpo(x: number): number
 		return x == 0 and 0 or 2 ^ (10 * x - 10)
 	end
 
 	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
-	local SpeedMultiplier = EaseInExpo(SpeedAlpha) * InToWindDamper
-	TimeModifier *= SpeedMultiplier
-
-	local WindSpeed = Settings.WindSpeed
-	local WindStrength = Settings.WindStrength
+	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
+	TimeModifier *= math.max(SpeedMultiplier, 1)
 
 	if WindSpeed < 1 then
 		WindSpeed *= SpeedMultiplier
@@ -227,8 +241,10 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local Sin1 = math.cos(TimeModifier / 10 * Freq)
 		local Sin2 = math.sin(TimeModifier * 2 * Freq)
 		local Sin3 = math.cos(TimeModifier * 3 * Freq)
-		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4 * (Power + 8)
+		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4
 		local ScaledWave = Wave * 0.5 + 0.5
+		Wave *= Power
+		ScaledWave *= Power
 		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
