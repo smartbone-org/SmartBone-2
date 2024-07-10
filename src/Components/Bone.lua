@@ -69,6 +69,7 @@ export type IBone = {
 
 	ActiveWeld: bool,
 	WeldPosition: Vector3,
+	WeldCFrame: CFrame,
 
 	Anchored: bool,
 	AxisLocked: { [number]: bool },
@@ -190,6 +191,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local MinSpeed = 2.5
 	local TimeMultiplier = EaseInExpo(Velocity.Magnitude / MinSpeed)
 	TimeMultiplier = TimeMultiplier < 1 and 1 or TimeMultiplier
+	TimeMultiplier = TimeMultiplier >= math.huge and 1 or TimeMultiplier
 	TimeModifier *= TimeMultiplier
 
 	local WindSpeed = Settings.WindSpeed
@@ -308,9 +310,31 @@ end
 --- @prop Radius number
 
 --- @within Bone
+--- @prop Friction number
+
+--- @within Bone
+--- @prop RotationLimit number
+
+--- @within Bone
+--- @prop Force Vector3?
+
+--- @within Bone
+--- @prop Gravity Vector3?
+
+--- @within Bone
+--- @prop SolvedAnimatedCFrame boolean
+--- Describes if this bone has already solved its animated world cframe, this is used for optimization.
+
+--- @within Bone
+--- @prop HasChild boolean
+
+--- @within Bone
 --- @readonly
 --- @prop AnimatedWorldCFrame CFrame
 --- Bone.TransformedWorldCFrame
+
+--- @within Bone
+--- @prop StartingCFrame CFrame
 
 --- @within Bone
 --- @readonly
@@ -331,6 +355,24 @@ end
 --- @within Bone
 --- @prop Position Vector3
 --- Internal representation of the bone
+
+--- @within Bone
+--- @prop LastPosition Vector3
+--- Internal representation of the bone's position last frame
+
+--- @within Bone
+--- @prop WeldPosition Vector3
+
+--- @within Bone
+--- @prop WeldCFrame CFrame
+
+--- @within Bone
+--- @prop ActiveWeld boolean
+--- Describes if this bone has a weld
+
+--- @within Bone
+--- @prop RigidWeld boolean
+--- If the bone has a weld, is it rigid
 
 --- @within Bone
 --- @prop Anchored boolean
@@ -356,6 +398,7 @@ end
 
 --- @within Bone
 --- @prop CollisionData {}
+--- Debug property, holds information about the collisions that the bone had this frame
 
 local Class = {}
 Class.__index = Class
@@ -393,6 +436,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		LastPosition = Bone.TransformedWorldCFrame.Position,
 
 		WeldPosition = Vector3.zero,
+		WeldCFrame = CFrame.identity,
 		ActiveWeld = false,
 		RigidWeld = false,
 
@@ -453,9 +497,11 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 			if WeldTo then
 				if WeldTo:IsA("Attachment") then -- Attachment also covers bones
 					self.WeldPosition = WeldTo.WorldPosition
+					self.WeldCFrame = WeldTo.WorldCFrame
 					self.ActiveWeld = true
 				elseif WeldTo:IsA("BasePart") then
 					self.WeldPosition = WeldTo.Position
+					self.WeldCFrame = WeldTo.CFrame
 					self.ActiveWeld = true
 				end
 			end
@@ -557,8 +603,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 
 	if self.ActiveWeld then
 		if self.RigidWeld then
+			-- Solve Transform has the rest of this implementation.
 			Position = self.WeldPosition
-			Position = DistanceConstraint(self, Position, BoneTree)
 		else
 			Position = SpringConstraint(self, Position, self.WeldPosition, BoneTree, Delta)
 		end
@@ -614,7 +660,7 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		local alpha = math.min(1 - factor ^ Delta, 1)
 
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
-			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
+			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
 		else
 			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 		end
