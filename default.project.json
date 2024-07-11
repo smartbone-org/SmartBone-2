@@ -1,6 +1,6 @@
 {
 	"name": "smartbone-2",
 	"tree": {
-		"$path": "src"
+		"$path": "src-build"
 	}
 }

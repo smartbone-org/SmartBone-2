@@ -1,4 +1,4 @@
-gitSourceBranch = "jakey"
+gitSourceBranch = "main" # This means we will have to commit and push before building docs
 
 classOrder = [
     "SmartBone",

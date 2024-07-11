@@ -229,7 +229,7 @@ function Class:DrawDebug(ColliderObject, FILL_COLLIDER, SHOW_INFLUENCE, SHOW_AWA
 	end
 
 	if Type == "Capsule" then
-		local CapsuleRadius = math.min(Size.Y, Size.Z) * 0.5
+		local CapsuleRadius = (Size.Y < Size.Z and Size.Y or Size.Z) * 0.5
 		local CapsuleLength = Size.X
 
 		local TransformedTransform = Transform * CFrame.Angles(math.rad(90), -math.rad(90), 0)
@@ -267,7 +267,7 @@ function Class:DrawDebug(ColliderObject, FILL_COLLIDER, SHOW_INFLUENCE, SHOW_AWA
 	end
 
 	if Type == "Cylinder" then
-		local Radius = math.min(Size.Y, Size.Z) * 0.5
+		local Radius = (Size.Y < Size.Z and Size.Y or Size.Z) * 0.5
 
 		Gizmo.SetStyle(COLLIDER_COLOR, 0, false)
 		Gizmo.Cylinder:Draw(Transform * CFrame.Angles(0, 0, math.rad(90)), Radius, Size.X, 15)

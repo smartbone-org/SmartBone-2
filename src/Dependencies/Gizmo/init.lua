@@ -6,11 +6,13 @@
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local Terrain = workspace:WaitForChild("Terrain")
+local TargetParent = workspace:WaitForChild("Terrain") -- Change this if you wish to have gizmos under a different location, e.g CoreGui
 
-assert(Terrain, "No terrain object found under workspace...")
+assert(Terrain, "No terrain object found under workspace")
+assert(TargetParent, "No target parent found.")
 
-local AOTWireframeHandle: WireframeHandleAdornment = Terrain:FindFirstChild("AOTGizmoAdornment")
-local WireframeHandle: WireframeHandleAdornment = Terrain:FindFirstChild("GizmoAdornment")
+local AOTWireframeHandle: WireframeHandleAdornment = TargetParent:FindFirstChild("AOTGizmoAdornment")
+local WireframeHandle: WireframeHandleAdornment = TargetParent:FindFirstChild("GizmoAdornment")
 
 if not AOTWireframeHandle then
 	AOTWireframeHandle = Instance.new("WireframeHandleAdornment")
@@ -18,7 +20,7 @@ if not AOTWireframeHandle then
 	AOTWireframeHandle.ZIndex = 1
 	AOTWireframeHandle.AlwaysOnTop = true
 	AOTWireframeHandle.Name = "AOTGizmoAdornment"
-	AOTWireframeHandle.Parent = Terrain
+	AOTWireframeHandle.Parent = TargetParent
 end
 
 if not WireframeHandle then
@@ -27,7 +29,7 @@ if not WireframeHandle then
 	WireframeHandle.ZIndex = 1
 	WireframeHandle.AlwaysOnTop = false
 	WireframeHandle.Name = "GizmoAdornment"
-	WireframeHandle.Parent = Terrain
+	WireframeHandle.Parent = TargetParent
 end
 
 local Gizmos = script:WaitForChild("Gizmos")
@@ -36,7 +38,7 @@ local ActiveObjects = {}
 local RetainObjects = {}
 local Debris = {}
 local Tweens = {}
-local PropertyTable = { AlwaysOnTop = true }
+local PropertyTable = { AlwaysOnTop = true, Color3 = Color3.fromRGB(13, 105, 172), Transparency = 0 } -- Defaults
 local Pool = {}
 
 local CleanerScheduled = false
@@ -46,6 +48,7 @@ local function Retain(Gizmo, GizmoProperties)
 end
 
 local function Register(object)
+	object.Parent = TargetParent
 	table.insert(ActiveObjects, object)
 end
 
@@ -63,12 +66,13 @@ end
 local function Request(ClassName)
 	if not Pool[ClassName] then
 		return Instance.new(ClassName)
-	elseif not Pool[ClassName][1] then
-		return Instance.new(ClassName)
 	end
 
-	local Object = Pool[ClassName][1]
-	table.remove(Pool[ClassName], 1)
+	local Object = table.remove(Pool[ClassName])
+
+	if not Object then
+		return Instance.new(ClassName)
+	end
 
 	return Object
 end
@@ -158,12 +162,13 @@ type IWedge = {
 }
 
 type ICircle = {
-	Draw: (self: ICircle, Transform: CFrame, Radius: number, Subdivisions: number, ConnectToStart: boolean?) -> (),
+	Draw: (self: ICircle, Transform: CFrame, Radius: number, Subdivisions: number, Angle: number, ConnectToStart: boolean?) -> (),
 	Create: (
 		self: ICircle,
 		Transform: CFrame,
 		Radius: number,
 		Subdivisions: number,
+		Angle: number,
 		ConnectToStart: boolean?
 	) -> {
 		Transform: CFrame,
@@ -376,15 +381,7 @@ type IVolumeCylinder = {
 }
 
 type IVolumeArrow = {
-	Draw: (
-		self: IVolumeArrow,
-		Origin: Vector3,
-		End: Vector3,
-		CylinderRadius: number,
-		ConeRadius: number,
-		Length: number,
-		UseCylinder: boolean?
-	) -> (),
+	Draw: (self: IVolumeArrow, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
 	Create: (
 		self: IVolumeArrow,
 		Origin: Vector3,
@@ -408,22 +405,44 @@ type IVolumeArrow = {
 	},
 }
 
+type IText = {
+	Draw: (self: IText, Origin: Vector3, Text: string, Size: number?) -> (),
+	Create: (
+		self: IText,
+		Origin: Vector3,
+		Text: string,
+		Size: number?
+	) -> {
+		Origin: Vector3,
+		Text: string,
+		Size: number?,
+		Color3: Color3,
+		AlwaysOnTop: boolean,
+		Transparency: number,
+		Enabled: boolean,
+		Destroy: boolean,
+	},
+}
+
 type IStyles = {
 	Color: string,
 	Transparency: number,
 	AlwaysOnTop: boolean,
 }
 
+type IStyle = "Color3" | "Transparency" | "AlwaysOnTop"
+
 type ICeive = {
 	ActiveRays: number,
 	ActiveInstances: number,
 
-	PushProperty: (Property: string, Value: any?) -> (),
-	PopProperty: (Property: string) -> any?,
+	PushProperty: (Property: IStyle, Value: any?) -> (),
+	PopProperty: (Property: IStyle) -> any?,
 	SetStyle: (Color: Color3?, Transparency: number?, AlwaysOnTop: boolean?) -> (),
 	AddDebrisInSeconds: (Seconds: number, Callback: () -> ()) -> (),
 	AddDebrisInFrames: (Frames: number, Callback: () -> ()) -> (),
 	SetEnabled: (Value: boolean) -> (),
+	RemoveAdornments: () -> (),
 	DoCleaning: () -> (),
 	ScheduleCleaning: () -> (),
 	TweenProperies: (Properties: {}, Goal: {}, TweenInfo: TweenInfo) -> () -> (),
@@ -443,6 +462,7 @@ type ICeive = {
 	Cone: ICone,
 	Arrow: IArrow,
 	Mesh: IMesh,
+	Text: IText,
 	VolumeCone: IVolumeCone,
 	VolumeBox: IVolumeBox,
 	VolumeSphere: IVolumeSphere,
@@ -451,6 +471,9 @@ type ICeive = {
 }
 
 -- Ceive
+
+--- @class CEIVE
+--- Root class for all the gizmos.
 
 local Styles = {
 	Color = "Color3",
@@ -469,6 +492,9 @@ local Ceive: ICeive = {
 	WireframeHandle = WireframeHandle,
 }
 
+--- @within CEIVE
+--- @function GetPoolSize
+--- @return number
 function Ceive.GetPoolSize(): number
 	local n = 0
 
@@ -479,6 +505,11 @@ function Ceive.GetPoolSize(): number
 	return n
 end
 
+--- @within CEIVE
+--- @function PushProperty
+--- Push Property sets the value of a property.
+--- @param Property string
+--- @param Value any
 function Ceive.PushProperty(Property, Value)
 	PropertyTable[Property] = Value
 
@@ -492,7 +523,12 @@ function Ceive.PushProperty(Property, Value)
 	end)
 end
 
-function Ceive.PopProperty(Property): any
+--- @within CEIVE
+--- @function PopProperty
+--- Pop Property returns the property value.
+--- @param Property string
+--- @return any
+function Ceive.PopProperty(Property)
 	if PropertyTable[Property] then
 		return PropertyTable[Property]
 	end
@@ -500,20 +536,28 @@ function Ceive.PopProperty(Property): any
 	return AOTWireframeHandle[Property]
 end
 
+--- @within CEIVE
+--- @function SetStyle
+--- Sets the style of all properties.
+--- @param Color Color3?
+--- @param Transparency number?
+--- @param AlwaysOnTop boolean?
 function Ceive.SetStyle(Color, Transparency, AlwaysOnTop)
-	if Color and typeof(Color) == "Color3" then
+	if Color ~= nil and typeof(Color) == "Color3" then
 		Ceive.PushProperty("Color3", Color)
 	end
 
-	if Transparency and typeof(Transparency) == "number" then
+	if Transparency ~= nil and typeof(Transparency) == "number" then
 		Ceive.PushProperty("Transparency", Transparency)
 	end
 
-	if AlwaysOnTop and typeof(AlwaysOnTop) == "boolean" then
+	if AlwaysOnTop ~= nil and typeof(AlwaysOnTop) == "boolean" then
 		Ceive.PushProperty("AlwaysOnTop", AlwaysOnTop)
 	end
 end
 
+--- @within CEIVE
+--- @function DoCleaning
 function Ceive.DoCleaning()
 	AOTWireframeHandle:Clear()
 	WireframeHandle:Clear()
@@ -528,6 +572,8 @@ function Ceive.DoCleaning()
 	Ceive.ActiveInstances = 0
 end
 
+--- @within CEIVE
+--- @function ScheduleCleaning
 function Ceive.ScheduleCleaning()
 	if CleanerScheduled then
 		return
@@ -542,36 +588,80 @@ function Ceive.ScheduleCleaning()
 	end)
 end
 
+--- @within CEIVE
+--- @function AddDebrisInSeconds
+--- Acts as a wrapper for your code that runs for a provided amount of seconds.
+--- @param Seconds number
+--- @param Callback function
 function Ceive.AddDebrisInSeconds(Seconds: number, Callback)
 	table.insert(Debris, { "Seconds", Seconds, os.clock(), Callback })
 end
 
+--- @within CEIVE
+--- @function AddDebrisInFrames
+--- Acts as a wrapper for your code that runs for a provided amount of frames.
+--- @param Frames number
+--- @param Callback function
 function Ceive.AddDebrisInFrames(Frames: number, Callback)
 	table.insert(Debris, { "Frames", Frames, 0, Callback })
 end
 
+--- @within CEIVE
+--- @function TweenProperties
+--- Tweens the property table to the goal with the provided TweenInfo, returns a function which can be used to cancel.
+--- @param Properties table
+--- @param Goal table
+--- @param TweenInfo TweenInfo
+--- @return CancelFunction
 function Ceive.TweenProperties(Properties: {}, Goal: {}, TweenInfo: TweenInfo): () -> ()
 	local p_Properties = Properties
 	local c_Properties = deepCopy(Properties)
 
-	table.insert(Tweens, {
+	local Tween = {
 		p_Properties = p_Properties,
 		Properties = c_Properties,
 		Goal = Goal,
 		TweenInfo = TweenInfo,
 		Time = 0,
-	})
+	}
 
-	local TweenIndex = #Tweens
+	Tweens[Tween] = true
 
 	return function()
-		table.remove(Tweens, TweenIndex)
+		Tweens[Tween] = nil
 	end
 end
 
+--- @within CEIVE
+--- @function Init
 function Ceive.Init()
 	RunService.RenderStepped:Connect(function(dt)
-		for i, Tween in Tweens do
+    	if Ceive.Enabled then
+			-- Add our gizmos if they were removed for whatever reasons
+			if not TargetParent:FindFirstChild("AOTGizmoAdornment") then
+				AOTWireframeHandle = Instance.new("WireframeHandleAdornment")
+				AOTWireframeHandle.Adornee = Terrain
+				AOTWireframeHandle.ZIndex = 1
+				AOTWireframeHandle.AlwaysOnTop = true
+				AOTWireframeHandle.Name = "AOTGizmoAdornment"
+				AOTWireframeHandle.Parent = TargetParent
+
+				Ceive.AOTWireframeHandle = AOTWireframeHandle
+			end
+
+			if not TargetParent:FindFirstChild("GizmoAdornment") then
+				WireframeHandle = Instance.new("WireframeHandleAdornment")
+				WireframeHandle.Adornee = Terrain
+				WireframeHandle.ZIndex = 1
+				WireframeHandle.AlwaysOnTop = false
+				WireframeHandle.Name = "GizmoAdornment"
+				WireframeHandle.Parent = TargetParent
+
+				Ceive.WireframeHandle = WireframeHandle
+			end
+		end
+
+		for Tween in Tweens do
 			Tween.Time += dt
 			local Alpha = Tween.Time / Tween.TweenInfo.Time
 
@@ -599,11 +689,12 @@ function Ceive.Init()
 			end
 
 			if Alpha == 1 then
-				table.remove(Tweens, i)
+				Tweens[Tween] = nil
 			end
 		end
 
-		for i, DebrisObject in Debris do
+		for i = #Debris, 1, -1 do
+			local DebrisObject = Debris[i]
 			local DebrisType = DebrisObject[1]
 			local DebrisLifetime = DebrisObject[2]
 			local DebrisBirth = DebrisObject[3]
@@ -630,7 +721,8 @@ function Ceive.Init()
 			DebrisCallback()
 		end
 
-		for i, Gizmo in RetainObjects do
+		for i = #RetainObjects, 1, -1 do
+			local Gizmo = RetainObjects[i]
 			local GizmoPropertys = Gizmo[2]
 
 			if not GizmoPropertys.Enabled then
@@ -646,11 +738,27 @@ function Ceive.Init()
 	end)
 end
 
+--- @within CEIVE
+--- @function SetEnabled
+--- @param Value boolean
 function Ceive.SetEnabled(Value)
 	Ceive.Enabled = Value
 
 	if Value == false then
 		Ceive.DoCleaning()
+	end
+end
+
+--- @within CEIVE
+--- @function RemoveAdornments
+--- Removes adornments, will be added back next frame if Ceive is enabled
+function Ceive.RemoveAdornments()
+	if TargetParent:FindFirstChild("AOTGizmoAdornment") then
+		TargetParent:FindFirstChild("AOTGizmoAdornment"):Destroy()
+	end
+
+	if TargetParent:FindFirstChild("GizmoAdornment") then
+		TargetParent:FindFirstChild("GizmoAdornment"):Destroy()
 	end
 end
 

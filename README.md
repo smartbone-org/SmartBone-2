@@ -9,7 +9,7 @@ The wally package can be found [here](https://wally.run/package/jakeywastaken/sm
 * Support for animating bones
 * A more realistic and customizable wind solution
 * Support for global wind (MatchWorkspaceWind Attribute)
-* More accurate and faster frustum culling (Large root parts now have correct culling)
+* A faster, dynamic and more accurate frustum culling solution (The bounding box of all bones is now checked)
 * Detailed documentation and API
 * Runtime debug ui (Debug Attribute)
 * Cleaner code base
@@ -19,11 +19,11 @@ The wally package can be found [here](https://wally.run/package/jakeywastaken/sm
 
 There is a [demo place](https://www.roblox.com/games/14405998010/Smartbone-2) which has colliders and over 170 SmartBone objects setup.
 
-You can find the plugins here:
+If you wish to take the source code directly from the repository then take it from `src-build` as this is the optimized build.
 
-[Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)
-
-[SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)
+You can find the plugins here:<br />
+[Collider Creator](https://create.roblox.com/marketplace/asset/15539103407/Collider-Creator%3Fkeyword=&pageNumber=&pagePosition=)<br />
+[SmartBone Editor](https://create.roblox.com/marketplace/asset/15539148341/SmartBone-Editor%3Fkeyword=&pageNumber=&pagePosition=)<br />
 
 ## Contributing
 

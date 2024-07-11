@@ -98,7 +98,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 	local Bone: IBone = BoneClass.new(BoneObject, BoneTree.Root, BoneTree.RootPart)
 
 	for k, v in Settings do
-		-- "¬" represents a nil value
+		-- "¬" represents a nil value, this is done so we can delete attributes at runtime.
 		Bone[k] = (v ~= "¬") and v or nil
 	end
 
@@ -111,6 +111,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 		Bone.HeirarchyLength = HeirarchyLength
 
 		ParentBone.HasChild = true
+		--ParentBone.NumberOfChildren += 1
 	end
 
 	if HeirarchyLength <= BoneTree.Settings.AnchorDepth then
@@ -144,16 +145,18 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 		SB_VERBOSE_LOG(`Adding bone: {Bone.Name}; {ParentIndex}; {HeirarchyLength}`)
 		SB_INDENT_LOG()
 		local Children = Bone:GetChildren()
+		local HasBoneChild = false
 
 		for _, Child in Children do
 			if Child:IsA("Bone") then
 				self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
 
 				AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
+				HasBoneChild = true
 			end
 		end
 
-		if #Children == 0 then -- Add tail bone for transform calculations
+		if not HasBoneChild then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Parent = Bone.Parent
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
@@ -188,6 +191,11 @@ end
 --- :::
 --- Updates the view frustum used for optimization
 function Class:m_UpdateViewFrustum()
+	-- Should we do frustum checks this frame, depends on config setting
+	if shared.FrameCounter % Config.FRUSTUM_FREQ ~= 0 then
+		return
+	end
+
 	debug.profilebegin("SmartBone2::m_UpdateViewFrustum")
 	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
@@ -229,22 +237,6 @@ end
 --- @private
 --- @within SmartBone
 --- @param BoneTree table
---- @param Delta number
---- :::caution Caution:
---- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
---- :::
---- Constrains each bone in the provided bone tree and cleans up colliders
-function Class:m_ConstrainBoneTree(BoneTree: IBoneTree, Delta: number) -- Why does this still exist? It makes sense for older runtime implementation but not current
-	debug.profilebegin("SmartBone2::m_ConstrainBoneTree")
-
-	BoneTree:Constrain(self.ColliderObjects, Delta)
-
-	debug.profileend()
-end
-
---- @private
---- @within SmartBone
---- @param BoneTree table
 --- @param Index number
 --- @param Delta number
 --- :::caution Caution:
@@ -263,8 +255,8 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 
 	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
-	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 then
-		local AlreadySkipped = BoneTree.FirstSkipUpdate
+	if not BoneTree.InView or math.floor(BoneTree.UpdateRate) == 0 or not BoneTree.InWorkspace then
+		local AlreadySkipped = BoneTree.IsSkippingUpdates
 
 		BoneTree:SkipUpdate()
 
@@ -274,7 +266,9 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 			task.synchronize()
 			BoneTree:ApplyTransform()
 
-			SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
+			SB_VERBOSE_LOG(
+				`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}, InWorkspace: {BoneTree.InWorkspace}`
+			)
 		end
 
 		return
@@ -296,7 +290,7 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		DidUpdate = true
 
 		BoneTree:StepPhysics(UpdateHz)
-		self:m_ConstrainBoneTree(BoneTree, Delta)
+		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
 		BoneTree:SolveTransform(UpdateHz)
 	end
 	debug.profileend()
@@ -674,6 +668,8 @@ function Class.Start(): { Stop: () -> () }
 
 	return {
 		Stop = function()
+			Class.Running = false
+
 			if not Config.RESET_BONE_ON_DESTROY then
 				ActorFolder:Destroy()
 				return

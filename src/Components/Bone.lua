@@ -20,7 +20,15 @@ local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
-local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+--local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
+
+local function SafeUnit(Vector: Vector3): Vector3
+	if Vector.Magnitude == 0 then
+		return Vector3.zero
+	else
+		return Vector.Unit
+	end
+end
 
 type bool = boolean
 
@@ -48,6 +56,10 @@ export type IBone = {
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
+	--NumberOfChildren: number,
+	IsSkippingUpdates: bool,
+
+	--RotationSum: Vector3,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -60,6 +72,7 @@ export type IBone = {
 
 	ActiveWeld: bool,
 	WeldPosition: Vector3,
+	WeldCFrame: CFrame,
 
 	Anchored: bool,
 	AxisLocked: { [number]: bool },
@@ -81,8 +94,6 @@ end
 local SolvedTransformedCFrames = {}
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
--- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
--- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	debug.profilebegin("QueryTransformedWorldCFrameNonSmartbone")
 	local Solved = SolvedTransformedCFrames[OriginBone]
@@ -151,11 +162,13 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self: IBone, BoneTree: any): Vector3
+local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
+	debug.profilebegin("SolveWind")
 	local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
+		debug.profileend()
 		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
@@ -165,16 +178,64 @@ local function SolveWind(self: IBone, BoneTree: any): Vector3
 			* Settings.WindInfluence
 		)
 
+	local WindSpeed = Settings.WindSpeed
+	local WindStrength = Settings.WindStrength
+
+	if WindSpeed == Vector3.zero or WindStrength == 0 then
+		debug.profileend()
+		return Vector3.zero
+	end
+
+	-- Velocity multiplier
+	local WindDirection = Settings.WindDirection
+	local VelocityDirection = SafeUnit(Velocity)
+
+	-- If we are going the same direction as the wind
+	debug.profilebegin("Solve WindDamper")
+	local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
+
+	-- This section of code manages the following:
+	-- If we are going into the wind then if our bone speed is the same as the wind speed then we should apply double the wind speed, contrary
+	-- If we are going with the wind if our bone speed is the same as the wind speed then we wind speed should be zero for this bone.
+	if WindSpeed > 0 then
+		if VelocityDirection:Dot(WindDirection) > 0 then -- Going with the wind
+			local SpeedMatch = 1 - Velocity.Magnitude / WindSpeed
+			WindDamper *= math.abs(SpeedMatch)
+		else -- Going against the wind
+			local SpeedMatch = 1 + Velocity.Magnitude / WindSpeed
+			WindDamper *= SpeedMatch
+		end
+	end
+	debug.profileend()
+
+	WindSpeed *= WindDamper
+
+	local function EaseInExpo(x: number): number
+		return x == 0 and 0 or 2 ^ (10 * x - 10)
+	end
+
+	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
+	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
+	TimeModifier *= math.max(SpeedMultiplier, 1)
+
+	if WindSpeed < 1 then
+		WindSpeed *= SpeedMultiplier
+	else
+		local Mult = SpeedMultiplier / 2
+		WindSpeed *= (Mult > 1 and Mult or 1)
+	end
+
 	local WindMove
 
 	local function GetNoise(X, Y, Z, Map) -- Returns noise between 0, 1
+		debug.profilebegin("GetNoise")
 		local Value = math.noise(X, Y, Z)
 		Value = math.clamp(Value, -1, 1)
 
 		if Map then
 			Value ^= 2
 		end
-
+		debug.profileend()
 		return Value
 	end
 
@@ -185,42 +246,61 @@ local function SolveWind(self: IBone, BoneTree: any): Vector3
 	end
 
 	local function SampleSin()
-		local Freq = Settings.WindStrength ^ 0.8
-		local Power = Settings.WindSpeed * 2
-		local Sin1 = math.sin(TimeModifier * Freq) ^ 2
-		local Sin2 = math.cos(TimeModifier * Freq) ^ 2
-		local Wave = (Sin1 + (Sin2 - Sin1) * Sin2) * Power
-		return Settings.WindDirection * Wave
+		debug.profilebegin("SampleSin")
+		local Freq = WindStrength ^ 0.8
+		local Power = WindSpeed * 2
+
+		-- Multiple octaves of sin waves
+		local Sin0 = math.sin(TimeModifier * Freq)
+		local Sin1 = math.cos(TimeModifier / 10 * Freq)
+		local Sin2 = math.sin(TimeModifier * 2 * Freq)
+		local Sin3 = math.cos(TimeModifier * 3 * Freq)
+		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4
+		local ScaledWave = Wave * 0.5 + 0.5
+		Wave *= Power
+		ScaledWave *= Power
+		debug.profileend()
+		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
+		debug.profilebegin("SampleNoise")
 		CustomAmp = CustomAmp or 0
 
-		local Freq = Settings.WindStrength ^ 0.8
-		local Power = Settings.WindSpeed * 2
+		local Freq = WindStrength ^ 0.8
+		local Power = WindSpeed * 2
 		local Seed = BoneTree.WindOffset
 
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
-
-		return Settings.WindDirection * Vector3.new(X, Y, Z)
+		debug.profileend()
+		return WindDirection * Vector3.new(X, Y, Z)
 	end
 
+	debug.profilebegin("Solve Wind from type")
 	if Settings.WindType == "Sine" then
+		debug.profilebegin("Sine")
 		WindMove = SampleSin() * SampleGust()
+		debug.profileend()
 	elseif Settings.WindType == "Noise" then
+		debug.profilebegin("Noise")
 		WindMove = SampleNoise(0, true) * SampleGust()
+		debug.profileend()
 	elseif Settings.WindType == "Hybrid" then
+		debug.profilebegin("Hybrid")
 		WindMove = SampleSin() * SampleGust()
 		WindMove += SampleNoise(0.5, true) * SampleGust()
 		WindMove *= 0.5
+		debug.profileend()
 	end
+	debug.profileend()
 
-	WindMove /= math.max(self.FreeLength, 0.01)
-	WindMove *= (Settings.WindInfluence * (Settings.WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
+	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
+	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
 
+	debug.profileend()
 	return WindMove
 end
 
@@ -266,9 +346,31 @@ end
 --- @prop Radius number
 
 --- @within Bone
+--- @prop Friction number
+
+--- @within Bone
+--- @prop RotationLimit number
+
+--- @within Bone
+--- @prop Force Vector3?
+
+--- @within Bone
+--- @prop Gravity Vector3?
+
+--- @within Bone
+--- @prop SolvedAnimatedCFrame boolean
+--- Describes if this bone has already solved its animated world cframe, this is used for optimization.
+
+--- @within Bone
+--- @prop HasChild boolean
+
+--- @within Bone
 --- @readonly
 --- @prop AnimatedWorldCFrame CFrame
 --- Bone.TransformedWorldCFrame
+
+--- @within Bone
+--- @prop StartingCFrame CFrame
 
 --- @within Bone
 --- @readonly
@@ -291,6 +393,24 @@ end
 --- Internal representation of the bone
 
 --- @within Bone
+--- @prop LastPosition Vector3
+--- Internal representation of the bone's position last frame
+
+--- @within Bone
+--- @prop WeldPosition Vector3
+
+--- @within Bone
+--- @prop WeldCFrame CFrame
+
+--- @within Bone
+--- @prop ActiveWeld boolean
+--- Describes if this bone has a weld
+
+--- @within Bone
+--- @prop RigidWeld boolean
+--- If the bone has a weld, is it rigid
+
+--- @within Bone
 --- @prop Anchored boolean
 
 --- @within Bone
@@ -307,13 +427,14 @@ end
 --- @prop ZAxisLimits NumberRange
 
 --- @within Bone
---- @prop FirstSkipUpdate boolean
+--- @prop IsSkippingUpdates boolean
 
 --- @within Bone
 --- @prop CollisionHits {}
 
 --- @within Bone
 --- @prop CollisionData {}
+--- Debug property, holds information about the collisions that the bone had this frame
 
 local Class = {}
 Class.__index = Class
@@ -339,6 +460,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
+		--NumberOfChildren = 0,
+		--RotationSum = Vector3.zero,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		StartingCFrame = Bone.TransformedCFrame,
@@ -351,6 +474,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		LastPosition = Bone.TransformedWorldCFrame.Position,
 
 		WeldPosition = Vector3.zero,
+		WeldCFrame = CFrame.identity,
 		ActiveWeld = false,
 		RigidWeld = false,
 
@@ -360,7 +484,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		YAxisLimits = NumberRange.new(-math.huge, math.huge),
 		ZAxisLimits = NumberRange.new(-math.huge, math.huge),
 
-		FirstSkipUpdate = false,
+		IsSkippingUpdates = false,
 
 		CollisionHits = {},
 
@@ -373,7 +497,7 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		local Settings = Utilities.GatherBoneSettings(Bone)
 
 		for k, v in Settings do
-			-- ¬ represents a nil value
+			-- ¬ represents a nil value, this is done so we can delete attributes at runtime.
 			self[k] = (v ~= "¬") and v or nil
 		end
 	end)
@@ -411,9 +535,11 @@ function Class:PreUpdate(BoneTree) -- Parallel safe
 			if WeldTo then
 				if WeldTo:IsA("Attachment") then -- Attachment also covers bones
 					self.WeldPosition = WeldTo.WorldPosition
+					self.WeldCFrame = WeldTo.WorldCFrame
 					self.ActiveWeld = true
 				elseif WeldTo:IsA("BasePart") then
 					self.WeldPosition = WeldTo.Position
+					self.WeldCFrame = WeldTo.CFrame
 					self.ActiveWeld = true
 				end
 			end
@@ -460,20 +586,23 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
+		debug.profilebegin("Solve Force")
 		Force = (self.Gravity or BoneTree.Settings.Gravity)
 
 		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
+		debug.profileend()
 	end
 
+	debug.profilebegin("Update")
 	local Settings = BoneTree.Settings
 
 	local Velocity = (self.Position - self.LastPosition)
 	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
-	local WindMove = SolveWind(self, BoneTree)
+	local WindMove = SolveWind(self, BoneTree, Velocity)
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
-
+	debug.profileend()
 	debug.profileend()
 end
 
@@ -515,8 +644,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 
 	if self.ActiveWeld then
 		if self.RigidWeld then
+			-- Solve Transform has the rest of this implementation.
 			Position = self.WeldPosition
-			Position = DistanceConstraint(self, Position, BoneTree)
 		else
 			Position = SpringConstraint(self, Position, self.WeldPosition, BoneTree, Delta)
 		end
@@ -526,7 +655,8 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 
 	for _, HitPart in self.CollisionHits do
 		-- Use whatever object has the higher friction
-		self.Friction = math.max(GetFriction(self.RootPart, HitPart), self.Friction)
+		local Friction = GetFriction(self.RootPart, HitPart)
+		self.Friction = Friction < self.Friction and self.Friction or Friction
 	end
 
 	self.Position = Position
@@ -536,14 +666,14 @@ end
 --- @within Bone
 --- Returns bone to rest position
 function Class:SkipUpdate()
-	if self.FirstSkipUpdate == false and Config.RESET_TRANSFORM_ON_SKIP then
-		SB_VERBOSE_LOG("Skipping bone, resetting transform.")
+	if self.IsSkippingUpdates == false and Config.RESET_TRANSFORM_ON_SKIP then
+		--SB_VERBOSE_LOG("Skipping bone, resetting transform.")
 		self.CalculatedWorldCFrame = self.AnimatedWorldCFrame
-		self.FirstSkipUpdate = true
+		self.IsSkippingUpdates = true
 	end
 
-	self.Position = self.Bone.WorldPosition
-	self.LastPosition = self.Position
+	self.LastPosition = self.AnimatedWorldCFrame.Position + (self.LastPosition - self.Position)
+	self.Position = self.AnimatedWorldCFrame.Position
 end
 
 --- @within Bone
@@ -557,7 +687,7 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		return
 	end
 
-	self.FirstSkipUpdate = false
+	self.IsSkippingUpdates = false
 
 	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
@@ -570,10 +700,15 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		local factor = 0.00001
 		local alpha = math.min(1 - factor ^ Delta, 1)
 
+		--local ShouldAverage = ParentBone.NumberOfChildren > 1
+
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
-			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
+			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
+		--elseif ShouldAverage then
+		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
 		else
-			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			--ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
 		end
 
 		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
@@ -594,23 +729,23 @@ function Class:ApplyTransform(BoneTree)
 		return
 	end
 
-	local ParentBone = BoneTree.Bones[self.ParentIndex]
+	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
 
-	if ParentBone and BoneParent then
-		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then
-			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		else
-			if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == true then
-				BoneParent.WorldCFrame = ParentBone.TransformOffset * ParentBone.CalculatedWorldCFrame.Rotation
-				debug.profileend()
-				return
-			elseif ParentBone.Anchored then
-				BoneParent.WorldCFrame = ParentBone.TransformOffset
-				debug.profileend()
-				return
-			end
+	-- We check if the magnitude of rotation sum is zero because that tells us if it has already been averaged by another bone.
+	-- if ParentBone.NumberOfChildren > 1 and ParentBone.RotationSum.Magnitude ~= 0 then
+	-- 	local AverageRotation = ParentBone.RotationSum / ParentBone.NumberOfChildren
+	-- 	ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position)
+	-- 		* CFrame.fromEulerAnglesXYZ(AverageRotation.X, AverageRotation.Y, AverageRotation.Z)
+	-- 	ParentBone.RotationSum = Vector3.zero
+	-- end
 
+	if ParentBone and BoneParent then
+		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then -- Anchored and anchors do not rotate
+			BoneParent.WorldCFrame = ParentBone.TransformOffset
+		--elseif ParentBone.Anchored then -- Anchored and anchors rotate
+		--	BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
 	end
@@ -805,7 +940,7 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 		local ConeDirection = (self.Position - BoneTree.Bones[self.ParentIndex].Position).Unit * InverseDirection
 
 		local NewBoneCFrame =
-			CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH / 2), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
+			CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH * 0.5), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
 
 		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
 		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
