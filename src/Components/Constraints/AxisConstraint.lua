@@ -20,15 +20,19 @@ return function(self, Position, LastPosition, RootCFrame)
 	local YLimit = self.YAxisLimits
 	local ZLimit = self.ZAxisLimits
 
-	-- Most bones probably wont have an axis limit, this allows us to skip all the other stuff
-	if XLimit.Min == -inf and XLimit.Max == inf and YLimit.Min == -inf and YLimit.Max == inf and ZLimit.Min == -inf and ZLimit.Max == inf then
-		debug.profileend()
-		return Position
-	end
-
 	local XLock = self.AxisLocked[1] and 0 or 1
 	local YLock = self.AxisLocked[2] and 0 or 1
 	local ZLock = self.AxisLocked[3] and 0 or 1
+
+	-- Most bones probably wont have an axis limit, this allows us to skip all the other stuff
+	if XLimit.Min == -inf and XLimit.Max == inf and YLimit.Min == -inf and YLimit.Max == inf and ZLimit.Min == -inf and ZLimit.Max == inf then
+		if XLock == 1 and YLock == 1 and ZLock == 1 then
+			debug.profileend()
+			return Position
+		else
+			return RootCFrame * Vector3.new(X * XLock, Y * YLock, Z * ZLock)
+		end
+	end
 
 	-- If our radius is > than the diff between min and max
 	-- We do this because its faster than math.min() ¯\_(ツ)_/¯
