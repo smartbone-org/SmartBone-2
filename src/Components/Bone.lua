@@ -56,7 +56,10 @@ export type IBone = {
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
+	--NumberOfChildren: number,
 	IsSkippingUpdates: bool,
+
+	--RotationSum: Vector3,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -457,6 +460,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
+		--NumberOfChildren = 0,
+		--RotationSum = Vector3.zero,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		StartingCFrame = Bone.TransformedCFrame,
@@ -695,8 +700,12 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		local factor = 0.00001
 		local alpha = math.min(1 - factor ^ Delta, 1)
 
+		--local ShouldAverage = ParentBone.NumberOfChildren > 1
+
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
 			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
+		--elseif ShouldAverage then
+		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
 		else
 			--ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
@@ -720,14 +729,22 @@ function Class:ApplyTransform(BoneTree)
 		return
 	end
 
-	local ParentBone = BoneTree.Bones[self.ParentIndex]
+	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
+
+	-- We check if the magnitude of rotation sum is zero because that tells us if it has already been averaged by another bone.
+	-- if ParentBone.NumberOfChildren > 1 and ParentBone.RotationSum.Magnitude ~= 0 then
+	-- 	local AverageRotation = ParentBone.RotationSum / ParentBone.NumberOfChildren
+	-- 	ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position)
+	-- 		* CFrame.fromEulerAnglesXYZ(AverageRotation.X, AverageRotation.Y, AverageRotation.Z)
+	-- 	ParentBone.RotationSum = Vector3.zero
+	-- end
 
 	if ParentBone and BoneParent then
 		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then -- Anchored and anchors do not rotate
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		elseif ParentBone.Anchored then -- Anchored and anchors rotate
-			BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		--elseif ParentBone.Anchored then -- Anchored and anchors rotate
+		--	BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
 		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end

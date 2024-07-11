@@ -111,6 +111,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 		Bone.HeirarchyLength = HeirarchyLength
 
 		ParentBone.HasChild = true
+		--ParentBone.NumberOfChildren += 1
 	end
 
 	if HeirarchyLength <= BoneTree.Settings.AnchorDepth then
@@ -265,10 +266,9 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 			task.synchronize()
 			BoneTree:ApplyTransform()
 
-			print(
+			SB_VERBOSE_LOG(
 				`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}, InWorkspace: {BoneTree.InWorkspace}`
 			)
-			--SB_VERBOSE_LOG(`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}`)
 		end
 
 		return
