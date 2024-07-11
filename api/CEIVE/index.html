@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en" dir="ltr" class="plugin-moonwave plugin-id-moonwave">
+<head>
+<meta charset="UTF-8">
+<meta name="generator" content="Docusaurus v2.3.1">
+<title data-rh="true">CEIVE | SmartBone-2</title><meta data-rh="true" name="viewport" content="width=device-width,initial-scale=1"><meta data-rh="true" name="twitter:card" content="summary_large_image"><meta data-rh="true" property="og:url" content="https://smartbone.org/api/CEIVE"><meta data-rh="true" name="docusaurus_locale" content="en"><meta data-rh="true" name="docusaurus_tag" content="default"><meta data-rh="true" name="docsearch:language" content="en"><meta data-rh="true" name="docsearch:docusaurus_tag" content="default"><meta data-rh="true" property="og:title" content="CEIVE | SmartBone-2"><meta data-rh="true" name="description" content="Root class for all the gizmos."><meta data-rh="true" property="og:description" content="Root class for all the gizmos."><link data-rh="true" rel="canonical" href="https://smartbone.org/api/CEIVE"><link data-rh="true" rel="alternate" href="https://smartbone.org/api/CEIVE" hreflang="en"><link data-rh="true" rel="alternate" href="https://smartbone.org/api/CEIVE" hreflang="x-default"><link rel="stylesheet" href="/assets/css/styles.6b33bbd6.css">
+<link rel="preload" href="/assets/js/runtime~main.7709f439.js" as="script">
+<link rel="preload" href="/assets/js/main.494ed40d.js" as="script">
+</head>
+<body class="navigation-with-keyboard">
+<script>!function(){function e(e){document.documentElement.setAttribute("data-theme",e)}var t=function(){var e=null;try{e=localStorage.getItem("theme")}catch(e){}return e}();null!==t?e(t):window.matchMedia("(prefers-color-scheme: dark)").matches?e("dark"):(window.matchMedia("(prefers-color-scheme: light)").matches,e("light"))}()</script><div id="__docusaurus">
+<div role="region" aria-label="Skip to main content"><a class="skipToContent_fXgn" href="#docusaurus_skipToContent_fallback">Skip to main content</a></div><nav aria-label="Main" class="navbar navbar--fixed-top"><div class="navbar__inner"><div class="navbar__items"><button aria-label="Toggle navigation bar" aria-expanded="false" class="navbar__toggle clean-btn" type="button"><svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path stroke="currentColor" stroke-linecap="round" stroke-miterlimit="10" stroke-width="2" d="M4 7h22M4 15h22M4 23h22"></path></svg></button><a class="navbar__brand" href="/"><b class="navbar__title text--truncate">SmartBone-2</b></a><a class="navbar__item navbar__link" href="/docs/intro">Docs</a><a aria-current="page" class="navbar__item navbar__link navbar__link--active" href="/api/">API</a></div><div class="navbar__items navbar__items--right"><a href="https://github.com/smartbone-org/SmartBone-2" target="_blank" rel="noopener noreferrer" class="navbar__item navbar__link">GitHub<svg width="13.5" height="13.5" aria-hidden="true" viewBox="0 0 24 24" class="iconExternalLink_nPIU"><path fill="currentColor" d="M21 13v10h-21v-19h12v2h-10v15h17v-8h2zm3-12h-10.988l4.035 4-6.977 7.07 2.828 2.828 6.977-7.07 4.125 4.172v-11z"></path></svg></a><div class="toggle_vylO colorModeToggle_DEke"><button class="clean-btn toggleButton_gllP toggleButtonDisabled_aARS" type="button" disabled="" title="Switch between dark and light mode (currently light mode)" aria-label="Switch between dark and light mode (currently light mode)" aria-live="polite"><svg viewBox="0 0 24 24" width="24" height="24" class="lightToggleIcon_pyhR"><path fill="currentColor" d="M12,9c1.65,0,3,1.35,3,3s-1.35,3-3,3s-3-1.35-3-3S10.35,9,12,9 M12,7c-2.76,0-5,2.24-5,5s2.24,5,5,5s5-2.24,5-5 S14.76,7,12,7L12,7z M2,13l2,0c0.55,0,1-0.45,1-1s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S1.45,13,2,13z M20,13l2,0c0.55,0,1-0.45,1-1 s-0.45-1-1-1l-2,0c-0.55,0-1,0.45-1,1S19.45,13,20,13z M11,2v2c0,0.55,0.45,1,1,1s1-0.45,1-1V2c0-0.55-0.45-1-1-1S11,1.45,11,2z M11,20v2c0,0.55,0.45,1,1,1s1-0.45,1-1v-2c0-0.55-0.45-1-1-1C11.45,19,11,19.45,11,20z M5.99,4.58c-0.39-0.39-1.03-0.39-1.41,0 c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0s0.39-1.03,0-1.41L5.99,4.58z M18.36,16.95 c-0.39-0.39-1.03-0.39-1.41,0c-0.39,0.39-0.39,1.03,0,1.41l1.06,1.06c0.39,0.39,1.03,0.39,1.41,0c0.39-0.39,0.39-1.03,0-1.41 L18.36,16.95z M19.42,5.99c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06c-0.39,0.39-0.39,1.03,0,1.41 s1.03,0.39,1.41,0L19.42,5.99z M7.05,18.36c0.39-0.39,0.39-1.03,0-1.41c-0.39-0.39-1.03-0.39-1.41,0l-1.06,1.06 c-0.39,0.39-0.39,1.03,0,1.41s1.03,0.39,1.41,0L7.05,18.36z"></path></svg><svg viewBox="0 0 24 24" width="24" height="24" class="darkToggleIcon_wfgR"><path fill="currentColor" d="M9.37,5.51C9.19,6.15,9.1,6.82,9.1,7.5c0,4.08,3.32,7.4,7.4,7.4c0.68,0,1.35-0.09,1.99-0.27C17.45,17.19,14.93,19,12,19 c-3.86,0-7-3.14-7-7C5,9.07,6.81,6.55,9.37,5.51z M12,3c-4.97,0-9,4.03-9,9s4.03,9,9,9s9-4.03,9-9c0-0.46-0.04-0.92-0.1-1.36 c-0.98,1.37-2.58,2.26-4.4,2.26c-2.98,0-5.4-2.42-5.4-5.4c0-1.81,0.89-3.42,2.26-4.4C12.92,3.04,12.46,3,12,3L12,3z"></path></svg></button></div><div class="searchBox_ZlJk"><div class="navbar__search"><span aria-label="expand searchbar" role="button" class="search-icon" tabindex="0"></span><input type="search" id="search_input_react" placeholder="Loading..." aria-label="Search" class="navbar__search-input search-bar" disabled=""></div></div></div></div><div role="presentation" class="navbar-sidebar__backdrop"></div></nav><div id="docusaurus_skipToContent_fallback" class="main-wrapper mainWrapper_z2l0 docPageContainer_wNNk"><div class="docPage_Dpn1"><div class="docSidebarContainer_o_re"><div class="sidebar_njMd"><nav aria-label="Docs sidebar" class="menu thin-scrollbar menu_SIkG"><ul class="theme-doc-sidebar-menu menu__list"><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/SmartBone">​Smart​Bone</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/BoneTree">​Bone​Tree</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/Bone">​Bone</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/ColliderObject">​Collider​Object</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link" href="/api/Collider">​Collider</a></li><li class="theme-doc-sidebar-item-link theme-doc-sidebar-item-link-level-1 menu__list-item"><a class="menu__link menu__link--active" aria-current="page" href="/api/CEIVE">​C​E​I​V​E</a></li></ul></nav></div></div><main class="docMainContainer_HJE1"><div class="container padding-vert--lg"><div class="row"><div class="col docItemCol_MU3C"><div class="docItemContainer_Wv98"><article><div class="member_J0w1 markdown"><div class="tocCollapsible_ETCw theme-doc-toc-mobile tocMobile_oUs_"><button type="button" class="clean-btn tocCollapsibleButton_TO0P">On this page</button></div><header><h1 class="docTitle_mZRt" style="text-decoration:none"><span style="display:inline-block">C</span><span style="display:inline-block">E</span><span style="display:inline-block">I</span><span style="display:inline-block">V</span><span style="display:inline-block">E</span></h1><div class="luaClassTags_EipM"></div><div>
+<p>Root class for all the gizmos.</p>
+</div></header><h2 class="anchor anchorWithStickyNavbar_LWe7" id="functions">Functions<a href="#functions" class="hash-link" aria-label="Direct link to Functions" title="Direct link to Functions">​</a></h2><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="GetPoolSize"><code style="text-decoration:none">GetPoolSize</code><a href="#GetPoolSize" class="hash-link" aria-label="Direct link to GetPoolSize" title="Direct link to GetPoolSize">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L498"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">GetPoolSize</code><code>(</code><code>) → </code><code class="blue_P4bS">number</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="PushProperty"><code style="text-decoration:none">PushProperty</code><a href="#PushProperty" class="hash-link" aria-label="Direct link to PushProperty" title="Direct link to PushProperty">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L513"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">PushProperty</code><code>(</code><div class="inset_uKQm"><div><code>Property<!-- -->: </code><code class="blue_P4bS">string</code><code>,</code></div><div><code>Value<!-- -->: </code><code class="blue_P4bS">any</code></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Push Property sets the value of a property.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="PopProperty"><code style="text-decoration:none">PopProperty</code><a href="#PopProperty" class="hash-link" aria-label="Direct link to PopProperty" title="Direct link to PopProperty">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L531"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">PopProperty</code><code>(</code><code>Property<!-- -->: </code><code class="blue_P4bS">string</code><code>) → </code><code class="blue_P4bS">any</code></div><div>
+<p>Pop Property returns the property value.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SetStyle"><code style="text-decoration:none">SetStyle</code><a href="#SetStyle" class="hash-link" aria-label="Direct link to SetStyle" title="Direct link to SetStyle">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L545"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">SetStyle</code><code>(</code><div class="inset_uKQm"><div><code>Color<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/Color3" target="_blank" rel="noopener noreferrer">Color3?<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code><code>,</code></div><div><code>Transparency<!-- -->: </code><code class="blue_P4bS">number?</code><code>,</code></div><div><code>AlwaysOnTop<!-- -->: </code><code class="blue_P4bS">boolean?</code></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Sets the style of all properties.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="DoCleaning"><code style="text-decoration:none">DoCleaning</code><a href="#DoCleaning" class="hash-link" aria-label="Direct link to DoCleaning" title="Direct link to DoCleaning">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L561"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">DoCleaning</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="ScheduleCleaning"><code style="text-decoration:none">ScheduleCleaning</code><a href="#ScheduleCleaning" class="hash-link" aria-label="Direct link to ScheduleCleaning" title="Direct link to ScheduleCleaning">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L577"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">ScheduleCleaning</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddDebrisInSeconds"><code style="text-decoration:none">AddDebrisInSeconds</code><a href="#AddDebrisInSeconds" class="hash-link" aria-label="Direct link to AddDebrisInSeconds" title="Direct link to AddDebrisInSeconds">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L596"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">AddDebrisInSeconds</code><code>(</code><div class="inset_uKQm"><div><code>Seconds<!-- -->: </code><code class="blue_P4bS">number</code><code>,</code></div><div><code>Callback<!-- -->: </code><code class="blue_P4bS">function</code></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Acts as a wrapper for your code that runs for a provided amount of seconds.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="AddDebrisInFrames"><code style="text-decoration:none">AddDebrisInFrames</code><a href="#AddDebrisInFrames" class="hash-link" aria-label="Direct link to AddDebrisInFrames" title="Direct link to AddDebrisInFrames">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L605"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">AddDebrisInFrames</code><code>(</code><div class="inset_uKQm"><div><code>Frames<!-- -->: </code><code class="blue_P4bS">number</code><code>,</code></div><div><code>Callback<!-- -->: </code><code class="blue_P4bS">function</code></div></div><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Acts as a wrapper for your code that runs for a provided amount of frames.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="TweenProperties"><code style="text-decoration:none">TweenProperties</code><a href="#TweenProperties" class="hash-link" aria-label="Direct link to TweenProperties" title="Direct link to TweenProperties">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L616"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">TweenProperties</code><code>(</code><div class="inset_uKQm"><div><code>Properties<!-- -->: </code><code class="blue_P4bS">table</code><code>,</code></div><div><code>Goal<!-- -->: </code><code class="blue_P4bS">table</code><code>,</code></div><div><code>TweenInfo<!-- -->: </code><code class="blue_P4bS"><a style="text-decoration:underline;color:inherit" href="https://developer.roblox.com/en-us/api-reference/datatype/TweenInfo" target="_blank" rel="noopener noreferrer">TweenInfo<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound" style="color:gray;vertical-align:middle;margin-left:2px"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></code></div></div><code>) → </code><code class="blue_P4bS">CancelFunction</code></div><div>
+<p>Tweens the property table to the goal with the provided TweenInfo, returns a function which can be used to cancel.</p>
+</div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="Init"><code style="text-decoration:none">Init</code><a href="#Init" class="hash-link" aria-label="Direct link to Init" title="Direct link to Init">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L637"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">Init</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="SetEnabled"><code style="text-decoration:none">SetEnabled</code><a href="#SetEnabled" class="hash-link" aria-label="Direct link to SetEnabled" title="Direct link to SetEnabled">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L744"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">SetEnabled</code><code>(</code><code>Value<!-- -->: </code><code class="blue_P4bS">boolean</code><code>) → </code><code>(</code><code>)</code></div><div></div><div class="divider_rE5g"></div><h3 class="anchor anchorWithStickyNavbar_LWe7" id="RemoveAdornments"><code style="text-decoration:none">RemoveAdornments</code><a href="#RemoveAdornments" class="hash-link" aria-label="Direct link to RemoveAdornments" title="Direct link to RemoveAdornments">​</a></h3><div class="repositoryDetailsContainer_BPdw"><a class="sourceButton_sEho" href="https://github.com/smartbone-org/SmartBone-2/blob/main/src/Dependencies/Gizmo/init.lua#L755"><div class="sourceButtonText_Vh0m">&lt;/&gt;</div></a></div><div class="memberString_GwaU"><code>CEIVE<!-- -->.</code><code class="green_DgR4">RemoveAdornments</code><code>(</code><code>) → </code><code>(</code><code>)</code></div><div>
+<p>Removes adornments, will be added back next frame if Ceive is enabled</p>
+</div></div></article></div><details><summary>Show raw api</summary><pre style="max-width:100%;white-space:pre-wrap">{
+    &quot;functions&quot;: [
+        {
+            &quot;name&quot;: &quot;GetPoolSize&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 498,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PushProperty&quot;,
+            &quot;desc&quot;: &quot;Push Property sets the value of a property.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Property&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Value&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 513,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;PopProperty&quot;,
+            &quot;desc&quot;: &quot;Pop Property returns the property value.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Property&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;string&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;any&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 531,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetStyle&quot;,
+            &quot;desc&quot;: &quot;Sets the style of all properties.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Color&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;Color3?&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Transparency&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number?&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;AlwaysOnTop&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean?&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 545,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;DoCleaning&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 561,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;ScheduleCleaning&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 577,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddDebrisInSeconds&quot;,
+            &quot;desc&quot;: &quot;Acts as a wrapper for your code that runs for a provided amount of seconds.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Seconds&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Callback&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;function&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 596,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;AddDebrisInFrames&quot;,
+            &quot;desc&quot;: &quot;Acts as a wrapper for your code that runs for a provided amount of frames.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Frames&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;number&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Callback&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;function&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 605,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;TweenProperties&quot;,
+            &quot;desc&quot;: &quot;Tweens the property table to the goal with the provided TweenInfo, returns a function which can be used to cancel.&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Properties&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;table&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;Goal&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;table&quot;
+                },
+                {
+                    &quot;name&quot;: &quot;TweenInfo&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;TweenInfo&quot;
+                }
+            ],
+            &quot;returns&quot;: [
+                {
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;CancelFunction&quot;
+                }
+            ],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 616,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;Init&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 637,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;SetEnabled&quot;,
+            &quot;desc&quot;: &quot;&quot;,
+            &quot;params&quot;: [
+                {
+                    &quot;name&quot;: &quot;Value&quot;,
+                    &quot;desc&quot;: &quot;&quot;,
+                    &quot;lua_type&quot;: &quot;boolean&quot;
+                }
+            ],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 744,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        },
+        {
+            &quot;name&quot;: &quot;RemoveAdornments&quot;,
+            &quot;desc&quot;: &quot;Removes adornments, will be added back next frame if Ceive is enabled\r&quot;,
+            &quot;params&quot;: [],
+            &quot;returns&quot;: [],
+            &quot;function_type&quot;: &quot;static&quot;,
+            &quot;source&quot;: {
+                &quot;line&quot;: 755,
+                &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+            }
+        }
+    ],
+    &quot;properties&quot;: [],
+    &quot;types&quot;: [],
+    &quot;name&quot;: &quot;CEIVE&quot;,
+    &quot;desc&quot;: &quot;Root class for all the gizmos.\r&quot;,
+    &quot;source&quot;: {
+        &quot;line&quot;: 477,
+        &quot;path&quot;: &quot;src/Dependencies/Gizmo/init.lua&quot;
+    }
+}</pre></details></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#types" class="table-of-contents__link toc-highlight">Types</a></li><li><a href="#properties" class="table-of-contents__link toc-highlight">Properties</a></li><li><a href="#functions" class="table-of-contents__link toc-highlight">Functions</a><ul><li><a href="#AddDebrisInFrames" class="table-of-contents__link toc-highlight">.AddDebrisInFrames</a></li><li><a href="#AddDebrisInSeconds" class="table-of-contents__link toc-highlight">.AddDebrisInSeconds</a></li><li><a href="#DoCleaning" class="table-of-contents__link toc-highlight">.DoCleaning</a></li><li><a href="#GetPoolSize" class="table-of-contents__link toc-highlight">.GetPoolSize</a></li><li><a href="#Init" class="table-of-contents__link toc-highlight">.Init</a></li><li><a href="#PopProperty" class="table-of-contents__link toc-highlight">.PopProperty</a></li><li><a href="#PushProperty" class="table-of-contents__link toc-highlight">.PushProperty</a></li><li><a href="#RemoveAdornments" class="table-of-contents__link toc-highlight">.RemoveAdornments</a></li><li><a href="#ScheduleCleaning" class="table-of-contents__link toc-highlight">.ScheduleCleaning</a></li><li><a href="#SetEnabled" class="table-of-contents__link toc-highlight">.SetEnabled</a></li><li><a href="#SetStyle" class="table-of-contents__link toc-highlight">.SetStyle</a></li><li><a href="#TweenProperties" class="table-of-contents__link toc-highlight">.TweenProperties</a></li></ul></li></ul></div></div></div></div></main></div></div><footer class="footer footer--dark"><div class="container container-fluid"><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2024 smartbone-org. Built with Moonwave and Docusaurus.</div></div></div></footer></div>
+<script src="/assets/js/runtime~main.7709f439.js"></script>
+<script src="/assets/js/main.494ed40d.js"></script>
+</body>
+</html>
