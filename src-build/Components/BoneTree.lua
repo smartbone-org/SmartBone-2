@@ -231,7 +231,8 @@ do end
 
 for _, Bone in self.Bones do
 do end		
-local Position = Bone.Position
+local Velocity = (Bone.Position - Bone.LastPosition)
+		local Position = Bone.Position + Velocity
 
 		BottomCorner = BottomCorner:Min(Position)
 		TopCorner = TopCorner:Max(Position)

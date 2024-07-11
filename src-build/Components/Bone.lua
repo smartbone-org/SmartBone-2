@@ -56,7 +56,10 @@ export type IBone = {
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
+	--NumberOfChildren: number,
 	IsSkippingUpdates: bool,
+
+	--RotationSum: Vector3,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
@@ -91,8 +94,6 @@ end
 local SolvedTransformedCFrames = {}
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
--- This could be a bit faster if we held a table of the bones we have traversed this frame, but roblox doesnt have a built in function to get a "frame counter"
--- which would make such an implementation alot harder
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 do end	
 local Solved = SolvedTransformedCFrames[OriginBone]
@@ -162,11 +163,13 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 end
 
 local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
-	local Settings = BoneTree.Settings
+do end	
+local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
-		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
+do end		
+return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	local TimeModifier = BoneTree.WindOffset
@@ -175,46 +178,65 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 			* Settings.WindInfluence
 		)
 
+	local WindSpeed = Settings.WindSpeed
+	local WindStrength = Settings.WindStrength
+
+	if WindSpeed == Vector3.zero or WindStrength == 0 then
+do end		
+return Vector3.zero
+	end
+
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
+do end	
 
-	-- If we are going the same direction as the wind
-	local InToWindDamper = 1 - (VelocityDirection:Dot(WindDirection) * 0.5 + 0.5)
-	InToWindDamper = InToWindDamper < 0.5 and 0.5 or WindDirection
+
+local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
+
+	-- This section of code manages the following:
+	-- If we are going into the wind then if our bone speed is the same as the wind speed then we should apply double the wind speed, contrary
+	-- If we are going with the wind if our bone speed is the same as the wind speed then we wind speed should be zero for this bone.
+	if WindSpeed > 0 then
+		if VelocityDirection:Dot(WindDirection) > 0 then -- Going with the wind
+			local SpeedMatch = 1 - Velocity.Magnitude / WindSpeed
+			WindDamper *= math.abs(SpeedMatch)
+		else -- Going against the wind
+			local SpeedMatch = 1 + Velocity.Magnitude / WindSpeed
+			WindDamper *= SpeedMatch
+		end
+	end
+do end
+	
+WindSpeed *= WindDamper
 
 	local function EaseInExpo(x: number): number
 		return x == 0 and 0 or 2 ^ (10 * x - 10)
 	end
 
-	-- Minimum speed to where we start to increase time modifier
-	local MinSpeed = 2.5
-	local TimeMultiplier = EaseInExpo(Velocity.Magnitude / MinSpeed)
-	TimeMultiplier = TimeMultiplier < 1 and 1 or TimeMultiplier
-	TimeMultiplier = TimeMultiplier >= math.huge and 1 or TimeMultiplier
-	TimeModifier *= TimeMultiplier
+	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
+	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
+	TimeModifier *= math.max(SpeedMultiplier, 1)
 
-	local WindSpeed = Settings.WindSpeed
-	local WindStrength = Settings.WindStrength
-
-	if WindSpeed < 1 and TimeMultiplier > 1 then
-		WindSpeed = 1 * TimeMultiplier
+	if WindSpeed < 1 then
+		WindSpeed *= SpeedMultiplier
 	else
-		local Mult = TimeMultiplier / 2
-		WindSpeed = WindSpeed * (Mult < 1 and 1 or Mult)
+		local Mult = SpeedMultiplier / 2
+		WindSpeed *= (Mult > 1 and Mult or 1)
 	end
 
 	local WindMove
 
 	local function GetNoise(X, Y, Z, Map) -- Returns noise between 0, 1
-		local Value = math.noise(X, Y, Z)
+do end		
+local Value = math.noise(X, Y, Z)
 		Value = math.clamp(Value, -1, 1)
 
 		if Map then
 			Value ^= 2
 		end
-
-		return Value
+do end		
+return Value
 	end
 
 	local function SampleGust()
@@ -224,21 +246,26 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	end
 
 	local function SampleSin()
-		local Freq = WindStrength ^ 0.8
+do end		
+local Freq = WindStrength ^ 0.8
 		local Power = WindSpeed * 2
 
 		-- Multiple octaves of sin waves
-		local Sin0 = math.sin(TimeMultiplier * Freq)
-		local Sin1 = math.cos(TimeMultiplier / 10 * Freq)
-		local Sin2 = math.sin(TimeMultiplier * 2 * Freq)
-		local Sin3 = math.cos(TimeMultiplier * 3 * Freq)
-		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4 * (Power + 8)
+		local Sin0 = math.sin(TimeModifier * Freq)
+		local Sin1 = math.cos(TimeModifier / 10 * Freq)
+		local Sin2 = math.sin(TimeModifier * 2 * Freq)
+		local Sin3 = math.cos(TimeModifier * 3 * Freq)
+		local Wave = (Sin0 + Sin1 + Sin2 + Sin3) / 4
 		local ScaledWave = Wave * 0.5 + 0.5
-		return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
+		Wave *= Power
+		ScaledWave *= Power
+do end		
+return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
-		CustomAmp = CustomAmp or 0
+do end		
+CustomAmp = CustomAmp or 0
 
 		local Freq = WindStrength ^ 0.8
 		local Power = WindSpeed * 2
@@ -247,25 +274,34 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
-
-		return WindDirection * Vector3.new(X, Y, Z)
+do end		
+return WindDirection * Vector3.new(X, Y, Z)
 	end
+do end	
 
-	if Settings.WindType == "Sine" then
-		WindMove = SampleSin() * SampleGust()
-	elseif Settings.WindType == "Noise" then
-		WindMove = SampleNoise(0, true) * SampleGust()
-	elseif Settings.WindType == "Hybrid" then
-		WindMove = SampleSin() * SampleGust()
+if Settings.WindType == "Sine" then
+do end		
+WindMove = SampleSin() * SampleGust()
+do end	
+elseif Settings.WindType == "Noise" then
+do end		
+WindMove = SampleNoise(0, true) * SampleGust()
+do end	
+elseif Settings.WindType == "Hybrid" then
+do end		
+WindMove = SampleSin() * SampleGust()
 		WindMove += SampleNoise(0.5, true) * SampleGust()
 		WindMove *= 0.5
-	end
-
-	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
+do end	
+end
+do end
+	
+WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
 	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
+do end	
 
-	return WindMove
+return WindMove
 end
 
 --- @class Bone
@@ -424,6 +460,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
+		--NumberOfChildren = 0,
+		--RotationSum = Vector3.zero,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		StartingCFrame = Bone.TransformedCFrame,
@@ -548,12 +586,15 @@ return
 
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
-		Force = (self.Gravity or BoneTree.Settings.Gravity)
+do end		
+Force = (self.Gravity or BoneTree.Settings.Gravity)
 
 		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
-	end
+do end	
+end
+do end	
 
-	local Settings = BoneTree.Settings
+local Settings = BoneTree.Settings
 
 	local Velocity = (self.Position - self.LastPosition)
 	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
@@ -561,7 +602,7 @@ return
 
 	self.LastPosition = self.Position
 	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
-do end
+do end do end
 
 end
 
@@ -659,8 +700,12 @@ return
 		local factor = 0.00001
 		local alpha = math.min(1 - factor ^ Delta, 1)
 
+		--local ShouldAverage = ParentBone.NumberOfChildren > 1
+
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
 			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
+		--elseif ShouldAverage then
+		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
 		else
 			--ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
@@ -684,14 +729,22 @@ do end
 return
 	end
 
-	local ParentBone = BoneTree.Bones[self.ParentIndex]
+	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
 	local BoneParent = ParentBone.Bone
+
+	-- We check if the magnitude of rotation sum is zero because that tells us if it has already been averaged by another bone.
+	-- if ParentBone.NumberOfChildren > 1 and ParentBone.RotationSum.Magnitude ~= 0 then
+	-- 	local AverageRotation = ParentBone.RotationSum / ParentBone.NumberOfChildren
+	-- 	ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position)
+	-- 		* CFrame.fromEulerAnglesXYZ(AverageRotation.X, AverageRotation.Y, AverageRotation.Z)
+	-- 	ParentBone.RotationSum = Vector3.zero
+	-- end
 
 	if ParentBone and BoneParent then
 		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then -- Anchored and anchors do not rotate
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		elseif ParentBone.Anchored then -- Anchored and anchors rotate
-			BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		--elseif ParentBone.Anchored then -- Anchored and anchors rotate
+		--	BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
 		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
