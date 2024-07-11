@@ -231,7 +231,8 @@ function Class:UpdateBoundingBox()
 	debug.profilebegin("Max Min Bones")
 	for _, Bone in self.Bones do
 		debug.profilebegin("Max Min Bone")
-		local Position = Bone.Position
+		local Velocity = (Bone.Position - Bone.LastPosition)
+		local Position = Bone.Position + Velocity
 
 		BottomCorner = BottomCorner:Min(Position)
 		TopCorner = TopCorner:Max(Position)
