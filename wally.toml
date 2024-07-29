@@ -1,11 +1,11 @@
 [package]
 name = "jakeywastaken/smartbone-2"
 description = "Revamped release of SmartBone (legacy)"
-version = "0.4.0"
+version = "0.4.1"
 license = "MIT"
 authors = ["CelnakRBLX", "JakeyWasTaken", "LoadingL0n3ly"]
 registry = "https://github.com/UpliftGames/wally-index"
 realm = "shared"
 
 exclude = ["**"]
-include = ["src", "src/*", "default.project.json", "wally.toml", "LICENSE"]
+include = ["src-build", "src-build/*", "default.project.json", "wally.toml", "LICENSE"]
