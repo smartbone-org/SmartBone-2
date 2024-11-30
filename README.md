@@ -1,5 +1,7 @@
 # SmartBone 2
 
+### [Community Server](https://discord.gg/MQEVR6vEwU)
+
 You can find out more info in the [documentation](https://smartbone.org/docs/intro)
 
 The wally package can be found [here](https://wally.run/package/jakeywastaken/smartbone-2)
