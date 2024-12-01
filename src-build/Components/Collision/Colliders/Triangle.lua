@@ -5,13 +5,13 @@
 ]]
 
 --!native
-local dot = Vector3.new().Dot
-local cross = Vector3.new().Cross
+local dot = vector.dot
+local cross = vector.cross
 local clamp = math.clamp
 
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
@@ -50,8 +50,9 @@ local function PointInTriangle(p, a, b, c)
 end
 
 local function ClosestPointOnTri(v0, v1, v2, point) -- ClosestPoint, Normal
-do end	
-local Edge0 = ClosestPointOnLineSegment(v0, v1, point)
+	do
+	end
+	local Edge0 = ClosestPointOnLineSegment(v0, v1, point)
 	local Edge1 = ClosestPointOnLineSegment(v1, v2, point)
 	local Edge2 = ClosestPointOnLineSegment(v2, v0, point)
 
@@ -60,8 +61,9 @@ local Edge0 = ClosestPointOnLineSegment(v0, v1, point)
 	local Projected = ProjectOnPlane(Center, Normal, point)
 
 	if PointInTriangle(point, v0, v1, v2) then
-do end		
-return Projected, Normal
+		do
+		end
+		return Projected, Normal
 	end
 
 	local d0 = (Edge0 - point).Magnitude
@@ -71,18 +73,22 @@ return Projected, Normal
 	local d = math.min(d0, d1, d2)
 
 	if d == d0 then
-do end		
-return Edge0, Normal
+		do
+		end
+		return Edge0, Normal
 	elseif d == d1 then
-do end		
-return Edge1, Normal
+		do
+		end
+		return Edge1, Normal
 	elseif d == d2 then
-do end		
-return Edge2, Normal
+		do
+		end
+		return Edge2, Normal
 	end
-do end	
+	do
+	end
 
-return point, Normal
+	return point, Normal
 end
 
 return ClosestPointOnTri

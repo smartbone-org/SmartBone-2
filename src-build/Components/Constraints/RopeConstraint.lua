@@ -1,14 +1,15 @@
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
 end
 
 return function(self, Position, BoneTree)
-do end	
-local ParentBone = BoneTree.Bones[self.ParentIndex]
+	do
+	end
+	local ParentBone = BoneTree.Bones[self.ParentIndex]
 
 	if ParentBone then
 		local RestLength = self.FreeLength
@@ -17,11 +18,13 @@ local ParentBone = BoneTree.Bones[self.ParentIndex]
 		local BoneDistance = BoneSub.Magnitude < RestLength and BoneSub.Magnitude or RestLength
 
 		local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
-do end		
+		do
+		end
 
-return RestPosition
+		return RestPosition
 	end
-do end	
+	do
+	end
 
-return
+	return
 end

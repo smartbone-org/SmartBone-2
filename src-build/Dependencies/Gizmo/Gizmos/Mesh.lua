@@ -47,7 +47,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 		local vY = Map(vertex.y, minY, maxY, -0.5, 0.5)
 		local vZ = Map(vertex.z, minZ, maxZ, -0.5, 0.5)
 
-		local vertexCFrame = Transform * CFrame.new(Vector3.new(vX, vY, vZ) * Size)
+		local vertexCFrame = Transform * CFrame.new(vector.create(vX, vY, vZ) * Size)
 		Vertices[i] = vertexCFrame
 	end
 

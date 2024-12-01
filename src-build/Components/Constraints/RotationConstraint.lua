@@ -1,33 +1,37 @@
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
 end
 
 return function(self, Position, BoneTree)
-do end	
-local ParentIndex = self.ParentIndex
+	do
+	end
+	local ParentIndex = self.ParentIndex
 	local ParentBone = BoneTree.Bones[ParentIndex]
 
 	if not ParentBone then
-do end		
-return Position
+		do
+		end
+		return Position
 	end
 
 	local ParentBoneLimit = ParentBone.RotationLimit
 
 	if ParentBoneLimit >= 180 then
-do end		
-return Position
+		do
+		end
+		return Position
 	end
 
 	local GrandParentBone = BoneTree.Bones[ParentBone.ParentIndex]
 
 	if not GrandParentBone then
-do end		
-return Position
+		do
+		end
+		return Position
 	end
 
 	local ParentBonePosition = ParentBone.Position
@@ -37,8 +41,9 @@ return Position
 	local DirectionToSelf = SafeUnit(Position - ParentBonePosition)
 
 	if ParentBoneLimit <= 0 then
-do end		
-return ParentBonePosition + DefaultDirection * DistanceToParent
+		do
+		end
+		return ParentBonePosition + DefaultDirection * DistanceToParent
 	end
 
 	local RotationLimit = math.rad(self.RotationLimit)
@@ -53,7 +58,8 @@ return ParentBonePosition + DefaultDirection * DistanceToParent
 	end
 
 	Position = ParentBonePosition + LimitedVector * DistanceToParent
-do end	
+	do
+	end
 
-return Position
+	return Position
 end

@@ -48,7 +48,11 @@ function module.GatherObjectSettings(Object: BasePart)
 
 	local function Expect(Value: any, Type: string, Name: string): boolean
 		if typeof(Value) ~= Type then
-			warn(`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(Value)}`)
+			warn(
+				`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(
+					Value
+				)}`
+			)
 			return false
 		end
 
@@ -77,7 +81,11 @@ function module.GatherBoneSettings(Bone: Bone)
 
 	local function Expect(Value: any, Type: string, Name: string)
 		if typeof(Value) ~= Type then
-			warn(`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(Value)}`)
+			warn(
+				`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(
+					Value
+				)}`
+			)
 		end
 	end
 
@@ -152,7 +160,7 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 	local cz = math.clamp(rz, -sz * 0.5, sz * 0.5)
 
 	if not (cx == rx and cy == ry and cz == rz) then
-		local closestPoint = cframe * Vector3.new(cx, cy, cz)
+		local closestPoint = cframe * vector.create(cx, cy, cz)
 		local normal = (point - closestPoint).unit
 		return false, closestPoint, normal
 	end
@@ -168,22 +176,22 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 
 	local max = math.max(posX, posY, posZ, negX, negY, negZ)
 	if max == posX then
-		local closestPoint = cframe * Vector3.new(sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(sx * 0.5, ry, rz)
 		return true, closestPoint, cframe.XVector
 	elseif max == posY then
-		local closestPoint = cframe * Vector3.new(rx, sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, sy * 0.5, rz)
 		return true, closestPoint, cframe.YVector
 	elseif max == posZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, sz * 0.5)
 		return true, closestPoint, cframe.ZVector
 	elseif max == negX then
-		local closestPoint = cframe * Vector3.new(-sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(-sx * 0.5, ry, rz)
 		return true, closestPoint, -cframe.XVector
 	elseif max == negY then
-		local closestPoint = cframe * Vector3.new(rx, -sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, -sy * 0.5, rz)
 		return true, closestPoint, -cframe.YVector
 	elseif max == negZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, -sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, -sz * 0.5)
 		return true, closestPoint, -cframe.ZVector
 	end
 

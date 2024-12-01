@@ -11,7 +11,7 @@ end
 return function()
 	local BoneTree = {
 		Bones = {
-			CreateBone(Vector3.zero, 3, 0),
+			CreateBone(vector.zero, 3, 0),
 			CreateBone(Vector3.yAxis * 10, 3, 1),
 		},
 	}

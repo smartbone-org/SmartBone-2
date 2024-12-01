@@ -1,7 +1,7 @@
 --!native
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
@@ -25,8 +25,9 @@ local function ClosestPointFunc(cframe, length, radius, point)
 end
 
 return function(CapsuleCFrame, CapsuleSize, Point, Radius)
-do end	
-local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or CapsuleSize.Z) * 0.5
+	do
+	end
+	local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or CapsuleSize.Z) * 0.5
 	local CapsuleLength = CapsuleSize.X
 
 	CapsuleCFrame *= CFrame.Angles(math.rad(90), -math.rad(90), 0) -- Optomize
@@ -40,6 +41,7 @@ local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or Capsul
 	local DistanceToCp = (ClosestPoint - Point).Magnitude
 
 	IsInside = (DistanceToCp < Radius)
-do end	
-return IsInside, ClosestPoint, Normal
+	do
+	end
+	return IsInside, ClosestPoint, Normal
 end

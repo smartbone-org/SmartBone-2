@@ -24,7 +24,7 @@ local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 
 local function SafeUnit(Vector: Vector3): Vector3
 	if Vector.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	else
 		return Vector.Unit
 	end
@@ -144,7 +144,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone): CFrame
 end
 
 local function ClipVector(LastPosition: Vector3, Position: Vector3, Vector: Vector3): Vector3
-	LastPosition *= (Vector3.one - Vector)
+	LastPosition *= (vector.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
 end
@@ -169,21 +169,24 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
 		debug.profileend()
-		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
+		return vector.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	local TimeModifier = BoneTree.WindOffset
 		+ (
-			((os.clock() - (self.HeirarchyLength * 0.2)) + (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude * 0.2) -- * 0.2 is / 5
+			(
+				(os.clock() - (self.HeirarchyLength * 0.2))
+				+ (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude * 0.2
+			) -- * 0.2 is / 5
 			* Settings.WindInfluence
 		)
 
 	local WindSpeed = Settings.WindSpeed
 	local WindStrength = Settings.WindStrength
 
-	if WindSpeed == Vector3.zero or WindStrength == 0 then
+	if WindSpeed == vector.zero or WindStrength == 0 then
 		debug.profileend()
-		return Vector3.zero
+		return vector.zero
 	end
 
 	-- Velocity multiplier
@@ -275,7 +278,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
 		debug.profileend()
-		return WindDirection * Vector3.new(X, Y, Z)
+		return WindDirection * vector.create(X, Y, Z)
 	end
 
 	debug.profilebegin("Solve Wind from type")
@@ -461,19 +464,19 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
 		--NumberOfChildren = 0,
-		--RotationSum = Vector3.zero,
+		--RotationSum = vector.zero,
 
 		AnimatedWorldCFrame = Bone.TransformedWorldCFrame,
 		StartingCFrame = Bone.TransformedCFrame,
 		TransformOffset = CFrame.identity,
 		LocalTransformOffset = CFrame.identity,
-		RestPosition = Vector3.zero,
+		RestPosition = vector.zero,
 		CalculatedWorldCFrame = Bone.TransformedWorldCFrame,
 
 		Position = Bone.TransformedWorldCFrame.Position,
 		LastPosition = Bone.TransformedWorldCFrame.Position,
 
-		WeldPosition = Vector3.zero,
+		WeldPosition = vector.zero,
 		WeldCFrame = CFrame.identity,
 		ActiveWeld = false,
 		RigidWeld = false,
@@ -705,13 +708,18 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		if ParentBone.ActiveWeld and ParentBone.RigidWeld then
 			ParentBone.CalculatedWorldCFrame = ParentBone.WeldCFrame
 		--elseif ShouldAverage then
-		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
+		--	ParentBone.RotationSum += vector.create(Rotation:ToEulerAnglesXYZ())
 		else
-			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			ParentBone.CalculatedWorldCFrame =
+				BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			--ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
 		end
 
-		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
+		SB_ASSERT_CB(
+			not IsNaN(ParentBone.CalculatedWorldCFrame.Position),
+			warn,
+			"If you see this report this as a bug, (NaN Calc world cframe)"
+		)
 	end
 	debug.profileend()
 end
@@ -737,7 +745,7 @@ function Class:ApplyTransform(BoneTree)
 	-- 	local AverageRotation = ParentBone.RotationSum / ParentBone.NumberOfChildren
 	-- 	ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position)
 	-- 		* CFrame.fromEulerAnglesXYZ(AverageRotation.X, AverageRotation.Y, AverageRotation.Z)
-	-- 	ParentBone.RotationSum = Vector3.zero
+	-- 	ParentBone.RotationSum = vector.zero
 	-- end
 
 	if ParentBone and BoneParent then
@@ -760,7 +768,14 @@ end
 --- @param DRAW_BONE boolean
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROTATION_LIMIT boolean
-function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROTATION_LIMIT: bool)
+function Class:DrawDebug(
+	BoneTree,
+	DRAW_CONTACTS: bool,
+	DRAW_PHYSICAL_BONE: bool,
+	DRAW_BONE: bool,
+	DRAW_AXIS_LIMITS: bool,
+	DRAW_ROTATION_LIMIT: bool
+)
 	debug.profilebegin("Bone::DrawDebug")
 	local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
@@ -825,11 +840,17 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 		local YVector = RootPart.CFrame.UpVector
 		local ZVector = RootPart.CFrame.LookVector
 
-		local Size = Vector3.new(5, 5, 0)
+		local Size = vector.create(5, 5, 0)
 
 		if not XLock then
 			Gizmo.PushProperty("Color3", AXIS_X_COLOR)
-			Gizmo.Arrow:Draw(BonePosition - XVector * 2, BonePosition + XVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
+			Gizmo.Arrow:Draw(
+				BonePosition - XVector * 2,
+				BonePosition + XVector * 2,
+				AXIS_ARROW_RADIUS,
+				AXIS_ARROW_LENGTH,
+				9
+			)
 
 			local MinXLimit = self.XAxisLimits.Min - Offset.X
 			local MaxXLimit = self.XAxisLimits.Max - Offset.X
@@ -840,7 +861,13 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 
 		if not YLock then
 			Gizmo.PushProperty("Color3", AXIS_Y_COLOR)
-			Gizmo.Arrow:Draw(BonePosition - YVector * 2, BonePosition + YVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
+			Gizmo.Arrow:Draw(
+				BonePosition - YVector * 2,
+				BonePosition + YVector * 2,
+				AXIS_ARROW_RADIUS,
+				AXIS_ARROW_LENGTH,
+				9
+			)
 
 			local MinYLimit = self.YAxisLimits.Min - Offset.Y
 			local MaxYLimit = self.YAxisLimits.Max - Offset.Y
@@ -851,7 +878,13 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 
 		if not ZLock then
 			Gizmo.PushProperty("Color3", AXIS_Z_COLOR)
-			Gizmo.Arrow:Draw(BonePosition - ZVector * 2, BonePosition + ZVector * 2, AXIS_ARROW_RADIUS, AXIS_ARROW_LENGTH, 9)
+			Gizmo.Arrow:Draw(
+				BonePosition - ZVector * 2,
+				BonePosition + ZVector * 2,
+				AXIS_ARROW_RADIUS,
+				AXIS_ARROW_LENGTH,
+				9
+			)
 
 			local MinZLimit = self.ZAxisLimits.Min - Offset.Z
 			local MaxZLimit = self.ZAxisLimits.Max - Offset.Z
@@ -918,7 +951,13 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 
 	-- Draw rotation limit
 
-	if DRAW_ROTATION_LIMIT and self.RotationLimit < 180 and self.RotationLimit > 0 and self.ParentIndex > 0 and self.HasChild then
+	if
+		DRAW_ROTATION_LIMIT
+		and self.RotationLimit < 180
+		and self.RotationLimit > 0
+		and self.ParentIndex > 0
+		and self.HasChild
+	then
 		local ConeRadius
 		local InverseDirection = 1
 		if self.RotationLimit < 89.5 then
@@ -939,8 +978,11 @@ function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool
 
 		local ConeDirection = (self.Position - BoneTree.Bones[self.ParentIndex].Position).Unit * InverseDirection
 
-		local NewBoneCFrame =
-			CFrame.lookAt(BonePosition + ConeDirection * (ROTATION_CONE_LENGTH * 0.5), BonePosition + -ConeDirection * 500, BoneCFrame.LookVector)
+		local NewBoneCFrame = CFrame.lookAt(
+			BonePosition + ConeDirection * (ROTATION_CONE_LENGTH * 0.5),
+			BonePosition + -ConeDirection * 500,
+			BoneCFrame.LookVector
+		)
 
 		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
 		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
@@ -975,12 +1017,22 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_WELD then
 		Overlay.Text(`Active Weld: {self.ActiveWeld}`)
 		Overlay.Text(`Rigid Weld: {self.RigidWeld}`)
-		Overlay.Text(`Weld Position: {string.format("%.3f, %.3f, %.3f", self.WeldPosition.X, self.WeldPosition.Y, self.WeldPosition.Z)}`)
+		Overlay.Text(
+			`Weld Position: {string.format(
+				"%.3f, %.3f, %.3f",
+				self.WeldPosition.X,
+				self.WeldPosition.Y,
+				self.WeldPosition.Z
+			)}`
+		)
 	end
 
 	if Config.DEBUG_OVERLAY_BONE_INFO or Config.DEBUG_OVERLAY_BONE_FORCES then
-		local Force = self.Force and string.format("%.3f, %.3f, %.3f", self.Force.X, self.Force.Y, self.Force.Z) or "-, -, -"
-		local Gravity = self.Gravity and string.format("%.3f, %.3f, %.3f", self.Gravity.X, self.Gravity.Y, self.Gravity.Z) or "-, -, -"
+		local Force = self.Force and string.format("%.3f, %.3f, %.3f", self.Force.X, self.Force.Y, self.Force.Z)
+			or "-, -, -"
+		local Gravity = self.Gravity
+				and string.format("%.3f, %.3f, %.3f", self.Gravity.X, self.Gravity.Y, self.Gravity.Z)
+			or "-, -, -"
 
 		Overlay.Text(`Force: {Force}`)
 		Overlay.Text(`Gravity: {Gravity}`)

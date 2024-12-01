@@ -18,7 +18,7 @@ return function()
 		it("Should lock X Axis", function()
 			Bone.AxisLocked = { true, false, false }
 
-			local Result = AxisConstraint(Bone, Vector3.new(-10, 0, 0), Vector3.zero, CFrame.identity)
+			local Result = AxisConstraint(Bone, vector.create(-10, 0, 0), vector.zero, CFrame.identity)
 
 			expect(Result.X).to.equal(0)
 		end)
@@ -26,7 +26,7 @@ return function()
 		it("Should lock Y Axis", function()
 			Bone.AxisLocked = { false, true, false }
 
-			local Result = AxisConstraint(Bone, Vector3.new(0, -10, 0), Vector3.zero, CFrame.identity)
+			local Result = AxisConstraint(Bone, vector.create(0, -10, 0), vector.zero, CFrame.identity)
 
 			expect(Result.Y).to.equal(0)
 		end)
@@ -34,7 +34,7 @@ return function()
 		it("Should lock Z Axis", function()
 			Bone.AxisLocked = { false, false, true }
 
-			local Result = AxisConstraint(Bone, Vector3.new(0, 0, -10), Vector3.zero, CFrame.identity)
+			local Result = AxisConstraint(Bone, vector.create(0, 0, -10), vector.zero, CFrame.identity)
 
 			expect(Result.Z).to.equal(0)
 		end)
@@ -45,7 +45,7 @@ return function()
 			it("Min Limit", function()
 				Bone.XAxisLimits = NumberRange.new(-5, math.huge)
 
-				local Result = AxisConstraint(Bone, Vector3.new(-10, 0, 0), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(-10, 0, 0), vector.zero, CFrame.identity)
 
 				expect(Result.X).to.equal(-5)
 			end)
@@ -53,7 +53,7 @@ return function()
 			it("Max Limit", function()
 				Bone.XAxisLimits = NumberRange.new(-math.huge, 5)
 
-				local Result = AxisConstraint(Bone, Vector3.new(10, 0, 0), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(10, 0, 0), vector.zero, CFrame.identity)
 
 				expect(Result.X).to.equal(5)
 			end)
@@ -63,7 +63,7 @@ return function()
 			it("Min Limit", function()
 				Bone.YAxisLimits = NumberRange.new(-5, math.huge)
 
-				local Result = AxisConstraint(Bone, Vector3.new(0, -10, 0), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(0, -10, 0), vector.zero, CFrame.identity)
 
 				expect(Result.Y).to.equal(-5)
 			end)
@@ -71,7 +71,7 @@ return function()
 			it("Max Limit", function()
 				Bone.YAxisLimits = NumberRange.new(-math.huge, 5)
 
-				local Result = AxisConstraint(Bone, Vector3.new(0, 10, 0), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(0, 10, 0), vector.zero, CFrame.identity)
 
 				expect(Result.Y).to.equal(5)
 			end)
@@ -81,7 +81,7 @@ return function()
 			it("Min Limit", function()
 				Bone.ZAxisLimits = NumberRange.new(-5, math.huge)
 
-				local Result = AxisConstraint(Bone, Vector3.new(0, 0, -10), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(0, 0, -10), vector.zero, CFrame.identity)
 
 				expect(Result.Z).to.equal(-5)
 			end)
@@ -89,7 +89,7 @@ return function()
 			it("Max Limit", function()
 				Bone.ZAxisLimits = NumberRange.new(-math.huge, 5)
 
-				local Result = AxisConstraint(Bone, Vector3.new(0, 0, 10), Vector3.zero, CFrame.identity)
+				local Result = AxisConstraint(Bone, vector.create(0, 0, 10), vector.zero, CFrame.identity)
 
 				expect(Result.Z).to.equal(5)
 			end)

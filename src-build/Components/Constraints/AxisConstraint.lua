@@ -1,6 +1,6 @@
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
@@ -9,8 +9,9 @@ end
 local inf = math.huge
 
 return function(self, Position, LastPosition, RootCFrame)
-do end	
-local RootOffset = RootCFrame:Inverse() * Position
+	do
+	end
+	local RootOffset = RootCFrame:Inverse() * Position
 
 	local X = RootOffset.X
 	local Y = RootOffset.Y
@@ -25,12 +26,20 @@ local RootOffset = RootCFrame:Inverse() * Position
 	local ZLock = self.AxisLocked[3] and 0 or 1
 
 	-- Most bones probably wont have an axis limit, this allows us to skip all the other stuff
-	if XLimit.Min == -inf and XLimit.Max == inf and YLimit.Min == -inf and YLimit.Max == inf and ZLimit.Min == -inf and ZLimit.Max == inf then
+	if
+		XLimit.Min == -inf
+		and XLimit.Max == inf
+		and YLimit.Min == -inf
+		and YLimit.Max == inf
+		and ZLimit.Min == -inf
+		and ZLimit.Max == inf
+	then
 		if XLock == 1 and YLock == 1 and ZLock == 1 then
-do end			
-return Position
+			do
+			end
+			return Position
 		else
-			return RootCFrame * Vector3.new(X * XLock, Y * YLock, Z * ZLock)
+			return RootCFrame * vector.create(X * XLock, Y * YLock, Z * ZLock)
 		end
 	end
 
@@ -53,7 +62,7 @@ return Position
 	Y *= YLock
 	Z *= ZLock
 
-	local WorldSpace = RootCFrame * Vector3.new(X, Y, Z)
+	local WorldSpace = RootCFrame * vector.create(X, Y, Z)
 
 	Position = WorldSpace
 
@@ -78,7 +87,8 @@ return Position
 		local Normal = ZAxis:Dot(DifferenceDirection) > 0 and -ZAxis or ZAxis
 		self:ClipVelocity(Position, Normal)
 	end
-do end
-	
-return Position
+	do
+	end
+
+	return Position
 end

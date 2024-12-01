@@ -5,13 +5,13 @@
 ]]
 
 --!native
-local dot = Vector3.new().Dot
-local cross = Vector3.new().Cross
+local dot = vector.dot
+local cross = vector.cross
 local clamp = math.clamp
 
 local function SafeUnit(v3)
 	if v3.Magnitude == 0 then
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit

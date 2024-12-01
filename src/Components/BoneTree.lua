@@ -10,7 +10,7 @@ local Config = require(Dependencies:WaitForChild("Config"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
+local MaxVector = vector.create(math.huge, math.huge, math.huge)
 local IsStudio = game:GetService("RunService"):IsStudio()
 
 if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
@@ -54,13 +54,20 @@ type bool = boolean
 local function SafeUnit(v3: Vector3): Vector3
 	if v3.Magnitude == 0 then
 		--warn("Vector was saved")
-		return Vector3.zero
+		return vector.zero
 	end
 
 	return v3.Unit
 end
 
-local function map(n: number, start: number, stop: number, newStart: number, newStop: number, withinBounds: bool): number
+local function map(
+	n: number,
+	start: number,
+	stop: number,
+	newStart: number,
+	newStop: number,
+	withinBounds: bool
+): number
 	local value = ((n - start) / (stop - start)) * (newStop - newStart) + newStart
 
 	--// Returns basic value
@@ -72,7 +79,8 @@ local function map(n: number, start: number, stop: number, newStart: number, new
 	if newStart < newStop then
 		return (value < newStop and value or newStop) > newStart and (value < newStop and value or newStop) or newStart
 	else
-		return (value < newStart and value or newStart) > newStop and (value < newStart and value or newStart) or newStop
+		return (value < newStart and value or newStart) > newStop and (value < newStart and value or newStart)
+			or newStop
 	end
 end
 
@@ -185,10 +193,10 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		IsSkippingUpdates = false,
 		InWorkspace = false,
 
-		Force = Vector3.zero,
-		ObjectMove = Vector3.zero,
-		ObjectVelocity = Vector3.zero,
-		ObjectAcceleration = Vector3.zero,
+		Force = vector.zero,
+		ObjectMove = vector.zero,
+		ObjectVelocity = vector.zero,
+		ObjectAcceleration = vector.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
@@ -398,7 +406,7 @@ function Class:DrawDebug(
 	local OBJECT_ACCELERATION_COLOR = Color3.new(0, 0, 1)
 
 	if DRAW_ACCELERATION_INFO then
-		local Raised = self.RootPart.Position + Vector3.new(0, self.RootPart.Size.Y * 0.5 + 1, 0)
+		local Raised = self.RootPart.Position + vector.create(0, self.RootPart.Size.Y * 0.5 + 1, 0)
 
 		Gizmo.SetStyle(OBJECT_MOVE_COLOR, 0, true)
 		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectMove, 0.025, 0.1, 6)
@@ -448,7 +456,14 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_OBJECTS then
 		Overlay.Text(`Root Part: {self.RootPart.Name}`)
 		Overlay.Text(`Root Bone: {self.Root.Name}`)
-		Overlay.Text(`Root Part Size: {string.format("%.3f, %.3f, %.3f", self.RootPart.Size.X, self.RootPart.Size.Y, self.RootPart.Size.Z)}`)
+		Overlay.Text(
+			`Root Part Size: {string.format(
+				"%.3f, %.3f, %.3f",
+				self.RootPart.Size.X,
+				self.RootPart.Size.Y,
+				self.RootPart.Size.Z
+			)}`
+		)
 	end
 
 	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_NUMERICS then

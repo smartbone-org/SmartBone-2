@@ -213,7 +213,7 @@ return function(Iris: Types.Iris)
             Iris.Tree({"Multi-Component Input"})
 
                 local sharedVector2 = Iris.State(Vector2.new())
-                local sharedVector3 = Iris.State(Vector3.new())
+                local sharedVector3 = Iris.State(vector.zero)
                 local sharedUDim = Iris.State(UDim.new())
                 local sharedUDim2 = Iris.State(UDim2.new())
                 local sharedColor3 = Iris.State(Color3.new())

@@ -22,9 +22,9 @@ return function()
 	end)
 
 	describe("Point In View", function()
-		local CloseInView = Vector3.new(0, 0, -5)
-		local FarPlaneView = Vector3.new(0, 0, -550)
-		local OutOfView = Vector3.new(0, 0, 5)
+		local CloseInView = vector.create(0, 0, -5)
+		local FarPlaneView = vector.create(0, 0, -550)
+		local OutOfView = vector.create(0, 0, 5)
 
 		it("Close In View Point", function()
 			expect(Frustum.InViewFrustum(CloseInView, table.unpack(ReturnedCFrames))).to.equal(true)
@@ -42,17 +42,17 @@ return function()
 	describe("Object In View", function()
 		local CloseFakeObject = {
 			CFrame = CFrame.new(0, 0, -5),
-			Size = Vector3.new(1, 1, 3),
+			Size = vector.create(1, 1, 3),
 		}
 
 		local FarFakeObject = {
 			CFrame = CFrame.new(0, 0, -550),
-			Size = Vector3.new(1, 1, 3),
+			Size = vector.create(1, 1, 3),
 		}
 
 		local OutOfViewFakeObject = {
 			CFrame = CFrame.new(0, 0, 5),
-			Size = Vector3.new(1, 1, 3),
+			Size = vector.create(1, 1, 3),
 		}
 
 		it("Close In View Object", function()

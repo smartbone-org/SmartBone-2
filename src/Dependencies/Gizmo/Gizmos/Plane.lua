@@ -20,7 +20,7 @@ function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
 		return
 	end
 
-	Size *= Vector3.new(1, 1, 0)
+	Size *= vector.create(1, 1, 0)
 
 	local Transform = CFrame.lookAt(Position, Position + Normal)
 
