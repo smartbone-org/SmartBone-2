@@ -52,7 +52,7 @@ type ImOverlay = {
 type bool = boolean
 
 local function SafeUnit(v3: Vector3): Vector3
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		--warn("Vector was saved")
 		return vector.zero
 	end
@@ -264,7 +264,7 @@ function Class:UpdateThrottling(RootPosition: Vector3)
 	local Settings = self.Settings
 
 	local Camera = workspace.CurrentCamera
-	local Distance = (RootPosition - Camera.CFrame.Position).Magnitude
+	local Distance = vector.magnitude(RootPosition - Camera.CFrame.Position)
 
 	if Distance > Settings.ActivationDistance then
 		self.UpdateRate = 0
@@ -313,7 +313,7 @@ function Class:StepPhysics(Delta: number)
 	if Settings.MatchWorkspaceWind == true then
 		local GlobalWind = workspace.GlobalWind
 		Settings.WindDirection = SafeUnit(GlobalWind)
-		Settings.WindSpeed = GlobalWind.Magnitude
+		Settings.WindSpeed = vector.magnitude(GlobalWind)
 	else
 		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
 		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed

@@ -142,7 +142,7 @@ function Class:GetClosestPoint(Point, Radius)
 	self.InNarrowphase = false
 
 	-- Broadphase influence detection
-	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
+	local PointDistance = vector.magnitude(Point - self.Transform.Position) - Radius
 
 	if PointDistance > self.Radius then
 		return

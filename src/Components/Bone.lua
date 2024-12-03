@@ -20,10 +20,11 @@ local RotationConstraint = require(Constraints:WaitForChild("RotationConstraint"
 local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
+local Magnitude = vector.magnitude
 --local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 local function SafeUnit(Vector: Vector3): Vector3
-	if Vector.Magnitude == 0 then
+	if Magnitude(Vector) == 0 then
 		return vector.zero
 	else
 		return Vector.Unit
@@ -176,7 +177,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		+ (
 			(
 				(os.clock() - (self.HeirarchyLength * 0.2))
-				+ (self.TransformOffset.Position - BoneTree.Root.WorldPosition).Magnitude * 0.2
+				+ Magnitude(self.TransformOffset.Position - BoneTree.Root.WorldPosition) * 0.2
 			) -- * 0.2 is / 5
 			* Settings.WindInfluence
 		)
@@ -202,10 +203,10 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	-- If we are going with the wind if our bone speed is the same as the wind speed then we wind speed should be zero for this bone.
 	if WindSpeed > 0 then
 		if VelocityDirection:Dot(WindDirection) > 0 then -- Going with the wind
-			local SpeedMatch = 1 - Velocity.Magnitude / WindSpeed
+			local SpeedMatch = 1 - Magnitude(Velocity) / WindSpeed
 			WindDamper *= math.abs(SpeedMatch)
 		else -- Going against the wind
-			local SpeedMatch = 1 + Velocity.Magnitude / WindSpeed
+			local SpeedMatch = 1 + Magnitude(Velocity) / WindSpeed
 			WindDamper *= SpeedMatch
 		end
 	end
@@ -217,7 +218,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		return x == 0 and 0 or 2 ^ (10 * x - 10)
 	end
 
-	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
+	local SpeedAlpha = Magnitude(Velocity) < 100 and Magnitude(Velocity) or 100
 	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
 	TimeModifier *= math.max(SpeedMultiplier, 1)
 
@@ -741,7 +742,7 @@ function Class:ApplyTransform(BoneTree)
 	local BoneParent = ParentBone.Bone
 
 	-- We check if the magnitude of rotation sum is zero because that tells us if it has already been averaged by another bone.
-	-- if ParentBone.NumberOfChildren > 1 and ParentBone.RotationSum.Magnitude ~= 0 then
+	-- if ParentBone.NumberOfChildren > 1 and Magnitude(ParentBone.RotationSum) ~= 0 then
 	-- 	local AverageRotation = ParentBone.RotationSum / ParentBone.NumberOfChildren
 	-- 	ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position)
 	-- 		* CFrame.fromEulerAnglesXYZ(AverageRotation.X, AverageRotation.Y, AverageRotation.Z)
