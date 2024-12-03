@@ -162,7 +162,10 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
 
 			local Start = Bone.WorldCFrame
-				+ (Bone.WorldCFrame.UpVector.Unit * vector.magnitude(Bone.WorldPosition - ParentWorldPosition))
+				+ (
+					vector.normalize(Bone.WorldCFrame.UpVector)
+					* vector.magnitude(Bone.WorldPosition - ParentWorldPosition)
+				)
 			local tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
 			tailBone.Name = Bone.Name .. "_Tail"

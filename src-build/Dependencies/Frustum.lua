@@ -22,10 +22,10 @@ function Class.GetCFrames(camera, distance)
 
 	local frustumCFrameInverse = (cameraCFrame * CFrame.new(0, 0, -distance2)):Inverse()
 
-	local rightNormal = upVec:Cross(farPlaneBottomRight - cameraPos).Unit
-	local leftNormal = upVec:Cross(farPlaneBottomLeft - cameraPos).Unit
-	local topNormal = rightVec:Cross(cameraPos - farPlaneTopRight).Unit
-	local bottomNormal = rightVec:Cross(cameraPos - farPlaneBottomRight).Unit
+	local rightNormal = vector.normalize(vector.cross(upVec, farPlaneBottomRight - cameraPos))
+	local leftNormal = vector.normalize(vector.cross(upVec, farPlaneBottomLeft - cameraPos))
+	local topNormal = vector.normalize(vector.cross(rightVec, cameraPos - farPlaneTopRight))
+	local bottomNormal = vector.normalize(vector.cross(rightVec, cameraPos - farPlaneBottomRight))
 	do
 	end
 	return frustumCFrameInverse,
@@ -74,10 +74,10 @@ function Class.InViewFrustum(
 	-- Check if point lies outside a frustum plane
 	local lookToCell = point - cameraPos
 	if
-		rightNormal:Dot(lookToCell) < 0
-		or leftNormal:Dot(lookToCell) > 0
-		or topNormal:Dot(lookToCell) < 0
-		or bottomNormal:Dot(lookToCell) > 0
+		vector.dot(rightNormal, lookToCell) < 0
+		or vector.dot(leftNormal, lookToCell) > 0
+		or vector.dot(topNormal, lookToCell) < 0
+		or vector.dot(bottomNormal, lookToCell) > 0
 	then
 		do
 		end

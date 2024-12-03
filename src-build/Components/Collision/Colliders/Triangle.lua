@@ -10,11 +10,11 @@ local cross = vector.cross
 local clamp = math.clamp
 
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function ClosestPointOnLineSegment(A, B, P)
@@ -25,7 +25,7 @@ end
 
 local function ProjectOnPlane(pos, normal, point)
 	local d = point - pos
-	local v_dot = d:Dot(normal)
+	local v_dot = dot(d, normal)
 	local v = point - v_dot * normal
 
 	return v
@@ -66,9 +66,9 @@ local function ClosestPointOnTri(v0, v1, v2, point) -- ClosestPoint, Normal
 		return Projected, Normal
 	end
 
-	local d0 = (Edge0 - point).Magnitude
-	local d1 = (Edge1 - point).Magnitude
-	local d2 = (Edge2 - point).Magnitude
+	local d0 = vector.magnitude(Edge0 - point)
+	local d1 = vector.magnitude(Edge1 - point)
+	local d2 = vector.magnitude(Edge2 - point)
 
 	local d = math.min(d0, d1, d2)
 

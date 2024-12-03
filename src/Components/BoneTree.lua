@@ -57,7 +57,7 @@ local function SafeUnit(v3: Vector3): Vector3
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function map(

@@ -22,7 +22,7 @@ return function()
 		local function Callback()
 			local NewPosition = DistanceConstraint(Bone, Bone.Position, BoneTree)
 
-			expect(NewPosition.Magnitude).to.equal(Bone.FreeLength)
+			expect(vector.magnitude(NewPosition)).to.equal(Bone.FreeLength)
 
 			Bone.Position = NewPosition
 		end

@@ -33,7 +33,7 @@ export type IColliderTable = ColliderObjectClass.IColliderTable
 type ImOverlay = {
 	Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 	End: () -> (),
-	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> ()
+	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 }
 
 type bool = boolean
@@ -105,7 +105,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 	local ParentBone = BoneTree.Bones[ParentIndex]
 
 	if ParentIndex > 0 then
-		local BoneLength = (ParentBone.Position - Bone.Position).Magnitude
+		local BoneLength = vector.magnitude(ParentBone.Position - Bone.Position)
 		Bone.FreeLength = BoneLength
 		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
 		Bone.HeirarchyLength = HeirarchyLength
@@ -161,7 +161,10 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 			local Parent = Bone.Parent
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
 
-			local Start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - ParentWorldPosition).Magnitude)
+			local Start = Bone.WorldCFrame
+				+ vector.magnitude(
+					vector.normalize(Bone.WorldCFrame.UpVector) * (Bone.WorldPosition - ParentWorldPosition)
+				)
 			local tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
 			tailBone.Name = Bone.Name .. "_Tail"
@@ -195,25 +198,30 @@ function Class:m_UpdateViewFrustum()
 	if shared.FrameCounter % Config.FRUSTUM_FREQ ~= 0 then
 		return
 	end
-do end	
+	do
+	end
 
-local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
+	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
-do end		
-local FakeObject = {
+		do
+		end
+		local FakeObject = {
 			CFrame = BoneTree.BoundingBoxCFrame,
 			Size = BoneTree.BoundingBoxSize,
 		}
 		BoneTree.InView = Frustum.ObjectInFrustum(FakeObject, a, b, c, d, e, f, g, h, i)
-do end	
-end
-do end
+		do
+		end
+	end
+	do
+	end
 end
 
 function Class:m_CleanColliders()
-do end	
-local DidDestroy = false
+	do
+	end
+	local DidDestroy = false
 
 	if #self.ColliderObjects ~= 0 then -- Micro optimizations
 		for i, ColliderObject in self.ColliderObjects do
@@ -230,8 +238,9 @@ local DidDestroy = false
 	end
 
 	if not DidDestroy then -- Prevent warning because we left parallel
-do end	
-end
+		do
+		end
+	end
 end
 
 --- @private
@@ -244,9 +253,10 @@ end
 --- :::
 --- Updates the provided bone tree with all optimizations
 function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
-do end
-	
-if BoneTree.Destroyed then
+	do
+	end
+
+	if BoneTree.Destroyed then
 		BoneTree:Destroy()
 		table.remove(self.BoneTrees, Index)
 
@@ -261,9 +271,10 @@ if BoneTree.Destroyed then
 		BoneTree:SkipUpdate()
 
 		if not AlreadySkipped then
-do end
-			
-task.synchronize()
+			do
+			end
+
+			task.synchronize()
 			BoneTree:ApplyTransform()
 
 			SB_VERBOSE_LOG(
@@ -273,14 +284,16 @@ task.synchronize()
 
 		return
 	end
-do end	
+	do
+	end
 
-for _, ColliderObject in self.ColliderObjects do
+	for _, ColliderObject in self.ColliderObjects do
 		ColliderObject:Step()
 	end
-do end
-	
-local UpdateHz = 1 / BoneTree.UpdateRate
+	do
+	end
+
+	local UpdateHz = 1 / BoneTree.UpdateRate
 	local DidUpdate = false
 
 	BoneTree.AccumulatedDelta += Delta
@@ -293,9 +306,10 @@ local UpdateHz = 1 / BoneTree.UpdateRate
 		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
 		BoneTree:SolveTransform(UpdateHz)
 	end
-do end
-	
-if DidUpdate then
+	do
+	end
+
+	if DidUpdate then
 		task.synchronize()
 		BoneTree:ApplyTransform()
 	end
@@ -389,11 +403,13 @@ end
 --- @within SmartBone
 --- Resets all bone trees to their rest position
 function Class:SkipUpdate()
-do end	
-for _, BoneTree in self.BoneTrees do
+	do
+	end
+	for _, BoneTree in self.BoneTrees do
 		BoneTree:SkipUpdate()
 	end
-do end
+	do
+	end
 end
 
 --- @within SmartBone
@@ -462,7 +478,12 @@ function Class:DrawDebug(
 
 	if DRAW_COLLIDERS then
 		for _, ColliderObject in self.ColliderObjects do
-			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS, DRAW_COLLIDER_INFLUENCE, DRAW_COLLIDER_AWAKE, DRAW_COLLIDER_BROADPHASE)
+			ColliderObject:DrawDebug(
+				DRAW_FILL_COLLIDERS,
+				DRAW_COLLIDER_INFLUENCE,
+				DRAW_COLLIDER_AWAKE,
+				DRAW_COLLIDER_BROADPHASE
+			)
 		end
 	end
 end

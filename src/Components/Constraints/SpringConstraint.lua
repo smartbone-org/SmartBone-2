@@ -20,7 +20,7 @@ return function(self, Position, RestPosition, BoneTree, Delta)
 
 			if Stiffness > 0 then
 				local StiffDifference = RestPosition - Position
-				local Length = StiffDifference.Magnitude
+				local Length = vector.magnitude(StiffDifference)
 				local MaxLength = RestLength * (1 - Stiffness) * 2
 				if Length > MaxLength then
 					Position += StiffDifference * ((Length - MaxLength) / Length)
@@ -29,7 +29,7 @@ return function(self, Position, RestPosition, BoneTree, Delta)
 		end
 
 		local Difference = ParentBone.Position - Position
-		local Length = Difference.Magnitude
+		local Length = vector.magnitude(Difference)
 		if Length > 0 then
 			Position += Difference * ((Length - RestLength) / Length)
 		end

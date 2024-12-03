@@ -22,7 +22,7 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: numbe
 
 	Ceive.Ray:Draw(Origin, End)
 
-	local ArrowCFrame = CFrame.lookAt(End + ((Origin - End).Unit * (Length * 0.5)), End)
+	local ArrowCFrame = CFrame.lookAt(End + (vector.normalize(Origin - End) * (Length * 0.5)), End)
 	Ceive.Cone:Draw(ArrowCFrame, Radius, Length, Subdivisions)
 end
 
@@ -52,7 +52,13 @@ function Gizmo:Update(PropertyTable)
 	Ceive.PushProperty("Transparency", PropertyTable.Transparency)
 	Ceive.PushProperty("Color3", PropertyTable.Color3)
 
-	self:Draw(PropertyTable.Origin, PropertyTable.End, PropertyTable.Radius, PropertyTable.Length, PropertyTable.Subdivisions)
+	self:Draw(
+		PropertyTable.Origin,
+		PropertyTable.End,
+		PropertyTable.Radius,
+		PropertyTable.Length,
+		PropertyTable.Subdivisions
+	)
 end
 
 return Gizmo

@@ -11,22 +11,22 @@ local ColliderTranslations = {
 	Cylinder = "Cylinder",
 }
 
-local function SafeUnit(Vector: Vector3): Vector3
-	if Vector.Magnitude == 0 then
-		return -Vector3.yAxis
+local function SafeUnit(v3)
+	if vector.magnitude(v3) == 0 then
+		return vector.zero
 	end
 
-	return Vector.Unit
+	return vector.normalize(v3)
 end
 
 local module = {}
 module.LogIndent = 0
 
 function module.GetRotationBetween(U: Vector3, V: Vector3)
-	local Cos = U:Dot(V)
-	local Sin = U:Cross(V).Magnitude
+	local Cos = vector.dot(U, V)
+	local Sin = vector.magnitude(vector.cross(U, V))
 	local Angle = math.atan2(Sin, Cos)
-	local W = SafeUnit(U:Cross(V))
+	local W = SafeUnit(vector.cross(U, V))
 
 	return CFrame.fromAxisAngle(W, Angle)
 end
@@ -139,7 +139,7 @@ end
 
 function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Vector3): Vector3
 	local v = p1 - p0
-	local k = v:Dot(d0)
+	local k = vector.dot(v, d0)
 	k = math.clamp(k, -len, len)
 	return p0 + d0 * k
 end
@@ -161,7 +161,7 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 
 	if not (cx == rx and cy == ry and cz == rz) then
 		local closestPoint = cframe * vector.create(cx, cy, cz)
-		local normal = (point - closestPoint).unit
+		local normal = vector.normalize(point - closestPoint)
 		return false, closestPoint, normal
 	end
 
@@ -197,7 +197,7 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 
 	-- Shouldnt reach
 	warn("CLOSEST POINT ON BOX FAIL")
-	return false, Vector3.zero, Vector3.yAxis
+	return false, vector.zero, Vector3.yAxis
 end
 
 function module.GetCollider(Object: BasePart)
