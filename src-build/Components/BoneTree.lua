@@ -23,24 +23,24 @@ export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
 	RootPart: BasePart,
-	RootPartSize: Vector3,
+	RootPartSize: vector,
 	Bones: { BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
 	AccumulatedDelta: number,
 	BoundingBoxCFrame: CFrame,
-	BoundingBoxSize: Vector3,
+	BoundingBoxSize: vector,
 
 	InView: bool,
 	Destroyed: bool,
 	IsSkippingUpdates: bool,
 	InWorkspace: bool,
 
-	Force: Vector3,
-	ObjectMove: Vector3,
-	ObjectVelocity: Vector3,
-	ObjectAcceleration: Vector3,
-	ObjectPreviousPosition: Vector3,
+	Force: vector,
+	ObjectMove: vector,
+	ObjectVelocity: vector,
+	ObjectAcceleration: vector,
+	ObjectPreviousPosition: vector,
 }
 
 type ImOverlay = {
@@ -264,7 +264,7 @@ end
 --- @within BoneTree
 --- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
 --- Called in BoneTree:PreUpdate()
-function Class:UpdateThrottling(RootPosition: Vector3)
+function Class:UpdateThrottling(RootPosition: vector)
 	do
 	end
 	local Settings = self.Settings

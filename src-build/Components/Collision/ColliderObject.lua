@@ -112,7 +112,7 @@ end
 --- @within ColliderObject
 --- @param Point Vector3
 --- @param Radius number -- Radius of bone
---- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
+--- @return {[number]: {ClosestPoint: vector, Normal: vector}}
 function Class:GetCollisions(Point, Radius)
 	do
 	end

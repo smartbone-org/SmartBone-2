@@ -51,27 +51,27 @@ export type IBone = {
 	Radius: number,
 	Friction: number,
 	RotationLimit: number,
-	Force: Vector3?,
-	Gravity: Vector3?,
+	Force: vector?,
+	Gravity: vector?,
 
 	SolvedAnimatedCFrame: bool,
 	HasChild: bool,
 	--NumberOfChildren: number,
 	IsSkippingUpdates: bool,
 
-	--RotationSum: Vector3,
+	--RotationSum: vector,
 
 	AnimatedWorldCFrame: CFrame,
 	TransformOffset: CFrame,
 	LocalTransformOffset: CFrame,
-	RestPosition: Vector3,
+	RestPosition: vector,
 	CalculatedWorldCFrame: CFrame,
 
-	Position: Vector3,
-	LastPosition: Vector3,
+	Position: vector,
+	LastPosition: vector,
 
 	ActiveWeld: bool,
-	WeldPosition: Vector3,
+	WeldPosition: vector,
 	WeldCFrame: CFrame,
 
 	Anchored: bool,
@@ -148,7 +148,7 @@ local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone): CFrame
 	return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
 
-local function ClipVector(LastPosition: Vector3, Position: Vector3, Vector: Vector3): Vector3
+local function ClipVector(LastPosition: vector, Position: vector, Vector: vector): vector
 	LastPosition *= (vector.one - Vector)
 	LastPosition += (Position * Vector)
 	return LastPosition
@@ -167,7 +167,7 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 	return (f0 * w0 + f1 * w1) / (w0 + w1)
 end
 
-local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
+local function SolveWind(self: IBone, BoneTree: any, Velocity: vector): vector
 	do
 	end
 	local Settings = BoneTree.Settings
@@ -536,7 +536,7 @@ end
 --- @param Position Vector3
 --- @param Vector Vector3
 --- Clips velocity on specified vector, Position is where we are at our current physics step (Before we set self.Position)
-function Class:ClipVelocity(Position: Vector3, Vector: Vector3)
+function Class:ClipVelocity(Position: vector, Vector: vector)
 	self.LastPosition = ClipVector(self.LastPosition, Position, Vector)
 end
 
@@ -603,7 +603,7 @@ end
 --- @param Force Vector3
 --- @param Delta number -- Δt
 --- Force passed in via BoneTree:StepPhysics()
-function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel safe
+function Class:StepPhysics(BoneTree, Force: vector, Delta: number) -- Parallel safe
 	do
 	end
 	if self.Anchored then

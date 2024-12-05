@@ -17,7 +17,7 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
+function Gizmo:Draw(Transform: CFrame, Size: vector, Vertices, Faces)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
@@ -76,7 +76,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 	end
 end
 
-function Gizmo:Create(Transform: CFrame, Size: Vector3, Vertices, Faces)
+function Gizmo:Create(Transform: CFrame, Size: vector, Vertices, Faces)
 	local PropertyTable = {
 		Transform = Transform,
 		Size = Size,

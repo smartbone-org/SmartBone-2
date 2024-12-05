@@ -22,7 +22,7 @@ end
 local module = {}
 module.LogIndent = 0
 
-function module.GetRotationBetween(U: Vector3, V: Vector3)
+function module.GetRotationBetween(U: vector, V: vector)
 	local Cos = vector.dot(U, V)
 	local Sin = vector.magnitude(vector.cross(U, V))
 	local Angle = math.atan2(Sin, Cos)
@@ -137,7 +137,7 @@ function module.GatherBoneSettings(Bone: Bone)
 	return Settings
 end
 
-function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Vector3): Vector3
+function module.ClosestPointOnLine(p0: vector, d0: vector, len: number, p1: vector): vector
 	local v = p1 - p0
 	local k = vector.dot(v, d0)
 	k = math.clamp(k, -len, len)
@@ -145,7 +145,7 @@ function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Ve
 end
 
 -- IsInside, ClosestPoint, Normal
-function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3): (boolean, Vector3, Vector3)
+function module.ClosestPointInBox(cframe: CFrame, size: vector, point: vector): (boolean, Vector3, vector)
 	local rel = cframe:PointToObjectSpace(point)
 	local sx, sy, sz = size.X, size.X, size.Z
 	local rx, ry, rz = rel.X, rel.Y, rel.Z

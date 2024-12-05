@@ -23,24 +23,24 @@ export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
 	RootPart: BasePart,
-	RootPartSize: Vector3,
+	RootPartSize: vector,
 	Bones: { BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
 	AccumulatedDelta: number,
 	BoundingBoxCFrame: CFrame,
-	BoundingBoxSize: Vector3,
+	BoundingBoxSize: vector,
 
 	InView: bool,
 	Destroyed: bool,
 	IsSkippingUpdates: bool,
 	InWorkspace: bool,
 
-	Force: Vector3,
-	ObjectMove: Vector3,
-	ObjectVelocity: Vector3,
-	ObjectAcceleration: Vector3,
-	ObjectPreviousPosition: Vector3,
+	Force: vector,
+	ObjectMove: vector,
+	ObjectVelocity: vector,
+	ObjectAcceleration: vector,
+	ObjectPreviousPosition: vector,
 }
 
 type ImOverlay = {
@@ -51,7 +51,7 @@ type ImOverlay = {
 
 type bool = boolean
 
-local function SafeUnit(v3: Vector3): Vector3
+local function SafeUnit(v3: vector): vector
 	if vector.magnitude(v3) == 0 then
 		--warn("Vector was saved")
 		return vector.zero
@@ -259,7 +259,7 @@ end
 --- @within BoneTree
 --- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
 --- Called in BoneTree:PreUpdate()
-function Class:UpdateThrottling(RootPosition: Vector3)
+function Class:UpdateThrottling(RootPosition: vector)
 	debug.profilebegin("BoneTree::UpdateThrottling")
 	local Settings = self.Settings
 

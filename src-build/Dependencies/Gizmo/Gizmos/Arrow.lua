@@ -13,7 +13,7 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number)
+function Gizmo:Draw(Origin: vector, End: vector, Radius: number, Length: number, Subdivisions: number)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
@@ -26,7 +26,7 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: numbe
 	Ceive.Cone:Draw(ArrowCFrame, Radius, Length, Subdivisions)
 end
 
-function Gizmo:Create(Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number)
+function Gizmo:Create(Origin: vector, End: vector, Radius: number, Length: number, Subdivisions: number)
 	local PropertyTable = {
 		Origin = Origin,
 		End = End,

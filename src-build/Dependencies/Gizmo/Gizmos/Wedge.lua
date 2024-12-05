@@ -13,7 +13,7 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
+function Gizmo:Draw(Transform: CFrame, Size: vector, DrawTriangles: boolean)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
@@ -86,7 +86,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
 	end
 end
 
-function Gizmo:Create(Transform: CFrame, Size: Vector3, DrawTriangles: boolean)
+function Gizmo:Create(Transform: CFrame, Size: vector, DrawTriangles: boolean)
 	local PropertyTable = {
 		Transform = Transform,
 		Size = Size,

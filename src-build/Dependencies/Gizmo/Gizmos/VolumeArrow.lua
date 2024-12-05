@@ -15,8 +15,8 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain, Register)
 end
 
 function Gizmo:Draw(
-	Origin: Vector3,
-	End: Vector3,
+	Origin: vector,
+	End: vector,
 	CylinderRadius: number,
 	ConeRadius: number,
 	Length: number,
@@ -45,8 +45,8 @@ function Gizmo:Draw(
 end
 
 function Gizmo:Create(
-	Origin: Vector3,
-	End: Vector3,
+	Origin: vector,
+	End: vector,
 	CylinderRadius: number,
 	ConeRadius: number,
 	Length: number,

@@ -259,7 +259,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 		if isDragging and dragWindow then
 			local mouseLocation: Vector2
 			if input.UserInputType == Enum.UserInputType.Touch then
-				local location: Vector3 = input.Position
+				local location: vector = input.Position
 				mouseLocation = Vector2.new(location.X, location.Y)
 			else
 				mouseLocation = widgets.getMouseLocation()
@@ -506,7 +506,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 					if not thisWidget.arguments.NoMove then
 						dragWindow = thisWidget
 						isDragging = true
-						local location: Vector3 = input.Position
+						local location: vector = input.Position
 						moveDeltaCursorPosition = Vector2.new(location.X, location.Y) - thisWidget.state.position.value
 					end
 				end
