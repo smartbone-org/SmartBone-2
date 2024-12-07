@@ -1,22 +1,22 @@
 --!native
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
-		return Vector3.zero
+	if vector.magnitude(v3) == 0 then
+		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function solve(p0, d0, len, p1)
 	local v = p1 - p0
-	local k = v:Dot(d0)
+	local k = vector.dot(v, d0)
 	k = math.clamp(k, -len, len)
 	return p0 + d0 * k, k
 end
 
 local function ProjectOnPlane(pos, normal, point)
 	local d = point - pos
-	local v_dot = d:Dot(normal)
+	local v_dot = vector.dot(d, normal)
 	local v = point - v_dot * normal
 
 	return v
@@ -38,29 +38,29 @@ local function ClosestPointFunc(cframe, size, point)
 
 	local function GetFinalProj(proj, o)
 		local projDir = SafeUnit(proj - o)
-		local projDistance = (proj - o).Magnitude
+		local projDistance = vector.magnitude(proj - o)
 		return o + projDir * (projDistance < radius and projDistance or radius)
 	end
 
 	projEnd = GetFinalProj(projEnd, endPlane)
 	projTop = GetFinalProj(projTop, topPlane)
 
-	local radiusDistance = (l0 - point).Magnitude
+	local radiusDistance = vector.magnitude(l0 - point)
 	local radiusNormal = SafeUnit(point - l0)
 	local radiusInside = (radiusDistance <= radius)
 	local radiusPosition = l0 + (radiusNormal * radius)
 
-	local d0 = (projTop - point).Magnitude
-	local d1 = (projEnd - point).Magnitude
-	local d2 = (radiusPosition - point).Magnitude
+	local d0 = vector.magnitude(projTop - point)
+	local d1 = vector.magnitude(projEnd - point)
+	local d2 = vector.magnitude(radiusPosition - point)
 
 	local d = math.min(d0, d1, d2)
 
 	if k == length or d == d0 then
-		local dot = SafeUnit(point - projTop):Dot(topPlaneN)
+		local dot = vector.dot(SafeUnit(point - projTop), topPlaneN)
 		return dot < 0, projTop, topPlaneN
 	elseif k == -length or d == d1 then
-		local dot = SafeUnit(point - projEnd):Dot(endPlaneN)
+		local dot = vector.dot(SafeUnit(point - projEnd), endPlaneN)
 		return dot < 0, projEnd, endPlaneN
 	end
 
@@ -75,7 +75,7 @@ return function(CylinderCFrame, CylinderSize, Point, Radius) -- IsInside, PushPo
 		return IsInside, PushPosition, PushNormal
 	end
 
-	local PointDistance = (PushPosition - Point).Magnitude
+	local PointDistance = vector.magnitude(PushPosition - Point)
 
 	IsInside = PointDistance < Radius
 	debug.profileend()

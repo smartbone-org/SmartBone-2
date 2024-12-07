@@ -76,23 +76,23 @@ Class.__index = Class
 function Class.new()
 	local self = setmetatable({
 		Type = "Box",
-		Scale = Vector3.zero,
-		Offset = Vector3.zero,
-		Rotation = Vector3.zero,
+		Scale = vector.zero,
+		Offset = vector.zero,
+		Rotation = vector.zero,
 		Radius = 0,
 
-		PreviousScale = Vector3.zero,
-		PreviousOffset = Vector3.zero,
-		PreviousRotation = Vector3.zero,
-		PreviousObjectPosition = Vector3.zero,
-		PreviousObjectRotation = Vector3.zero,
+		PreviousScale = vector.zero,
+		PreviousOffset = vector.zero,
+		PreviousRotation = vector.zero,
+		PreviousObjectPosition = vector.zero,
+		PreviousObjectRotation = vector.zero,
 
 		m_Object = nil,
 
 		InNarrowphase = false,
 
 		Transform = CFrame.identity,
-		Size = Vector3.zero,
+		Size = vector.zero,
 
 		GUID = HttpService:GenerateGUID(false),
 	}, Class)
@@ -142,7 +142,7 @@ function Class:GetClosestPoint(Point, Radius)
 	self.InNarrowphase = false
 
 	-- Broadphase influence detection
-	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
+	local PointDistance = vector.magnitude(Point - self.Transform.Position) - Radius
 
 	if PointDistance > self.Radius then
 		return

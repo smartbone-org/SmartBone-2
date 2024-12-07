@@ -17,7 +17,7 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
+function Gizmo:Draw(Transform: CFrame, Size: vector, Vertices, Faces)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
@@ -47,7 +47,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 		local vY = Map(vertex.y, minY, maxY, -0.5, 0.5)
 		local vZ = Map(vertex.z, minZ, maxZ, -0.5, 0.5)
 
-		local vertexCFrame = Transform * CFrame.new(Vector3.new(vX, vY, vZ) * Size)
+		local vertexCFrame = Transform * CFrame.new(vector.create(vX, vY, vZ) * Size)
 		Vertices[i] = vertexCFrame
 	end
 
@@ -76,7 +76,7 @@ function Gizmo:Draw(Transform: CFrame, Size: Vector3, Vertices, Faces)
 	end
 end
 
-function Gizmo:Create(Transform: CFrame, Size: Vector3, Vertices, Faces)
+function Gizmo:Create(Transform: CFrame, Size: vector, Vertices, Faces)
 	local PropertyTable = {
 		Transform = Transform,
 		Size = Size,

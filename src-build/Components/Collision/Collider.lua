@@ -76,23 +76,23 @@ Class.__index = Class
 function Class.new()
 	local self = setmetatable({
 		Type = "Box",
-		Scale = Vector3.zero,
-		Offset = Vector3.zero,
-		Rotation = Vector3.zero,
+		Scale = vector.zero,
+		Offset = vector.zero,
+		Rotation = vector.zero,
 		Radius = 0,
 
-		PreviousScale = Vector3.zero,
-		PreviousOffset = Vector3.zero,
-		PreviousRotation = Vector3.zero,
-		PreviousObjectPosition = Vector3.zero,
-		PreviousObjectRotation = Vector3.zero,
+		PreviousScale = vector.zero,
+		PreviousOffset = vector.zero,
+		PreviousRotation = vector.zero,
+		PreviousObjectPosition = vector.zero,
+		PreviousObjectRotation = vector.zero,
 
 		m_Object = nil,
 
 		InNarrowphase = false,
 
 		Transform = CFrame.identity,
-		Size = Vector3.zero,
+		Size = vector.zero,
 
 		GUID = HttpService:GenerateGUID(false),
 	}, Class)
@@ -110,8 +110,9 @@ end
 
 --- @within Collider
 function Class:UpdateTransform()
-do end	
-local Object = self.m_Object
+	do
+	end
+	local Object = self.m_Object
 	local ObjectCFrame = Object.CFrame
 	local ObjectSize = Object.Size
 
@@ -127,7 +128,8 @@ local Object = self.m_Object
 	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 	self.Size = ScaledSize
 	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
-do end
+	do
+	end
 end
 
 --- @within Collider
@@ -142,15 +144,15 @@ function Class:GetClosestPoint(Point, Radius)
 	self.InNarrowphase = false
 
 	-- Broadphase influence detection
-	local PointDistance = (Point - self.Transform.Position).Magnitude - Radius
+	local PointDistance = vector.magnitude(Point - self.Transform.Position) - Radius
 
 	if PointDistance > self.Radius then
 		return
 	end
-do end
-	
+	do
+	end
 
-self.InNarrowphase = true
+	self.InNarrowphase = true
 
 	local Type = self.Type
 
@@ -172,17 +174,19 @@ self.InNarrowphase = true
 	if Type == "Cylinder" then
 		IsInside, ClosestPoint, Normal = CylinderSolver(self.Transform, self.Size, Point, Radius)
 	end
-do end
-	
+	do
+	end
 
-return IsInside, ClosestPoint, Normal
+	return IsInside, ClosestPoint, Normal
 end
 
 --- @within Collider
 function Class:Step()
-do end	
-self:UpdateTransform()
-do end
+	do
+	end
+	self:UpdateTransform()
+	do
+	end
 end
 
 --- @within Collider

@@ -11,7 +11,7 @@ end
 return function()
 	local BoneTree = {
 		Bones = {
-			CreateBone(Vector3.zero, 3, 0),
+			CreateBone(vector.zero, 3, 0),
 			CreateBone(Vector3.yAxis, 3, 1),
 		},
 	}
@@ -22,7 +22,7 @@ return function()
 		local function Callback()
 			local NewPosition = DistanceConstraint(Bone, Bone.Position, BoneTree)
 
-			expect(NewPosition.Magnitude).to.equal(Bone.FreeLength)
+			expect(vector.magnitude(NewPosition)).to.equal(Bone.FreeLength)
 
 			Bone.Position = NewPosition
 		end

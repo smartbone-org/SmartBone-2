@@ -10,7 +10,7 @@ local Config = require(Dependencies:WaitForChild("Config"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
+local MaxVector = vector.create(math.huge, math.huge, math.huge)
 local IsStudio = game:GetService("RunService"):IsStudio()
 
 if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
@@ -23,44 +23,50 @@ export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
 	RootPart: BasePart,
-	RootPartSize: Vector3,
+	RootPartSize: vector,
 	Bones: { BoneClass.IBone },
 	Settings: { [string]: any },
 	UpdateRate: number,
 	AccumulatedDelta: number,
 	BoundingBoxCFrame: CFrame,
-	BoundingBoxSize: Vector3,
+	BoundingBoxSize: vector,
 
 	InView: bool,
 	Destroyed: bool,
 	IsSkippingUpdates: bool,
 	InWorkspace: bool,
 
-	Force: Vector3,
-	ObjectMove: Vector3,
-	ObjectVelocity: Vector3,
-	ObjectAcceleration: Vector3,
-	ObjectPreviousPosition: Vector3
+	Force: vector,
+	ObjectMove: vector,
+	ObjectVelocity: vector,
+	ObjectAcceleration: vector,
+	ObjectPreviousPosition: vector,
 }
 
 type ImOverlay = {
 	Begin: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 	End: () -> (),
-	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> ()
+	Text: (Text: string, BackgroundColor: Color3?, TextColor: Color3?) -> (),
 }
 
 type bool = boolean
 
-local function SafeUnit(v3: Vector3): Vector3
-	if v3.Magnitude == 0 then
-		--warn("Vector was saved")
-		return Vector3.zero
+local function SafeUnit(v3)
+	if vector.magnitude(v3) == 0 then
+		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
-local function map(n: number, start: number, stop: number, newStart: number, newStop: number, withinBounds: bool): number
+local function map(
+	n: number,
+	start: number,
+	stop: number,
+	newStart: number,
+	newStop: number,
+	withinBounds: bool
+): number
 	local value = ((n - start) / (stop - start)) * (newStop - newStart) + newStart
 
 	--// Returns basic value
@@ -72,7 +78,8 @@ local function map(n: number, start: number, stop: number, newStart: number, new
 	if newStart < newStop then
 		return (value < newStop and value or newStop) > newStart and (value < newStop and value or newStop) or newStart
 	else
-		return (value < newStart and value or newStart) > newStop and (value < newStart and value or newStart) or newStop
+		return (value < newStart and value or newStart) > newStop and (value < newStart and value or newStart)
+			or newStop
 	end
 end
 
@@ -185,10 +192,10 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		IsSkippingUpdates = false,
 		InWorkspace = false,
 
-		Force = Vector3.zero,
-		ObjectMove = Vector3.zero,
-		ObjectVelocity = Vector3.zero,
-		ObjectAcceleration = Vector3.zero,
+		Force = vector.zero,
+		ObjectMove = vector.zero,
+		ObjectVelocity = vector.zero,
+		ObjectAcceleration = vector.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
@@ -215,66 +222,76 @@ end
 --- Called in BoneTree:PreUpdate(),
 --- Computes the bounding box of all the bones
 function Class:UpdateBoundingBox()
-do end
-	
-if not self.InView then
+	do
+	end
+
+	if not self.InView then
 		self.BoundingBoxCFrame = self.RootPart.CFrame
 		self.BoundingBoxSize = self.RootPart.Size
-do end		
+		do
+		end
 
-return
+		return
 	end
 
 	local BottomCorner = MaxVector
 	local TopCorner = -MaxVector
-do end	
+	do
+	end
 
-for _, Bone in self.Bones do
-do end		
-local Velocity = (Bone.Position - Bone.LastPosition)
+	for _, Bone in self.Bones do
+		do
+		end
+		local Velocity = (Bone.Position - Bone.LastPosition)
 		local Position = Bone.Position + Velocity
 
 		BottomCorner = BottomCorner:Min(Position)
 		TopCorner = TopCorner:Max(Position)
-do end	
-end
-do end
-	
-local CenterOfMass = (BottomCorner + TopCorner) * 0.5
+		do
+		end
+	end
+	do
+	end
+
+	local CenterOfMass = (BottomCorner + TopCorner) * 0.5
 
 	self.BoundingBoxCFrame = CFrame.new(CenterOfMass)
 	self.BoundingBoxSize = self.RootPartSize:Max(TopCorner - BottomCorner)
-do end
-
+	do
+	end
 end
 
 --- @within BoneTree
 --- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
 --- Called in BoneTree:PreUpdate()
-function Class:UpdateThrottling(RootPosition: Vector3)
-do end	
-local Settings = self.Settings
+function Class:UpdateThrottling(RootPosition: vector)
+	do
+	end
+	local Settings = self.Settings
 
 	local Camera = workspace.CurrentCamera
-	local Distance = (RootPosition - Camera.CFrame.Position).Magnitude
+	local Distance = vector.magnitude(RootPosition - Camera.CFrame.Position)
 
 	if Distance > Settings.ActivationDistance then
 		self.UpdateRate = 0
-do end		
-return
+		do
+		end
+		return
 	end
 
 	local UpdateRate = 1 - map(Distance, Settings.ThrottleDistance, Settings.ActivationDistance, 0, 1, true)
 	self.UpdateRate = Settings.UpdateRate * UpdateRate
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates object move, gravity and throttled update rate. Also calls Bone:PreUpdate()
 function Class:PreUpdate(Delta: number)
-do end	
-local RootPartCFrame = self.RootPart.CFrame
+	do
+	end
+	local RootPartCFrame = self.RootPart.CFrame
 	local RootPartPosition = RootPartCFrame.Position
 
 	local PreviousVelocity = self.ObjectVelocity
@@ -291,21 +308,23 @@ local RootPartCFrame = self.RootPart.CFrame
 	for _, Bone in self.Bones do
 		Bone:PreUpdate(self)
 	end
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates forces and updates wind. Also calls Bone:StepPhysics()
 function Class:StepPhysics(Delta: number)
-do end	
-local Settings = self.Settings
+	do
+	end
+	local Settings = self.Settings
 	local Force = (Settings.Gravity + Settings.Force) * Delta
 
 	if Settings.MatchWorkspaceWind == true then
 		local GlobalWind = workspace.GlobalWind
 		Settings.WindDirection = SafeUnit(GlobalWind)
-		Settings.WindSpeed = GlobalWind.Magnitude
+		Settings.WindSpeed = vector.magnitude(GlobalWind)
 	else
 		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
 		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
@@ -321,52 +340,61 @@ local Settings = self.Settings
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force, Delta)
 	end
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- @param ColliderObjects table
 --- @param Delta number -- Δt
 function Class:Constrain(ColliderObjects, Delta: number)
-do end	
-for _, Bone in self.Bones do
+	do
+	end
+	for _, Bone in self.Bones do
 		Bone:Constrain(self, ColliderObjects, Delta)
 	end
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- Resets all bones to their rest positions.
 function Class:SkipUpdate()
-do end	
-for _, Bone in self.Bones do
+	do
+	end
+	for _, Bone in self.Bones do
 		Bone:SkipUpdate()
 	end
 
 	self.IsSkippingUpdates = true
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 function Class:SolveTransform(Delta: number)
-do end	
-for _, Bone in self.Bones do
+	do
+	end
+	for _, Bone in self.Bones do
 		Bone:SolveTransform(self, Delta)
 	end
 
 	self.IsSkippingUpdates = false
-do end
+	do
+	end
 end
 
 --- @within BoneTree
 --- Applys all the transforms to bones in serial context.
 function Class:ApplyTransform()
-do end	
-for _, Bone in self.Bones do
+	do
+	end
+	for _, Bone in self.Bones do
 		Bone:ApplyTransform(self)
 	end
-do end
+	do
+	end
 end
 
 --- @client
@@ -389,8 +417,9 @@ function Class:DrawDebug(
 	DRAW_ROTATION_LIMITS: bool,
 	DRAW_ACCELERATION_INFO: bool
 )
-do end	
-local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
+	do
+	end
+	local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
 	local ROOT_PART_FILL_COLOR = Color3.fromRGB(255, 89, 89)
 	local OBJECT_MOVE_COLOR = Color3.new(1, 0, 0)
@@ -398,7 +427,7 @@ local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local OBJECT_ACCELERATION_COLOR = Color3.new(0, 0, 1)
 
 	if DRAW_ACCELERATION_INFO then
-		local Raised = self.RootPart.Position + Vector3.new(0, self.RootPart.Size.Y * 0.5 + 1, 0)
+		local Raised = self.RootPart.Position + vector.create(0, self.RootPart.Size.Y * 0.5 + 1, 0)
 
 		Gizmo.SetStyle(OBJECT_MOVE_COLOR, 0, true)
 		Gizmo.Arrow:Draw(Raised, Raised + self.ObjectMove, 0.025, 0.1, 6)
@@ -438,7 +467,8 @@ local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 			Gizmo.Ray:Draw(ParentBone.Bone.TransformedWorldCFrame.Position, BonePosition)
 		end
 	end
-do end
+	do
+	end
 end
 
 --- @client
@@ -448,7 +478,14 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_OBJECTS then
 		Overlay.Text(`Root Part: {self.RootPart.Name}`)
 		Overlay.Text(`Root Bone: {self.Root.Name}`)
-		Overlay.Text(`Root Part Size: {string.format("%.3f, %.3f, %.3f", self.RootPart.Size.X, self.RootPart.Size.Y, self.RootPart.Size.Z)}`)
+		Overlay.Text(
+			`Root Part Size: {string.format(
+				"%.3f, %.3f, %.3f",
+				self.RootPart.Size.X,
+				self.RootPart.Size.Y,
+				self.RootPart.Size.Z
+			)}`
+		)
 	end
 
 	if Config.DEBUG_OVERLAY_TREE_INFO or Config.DEBUG_OVERLAY_TREE_NUMERICS then

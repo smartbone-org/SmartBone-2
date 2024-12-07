@@ -78,9 +78,9 @@ end
 --- @private
 --- @param Collider {Type: string, ScaleX: number, ScaleY: number, ScaleZ: number, OffsetX: number, OffsetY: number, OffsetZ: number, RotationX: number, RotationY: number, RotationZ: number}
 function Class:m_LoadCollider(Collider: IRawCollider)
-	local FormattedScale = Vector3.new(Collider.ScaleX, Collider.ScaleY, Collider.ScaleZ)
-	local FormattedOffset = Vector3.new(Collider.OffsetX, Collider.OffsetY, Collider.OffsetZ)
-	local FormattedRotation = Vector3.new(Collider.RotationX, Collider.RotationY, Collider.RotationZ)
+	local FormattedScale = vector.create(Collider.ScaleX, Collider.ScaleY, Collider.ScaleZ)
+	local FormattedOffset = vector.create(Collider.OffsetX, Collider.OffsetY, Collider.OffsetZ)
+	local FormattedRotation = vector.create(Collider.RotationX, Collider.RotationY, Collider.RotationZ)
 
 	local ColliderSolver = ColliderClass.new()
 	ColliderSolver.Scale = FormattedScale

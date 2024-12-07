@@ -11,22 +11,22 @@ local ColliderTranslations = {
 	Cylinder = "Cylinder",
 }
 
-local function SafeUnit(Vector: Vector3): Vector3
-	if Vector.Magnitude == 0 then
-		return -Vector3.yAxis
+local function SafeUnit(v3)
+	if vector.magnitude(v3) == 0 then
+		return vector.zero
 	end
 
-	return Vector.Unit
+	return vector.normalize(v3)
 end
 
 local module = {}
 module.LogIndent = 0
 
-function module.GetRotationBetween(U: Vector3, V: Vector3)
-	local Cos = U:Dot(V)
-	local Sin = U:Cross(V).Magnitude
+function module.GetRotationBetween(U: vector, V: vector)
+	local Cos = vector.dot(U, V)
+	local Sin = vector.magnitude(vector.cross(U, V))
 	local Angle = math.atan2(Sin, Cos)
-	local W = SafeUnit(U:Cross(V))
+	local W = SafeUnit(vector.cross(U, V))
 
 	return CFrame.fromAxisAngle(W, Angle)
 end
@@ -48,7 +48,11 @@ function module.GatherObjectSettings(Object: BasePart)
 
 	local function Expect(Value: any, Type: string, Name: string): boolean
 		if typeof(Value) ~= Type then
-			warn(`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(Value)}`)
+			warn(
+				`[SmartBone][Object] Expected attribute {Name} on {Object.Name} to be of type {Type}, got type {typeof(
+					Value
+				)}`
+			)
 			return false
 		end
 
@@ -77,7 +81,11 @@ function module.GatherBoneSettings(Bone: Bone)
 
 	local function Expect(Value: any, Type: string, Name: string)
 		if typeof(Value) ~= Type then
-			warn(`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(Value)}`)
+			warn(
+				`[SmartBone][Bone] Expected attribute {Name} on {Bone.Name} to be of type {Type}, got type {typeof(
+					Value
+				)}`
+			)
 		end
 	end
 
@@ -129,15 +137,15 @@ function module.GatherBoneSettings(Bone: Bone)
 	return Settings
 end
 
-function module.ClosestPointOnLine(p0: Vector3, d0: Vector3, len: number, p1: Vector3): Vector3
+function module.ClosestPointOnLine(p0: vector, d0: vector, len: number, p1: vector): vector
 	local v = p1 - p0
-	local k = v:Dot(d0)
+	local k = vector.dot(v, d0)
 	k = math.clamp(k, -len, len)
 	return p0 + d0 * k
 end
 
 -- IsInside, ClosestPoint, Normal
-function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3): (boolean, Vector3, Vector3)
+function module.ClosestPointInBox(cframe: CFrame, size: vector, point: vector): (boolean, Vector3, vector)
 	local rel = cframe:PointToObjectSpace(point)
 	local sx, sy, sz = size.X, size.X, size.Z
 	local rx, ry, rz = rel.X, rel.Y, rel.Z
@@ -152,8 +160,8 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 	local cz = math.clamp(rz, -sz * 0.5, sz * 0.5)
 
 	if not (cx == rx and cy == ry and cz == rz) then
-		local closestPoint = cframe * Vector3.new(cx, cy, cz)
-		local normal = (point - closestPoint).unit
+		local closestPoint = cframe * vector.create(cx, cy, cz)
+		local normal = vector.normalize(point - closestPoint)
 		return false, closestPoint, normal
 	end
 
@@ -168,28 +176,28 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 
 	local max = math.max(posX, posY, posZ, negX, negY, negZ)
 	if max == posX then
-		local closestPoint = cframe * Vector3.new(sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(sx * 0.5, ry, rz)
 		return true, closestPoint, cframe.XVector
 	elseif max == posY then
-		local closestPoint = cframe * Vector3.new(rx, sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, sy * 0.5, rz)
 		return true, closestPoint, cframe.YVector
 	elseif max == posZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, sz * 0.5)
 		return true, closestPoint, cframe.ZVector
 	elseif max == negX then
-		local closestPoint = cframe * Vector3.new(-sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(-sx * 0.5, ry, rz)
 		return true, closestPoint, -cframe.XVector
 	elseif max == negY then
-		local closestPoint = cframe * Vector3.new(rx, -sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, -sy * 0.5, rz)
 		return true, closestPoint, -cframe.YVector
 	elseif max == negZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, -sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, -sz * 0.5)
 		return true, closestPoint, -cframe.ZVector
 	end
 
 	-- Shouldnt reach
 	warn("CLOSEST POINT ON BOX FAIL")
-	return false, Vector3.zero, Vector3.yAxis
+	return false, vector.zero, Vector3.yAxis
 end
 
 function module.GetCollider(Object: BasePart)

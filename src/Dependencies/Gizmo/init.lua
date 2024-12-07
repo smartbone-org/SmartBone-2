@@ -95,24 +95,24 @@ end
 -- Types
 
 type IRay = {
-	Draw: (self: IRay, Origin: Vector3, End: Vector3) -> (),
+	Draw: (self: IRay, Origin: vector, End: vector) -> (),
 	Create: (
 		self: IRay,
-		Origin: Vector3,
-		End: Vector3
-	) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
+		Origin: vector,
+		End: vector
+	) -> { Origin: vector, End: vector, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
 }
 
 type IBox = {
-	Draw: (self: IBox, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Draw: (self: IBox, Transform: CFrame, Size: vector, DrawTriangles: boolean) -> (),
 	Create: (
 		self: IBox,
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		DrawTriangles: boolean
 	) -> {
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		DrawTriangles: boolean,
 		Color3: Color3,
 		AlwaysOnTop: boolean,
@@ -123,16 +123,16 @@ type IBox = {
 }
 
 type IPlane = {
-	Draw: (self: IPlane, Position: Vector3, Normal: Vector3, Size: Vector3) -> (),
+	Draw: (self: IPlane, Position: vector, Normal: vector, Size: vector) -> (),
 	Create: (
 		self: IPlane,
-		Position: Vector3,
-		Normal: Vector3,
-		Size: Vector3
+		Position: vector,
+		Normal: vector,
+		Size: vector
 	) -> {
-		Position: Vector3,
-		Normal: Vector3,
-		Size: Vector3,
+		Position: vector,
+		Normal: vector,
+		Size: vector,
 		DrawTriangles: boolean,
 		Color3: Color3,
 		AlwaysOnTop: boolean,
@@ -143,15 +143,15 @@ type IPlane = {
 }
 
 type IWedge = {
-	Draw: (self: IWedge, Transform: CFrame, Size: Vector3, DrawTriangles: boolean) -> (),
+	Draw: (self: IWedge, Transform: CFrame, Size: vector, DrawTriangles: boolean) -> (),
 	Create: (
 		self: IWedge,
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		DrawTriangles: boolean
 	) -> {
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		DrawTriangles: boolean,
 		Color3: Color3,
 		AlwaysOnTop: boolean,
@@ -268,17 +268,17 @@ type ICone = {
 }
 
 type IArrow = {
-	Draw: (self: IArrow, Origin: Vector3, End: Vector3, Radius: number, Length: number, Subdivisions: number) -> (),
+	Draw: (self: IArrow, Origin: vector, End: vector, Radius: number, Length: number, Subdivisions: number) -> (),
 	Create: (
 		self: IArrow,
-		Origin: Vector3,
-		End: Vector3,
+		Origin: vector,
+		End: vector,
 		Radius: number,
 		Length: number,
 		Subdivisions: number
 	) -> {
-		Origin: Vector3,
-		End: Vector3,
+		Origin: vector,
+		End: vector,
 		Radius: number,
 		Length: number,
 		Subdivisions: number,
@@ -291,16 +291,16 @@ type IArrow = {
 }
 
 type IMesh = {
-	Draw: (self: IMesh, Transform: CFrame, Size: Vector3, Vertices: {}, Faces: {}) -> (),
+	Draw: (self: IMesh, Transform: CFrame, Size: vector, Vertices: {}, Faces: {}) -> (),
 	Create: (
 		self: IMesh,
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		Vertices: {},
 		Faces: {}
 	) -> {
 		Transform: CFrame,
-		Size: Vector3,
+		Size: vector,
 		Vertices: {},
 		Faces: {},
 		Color3: Color3,
@@ -340,12 +340,12 @@ type IVolumeCone = {
 }
 
 type IVolumeBox = {
-	Draw: (self: IVolumeBox, Transform: CFrame, Size: Vector3) -> (),
+	Draw: (self: IVolumeBox, Transform: CFrame, Size: vector) -> (),
 	Create: (
 		self: IVolumeBox,
 		Transform: CFrame,
-		Size: Vector3
-	) -> { Transform: CFrame, Size: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
+		Size: vector
+	) -> { Transform: CFrame, Size: vector, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
 }
 
 type IVolumeSphere = {
@@ -381,18 +381,18 @@ type IVolumeCylinder = {
 }
 
 type IVolumeArrow = {
-	Draw: (self: IVolumeArrow, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
+	Draw: (self: IVolumeArrow, Origin: vector, End: vector, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
 	Create: (
 		self: IVolumeArrow,
-		Origin: Vector3,
-		End: Vector3,
+		Origin: vector,
+		End: vector,
 		CylinderRadius: number,
 		ConeRadius: number,
 		Length: number,
 		UseCylinder: boolean?
 	) -> {
-		Origin: Vector3,
-		End: Vector3,
+		Origin: vector,
+		End: vector,
 		CylinderRadius: number,
 		ConeRadius: number,
 		Length: number,
@@ -406,14 +406,14 @@ type IVolumeArrow = {
 }
 
 type IText = {
-	Draw: (self: IText, Origin: Vector3, Text: string, Size: number?) -> (),
+	Draw: (self: IText, Origin: vector, Text: string, Size: number?) -> (),
 	Create: (
 		self: IText,
-		Origin: Vector3,
+		Origin: vector,
 		Text: string,
 		Size: number?
 	) -> {
-		Origin: Vector3,
+		Origin: vector,
 		Text: string,
 		Size: number?,
 		Color3: Color3,

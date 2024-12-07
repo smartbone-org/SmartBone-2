@@ -15,18 +15,26 @@ function Class.GetCFrames(camera, distance)
 	local farPlaneHeight2 = math.tan(((camera.FieldOfView + 5) * 0.5) * 0.017453) * distance
 	local farPlaneWidth2 = farPlaneHeight2 * (camera.ViewportSize.X / camera.ViewportSize.Y)
 	local farPlaneCFrame = cameraCFrame * CFrame.new(0, 0, -distance)
-	local farPlaneTopRight = farPlaneCFrame * Vector3.new(farPlaneWidth2, farPlaneHeight2, 0)
-	local farPlaneBottomLeft = farPlaneCFrame * Vector3.new(-farPlaneWidth2, -farPlaneHeight2, 0)
-	local farPlaneBottomRight = farPlaneCFrame * Vector3.new(farPlaneWidth2, -farPlaneHeight2, 0)
+	local farPlaneTopRight = farPlaneCFrame * vector.create(farPlaneWidth2, farPlaneHeight2, 0)
+	local farPlaneBottomLeft = farPlaneCFrame * vector.create(-farPlaneWidth2, -farPlaneHeight2, 0)
+	local farPlaneBottomRight = farPlaneCFrame * vector.create(farPlaneWidth2, -farPlaneHeight2, 0)
 
 	local frustumCFrameInverse = (cameraCFrame * CFrame.new(0, 0, -distance2)):Inverse()
 
-	local rightNormal = upVec:Cross(farPlaneBottomRight - cameraPos).Unit
-	local leftNormal = upVec:Cross(farPlaneBottomLeft - cameraPos).Unit
-	local topNormal = rightVec:Cross(cameraPos - farPlaneTopRight).Unit
-	local bottomNormal = rightVec:Cross(cameraPos - farPlaneBottomRight).Unit
+	local rightNormal = vector.normalize(vector.cross(upVec, farPlaneBottomRight - cameraPos))
+	local leftNormal = vector.normalize(vector.cross(upVec, farPlaneBottomLeft - cameraPos))
+	local topNormal = vector.normalize(vector.cross(rightVec, cameraPos - farPlaneTopRight))
+	local bottomNormal = vector.normalize(vector.cross(rightVec, cameraPos - farPlaneBottomRight))
 	debug.profileend()
-	return frustumCFrameInverse, farPlaneWidth2, farPlaneHeight2, distance2, rightNormal, leftNormal, topNormal, bottomNormal, cameraCFrame
+	return frustumCFrameInverse,
+		farPlaneWidth2,
+		farPlaneHeight2,
+		distance2,
+		rightNormal,
+		leftNormal,
+		topNormal,
+		bottomNormal,
+		cameraCFrame
 end
 
 function Class.InViewFrustum(
@@ -61,7 +69,12 @@ function Class.InViewFrustum(
 
 	-- Check if point lies outside a frustum plane
 	local lookToCell = point - cameraPos
-	if rightNormal:Dot(lookToCell) < 0 or leftNormal:Dot(lookToCell) > 0 or topNormal:Dot(lookToCell) < 0 or bottomNormal:Dot(lookToCell) > 0 then
+	if
+		vector.dot(rightNormal, lookToCell) < 0
+		or vector.dot(leftNormal, lookToCell) > 0
+		or vector.dot(topNormal, lookToCell) < 0
+		or vector.dot(bottomNormal, lookToCell) > 0
+	then
 		debug.profileend()
 		return false
 	end

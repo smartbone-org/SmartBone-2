@@ -13,14 +13,14 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
+function Gizmo:Draw(Position: vector, Normal: vector, Size: vector)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
 		return
 	end
 
-	Size *= Vector3.new(1, 1, 0)
+	Size *= vector.create(1, 1, 0)
 
 	local Transform = CFrame.lookAt(Position, Position + Normal)
 
@@ -50,7 +50,7 @@ function Gizmo:Draw(Position: Vector3, Normal: Vector3, Size: Vector3)
 	CalculateZFace(sUv, sRv, sLv)
 end
 
-function Gizmo:Create(Position: Vector3, Normal: Vector3, Size: Vector3)
+function Gizmo:Create(Position: vector, Normal: vector, Size: vector)
 	local PropertyTable = {
 		Position = Position,
 		Normal = Normal,

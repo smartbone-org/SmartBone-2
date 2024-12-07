@@ -105,7 +105,7 @@ function Class:m_AppendBone(BoneTree: IBoneTree, BoneObject: Bone, ParentIndex: 
 	local ParentBone = BoneTree.Bones[ParentIndex]
 
 	if ParentIndex > 0 then
-		local BoneLength = (ParentBone.Position - Bone.Position).Magnitude
+		local BoneLength = vector.magnitude(ParentBone.Position - Bone.Position)
 		Bone.FreeLength = BoneLength
 		Bone.Weight = BoneLength * 0.7 -- Why 0.7?
 		Bone.HeirarchyLength = HeirarchyLength
@@ -161,7 +161,11 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 			local Parent = Bone.Parent
 			local ParentWorldPosition = Parent:IsA("Bone") and Parent.WorldPosition or Parent.Position
 
-			local Start = Bone.WorldCFrame + (Bone.WorldCFrame.UpVector.Unit * (Bone.WorldPosition - ParentWorldPosition).Magnitude)
+			local Start = Bone.WorldCFrame
+				+ (
+					vector.normalize(Bone.WorldCFrame.UpVector)
+					* vector.magnitude(Bone.WorldPosition - ParentWorldPosition)
+				)
 			local tailBone = Instance.new("Bone")
 			tailBone.Parent = Bone
 			tailBone.Name = Bone.Name .. "_Tail"
@@ -462,7 +466,12 @@ function Class:DrawDebug(
 
 	if DRAW_COLLIDERS then
 		for _, ColliderObject in self.ColliderObjects do
-			ColliderObject:DrawDebug(DRAW_FILL_COLLIDERS, DRAW_COLLIDER_INFLUENCE, DRAW_COLLIDER_AWAKE, DRAW_COLLIDER_BROADPHASE)
+			ColliderObject:DrawDebug(
+				DRAW_FILL_COLLIDERS,
+				DRAW_COLLIDER_INFLUENCE,
+				DRAW_COLLIDER_AWAKE,
+				DRAW_COLLIDER_BROADPHASE
+			)
 		end
 	end
 end

@@ -13,7 +13,7 @@ function Gizmo.Init(Ceive, Propertys, Request, Release, Retain)
 	return self
 end
 
-function Gizmo:Draw(Origin: Vector3, End: Vector3)
+function Gizmo:Draw(Origin: vector, End: vector)
 	local Ceive = self.Ceive
 
 	if not Ceive.Enabled then
@@ -31,7 +31,7 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3)
 	self.Ceive.ScheduleCleaning()
 end
 
-function Gizmo:Create(Origin: Vector3, End: Vector3)
+function Gizmo:Create(Origin: vector, End: vector)
 	local PropertyTable = {
 		Origin = Origin,
 		End = End,

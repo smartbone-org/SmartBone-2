@@ -11,7 +11,7 @@ end
 return function()
 	local BoneTree = {
 		Bones = {
-			CreateBone(Vector3.zero, 3, 0),
+			CreateBone(vector.zero, 3, 0),
 			CreateBone(Vector3.yAxis * 10, 3, 1),
 		},
 	}
@@ -25,7 +25,7 @@ return function()
 		local function LimitCallback()
 			local NewPosition = RopeConstraint(Bone, Bone.Position, BoneTree)
 
-			expect(NewPosition.Magnitude).to.equal(Bone.FreeLength)
+			expect(vector.magnitude(NewPosition)).to.equal(Bone.FreeLength)
 
 			Bone.FreeLength = math.random(1, 20)
 
@@ -35,7 +35,7 @@ return function()
 		local function SameCallback()
 			local NewPosition = RopeConstraint(Bone, Bone.Position, BoneTree)
 
-			expect(NewPosition.Magnitude).to.equal(Bone.Position.Magnitude)
+			expect(vector.magnitude(NewPosition)).to.equal(vector.magnitude(Bone.Position))
 
 			Bone.FreeLength = math.random(1, 20)
 
@@ -49,7 +49,7 @@ return function()
 
 			i += 1
 
-			if Bone.Position.Magnitude < Bone.FreeLength then
+			if vector.magnitude(Bone.Position) < Bone.FreeLength then
 				it(`Should stay the same #{i}`, SameCallback)
 			else
 				it(`Should limit to {Bone.FreeLength} studs #{i}`, LimitCallback)

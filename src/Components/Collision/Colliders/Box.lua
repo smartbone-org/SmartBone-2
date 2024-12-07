@@ -1,9 +1,9 @@
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
-		return Vector3.zero
+	if vector.magnitude(v3) == 0 then
+		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function ClosestPointFunc(cframe, size, point)
@@ -17,7 +17,7 @@ local function ClosestPointFunc(cframe, size, point)
 	local cz = math.clamp(rz, -sz * 0.5, sz * 0.5)
 
 	if not (cx == rx and cy == ry and cz == rz) then
-		local closestPoint = cframe * Vector3.new(cx, cy, cz)
+		local closestPoint = cframe * vector.create(cx, cy, cz)
 		local normal = SafeUnit(point - closestPoint)
 		return false, closestPoint, normal
 	end
@@ -33,28 +33,28 @@ local function ClosestPointFunc(cframe, size, point)
 
 	local max = math.max(posX, posY, posZ, negX, negY, negZ)
 	if max == posX then
-		local closestPoint = cframe * Vector3.new(sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(sx * 0.5, ry, rz)
 		return true, closestPoint, cframe.XVector
 	elseif max == posY then
-		local closestPoint = cframe * Vector3.new(rx, sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, sy * 0.5, rz)
 		return true, closestPoint, cframe.YVector
 	elseif max == posZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, sz * 0.5)
 		return true, closestPoint, cframe.ZVector
 	elseif max == negX then
-		local closestPoint = cframe * Vector3.new(-sx * 0.5, ry, rz)
+		local closestPoint = cframe * vector.create(-sx * 0.5, ry, rz)
 		return true, closestPoint, -cframe.XVector
 	elseif max == negY then
-		local closestPoint = cframe * Vector3.new(rx, -sy * 0.5, rz)
+		local closestPoint = cframe * vector.create(rx, -sy * 0.5, rz)
 		return true, closestPoint, -cframe.YVector
 	elseif max == negZ then
-		local closestPoint = cframe * Vector3.new(rx, ry, -sz * 0.5)
+		local closestPoint = cframe * vector.create(rx, ry, -sz * 0.5)
 		return true, closestPoint, -cframe.ZVector
 	end
 
 	-- Shouldnt reach
 	warn("CLOSEST POINT ON BOX FAIL")
-	return false, cframe.Position, Vector3.zero
+	return false, cframe.Position, vector.zero
 end
 
 return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
@@ -65,7 +65,7 @@ return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
 		return IsInside, ClosestPoint, Normal
 	end
 
-	local DistanceToCp = (ClosestPoint - Point).Magnitude
+	local DistanceToCp = vector.magnitude(ClosestPoint - Point)
 
 	IsInside = (DistanceToCp < Radius)
 	debug.profileend()
