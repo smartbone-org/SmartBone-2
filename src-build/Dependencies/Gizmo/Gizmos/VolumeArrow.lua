@@ -21,11 +21,11 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, CylinderRadius: number, ConeR
 		return
 	end
 
-	local ArrowCFrame = CFrame.lookAt(End - (End - Origin).Unit * (Length * 0.5), End)
+	local ArrowCFrame =vector.normalize( CFrame.lookAt(End - (End - Origin)) * (Length * 0.5), End)
 
 	if UseCylinder == true then
 		local BottomCone = ArrowCFrame.Position
-		local CylinderLength = (BottomCone - Origin).Magnitude
+		local CylinderLength =vector.magnitude( (BottomCone - Origin))
 		local CylinderCFrame = CFrame.lookAt((Origin + BottomCone) * 0.5, End)
 
 		Ceive.VolumeCylinder:Draw(CylinderCFrame, CylinderRadius, CylinderLength)

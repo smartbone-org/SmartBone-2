@@ -1,9 +1,9 @@
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local inf = math.huge

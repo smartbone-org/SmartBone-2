@@ -1,9 +1,9 @@
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 return function(self, Position, BoneTree)
@@ -37,7 +37,7 @@ return function(self, Position, BoneTree)
 	local ParentBonePosition = ParentBone.Position
 	local DefaultDirection = SafeUnit(ParentBone.Position - GrandParentBone.Position)
 
-	local DistanceToParent = (Position - ParentBonePosition).Magnitude
+	local DistanceToParent =vector.magnitude( (Position - ParentBonePosition))
 	local DirectionToSelf = SafeUnit(Position - ParentBonePosition)
 
 	if ParentBoneLimit <= 0 then
@@ -51,7 +51,7 @@ return function(self, Position, BoneTree)
 	local LimitedVector
 
 	if VectorAngle >= RotationLimit then
-		local Cross = SafeUnit(DefaultDirection:Cross(DirectionToSelf))
+		local Cross = SafeUnit(vector.normalize(DefaultDirection, DirectionToSelf))
 		LimitedVector = CFrame.fromAxisAngle(Cross, RotationLimit) * DefaultDirection
 	else
 		LimitedVector = DirectionToSelf

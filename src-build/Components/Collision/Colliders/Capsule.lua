@@ -1,10 +1,10 @@
 --!native
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function solve(p0, d0, len, p1)
@@ -17,7 +17,7 @@ end
 local function ClosestPointFunc(cframe, length, radius, point)
 	local l0 = solve(cframe.Position, cframe.UpVector, length * 0.5, point)
 
-	local distance = (l0 - point).Magnitude
+	local distance =vector.magnitude( (l0 - point))
 	local normal = SafeUnit(point - l0)
 	local is_inside = (distance <= radius)
 
@@ -38,7 +38,7 @@ return function(CapsuleCFrame, CapsuleSize, Point, Radius)
 		return IsInside, ClosestPoint, Normal
 	end
 
-	local DistanceToCp = (ClosestPoint - Point).Magnitude
+	local DistanceToCp =vector.magnitude( (ClosestPoint - Point))
 
 	IsInside = (DistanceToCp < Radius)
 	do

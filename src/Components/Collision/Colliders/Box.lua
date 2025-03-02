@@ -1,9 +1,9 @@
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.magnitude(v3)
 end
 
 local function ClosestPointFunc(cframe, size, point)
@@ -65,7 +65,7 @@ return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
 		return IsInside, ClosestPoint, Normal
 	end
 
-	local DistanceToCp = (ClosestPoint - Point).Magnitude
+	local DistanceToCp = vector.magnitude(ClosestPoint - Point)
 
 	IsInside = (DistanceToCp < Radius)
 	debug.profileend()

@@ -27,11 +27,11 @@ function Gizmo:Draw(Origin: Vector3, Text: string, Size: number?)
 
 	if self.Propertys.AlwaysOnTop then
 		if DROP_SHADOW then
-			local DistanceToCamera = (Origin - Camera.CFrame.Position).Magnitude
+			local DistanceToCamera = vector.magnitude(Origin - Camera.CFrame.Position)
 			local PrevColor = Ceive.PopProperty("Color3")
 
 			Ceive.PushProperty("Color3", Color3.new())
-			local Offset = -(Vector3.xAxis + Vector3.yAxis).Unit
+			local Offset = vector.normalize(-(Vector3.xAxis + Vector3.yAxis))
 			Ceive.AOTWireframeHandle:AddText(Origin + Offset * (DistanceToCamera * OFFSET_PERCENTAGE), Text, Size)
 			Ceive.PushProperty("Color3", PrevColor)
 		end
@@ -39,11 +39,11 @@ function Gizmo:Draw(Origin: Vector3, Text: string, Size: number?)
 		Ceive.AOTWireframeHandle:AddText(Origin, Text, Size)
 	else
 		if DROP_SHADOW then
-			local DistanceToCamera = (Origin - Camera.CFrame.Position).Magnitude
+			local DistanceToCamera = vector.magnitude(Origin - Camera.CFrame.Position)
 			local PrevColor = Ceive.PopProperty("Color3")
 
 			Ceive.PushProperty("Color3", Color3.new())
-			local Offset = -(Vector3.xAxis + Vector3.yAxis).Unit
+			local Offset = vector.normalize(-(Vector3.xAxis + Vector3.yAxis))
 			Ceive.WireframeHandle:AddText(Origin + Offset * (DistanceToCamera * OFFSET_PERCENTAGE), Text, Size)
 			Ceive.PushProperty("Color3", PrevColor)
 		end

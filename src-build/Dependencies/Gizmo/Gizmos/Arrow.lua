@@ -22,7 +22,7 @@ function Gizmo:Draw(Origin: Vector3, End: Vector3, Radius: number, Length: numbe
 
 	Ceive.Ray:Draw(Origin, End)
 
-	local ArrowCFrame = CFrame.lookAt(End + ((Origin - End).Unit * (Length * 0.5)), End)
+	local ArrowCFrame =vector.normalize( CFrame.lookAt(End + ((Origin - End)) * (Length * 0.5)), End)
 	Ceive.Cone:Draw(ArrowCFrame, Radius, Length, Subdivisions)
 end
 

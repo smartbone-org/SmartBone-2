@@ -1,14 +1,14 @@
 --!native
 local function SafeUnit(v3)
-	if v3.Magnitude == 0 then
+	if vector.magnitude(v3) == 0 then
 		return vector.zero
 	end
 
-	return v3.Unit
+	return vector.normalize(v3)
 end
 
 local function ClosestPointFunc(position, radius, point)
-	local distance = (position - point).Magnitude
+	local distance = vector.magnitude(position - point)
 	local normal = SafeUnit(point - position)
 	local is_inside = (distance <= radius)
 
@@ -26,7 +26,7 @@ return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
 		return IsInside, ClosestPoint, Normal
 	end
 
-	local DistanceToCp = (ClosestPoint - Sphere1Point).Magnitude
+	local DistanceToCp = vector.magnitude(ClosestPoint - Sphere1Point)
 
 	IsInside = (DistanceToCp < Sphere1Radius)
 	debug.profileend()

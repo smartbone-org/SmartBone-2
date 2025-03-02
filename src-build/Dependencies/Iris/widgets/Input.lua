@@ -577,7 +577,7 @@ return function(Iris: Types.Internal, widgets: Types.WidgetUtility)
 			if
 				(
 					isTimeValid
-					and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude
+					and (Vector2.new(x,vector.magnitude( y) - thisWidget.lastClickedPosition))
 						< Iris._config.MouseDoubleClickMaxDist
 				) or isCtrlHeld
 			then

@@ -22,10 +22,10 @@ function Class.GetCFrames(camera, distance)
 
 	local frustumCFrameInverse = (cameraCFrame * CFrame.new(0, 0, -distance2)):Inverse()
 
-	local rightNormal = upVec:Cross(farPlaneBottomRight - cameraPos).Unit
-	local leftNormal = upVec:Cross(farPlaneBottomLeft - cameraPos).Unit
-	local topNormal = rightVec:Cross(cameraPos - farPlaneTopRight).Unit
-	local bottomNormal = rightVec:Cross(cameraPos - farPlaneBottomRight).Unit
+	local rightNormal =vector.cross( upVec,vector.normalize( farPlaneBottomRight - cameraPos))
+	local leftNormal =vector.cross( upVec,vector.normalize( farPlaneBottomLeft - cameraPos))
+	local topNormal =vector.cross( rightVec,vector.normalize( cameraPos - farPlaneTopRight))
+	local bottomNormal =vector.cross( rightVec,vector.normalize( cameraPos - farPlaneBottomRight))
 	do
 	end
 	return frustumCFrameInverse,

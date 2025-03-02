@@ -415,7 +415,7 @@ thisWidget.lastClickedPosition = Vector2.zero
 clickedGuiObject.MouseButton1Down:Connect(function(x: number, y: number)
                         local currentTime: number = widgets.getTime()
                         local isTimeValid: boolean = currentTime - thisWidget.lastClickedTime < Iris._config.MouseDoubleClickTime
-                        if isTimeValid and (Vector2.new(x, y) - thisWidget.lastClickedPosition).Magnitude < Iris._config.MouseDoubleClickMaxDist then
+                        if isTimeValid and (Vector2.new(x,vector.magnitude( y) - thisWidget.lastClickedPosition)) < Iris._config.MouseDoubleClickMaxDist then
                             thisWidget.lastDoubleClickedTick = Iris._cycleTick + 1
                         else
                             thisWidget.lastClickedTime = currentTime
