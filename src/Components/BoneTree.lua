@@ -242,8 +242,8 @@ function Class:UpdateBoundingBox()
 		local Velocity = (Bone.Position - Bone.LastPosition)
 		local Position = Bone.Position + Velocity
 
-		BottomCorner = BottomCorner:Min(Position)
-		TopCorner = TopCorner:Max(Position)
+		BottomCorner = vector.min(BottomCorner, Position)
+		TopCorner = vector.max(TopCorner, Position)
 		debug.profileend()
 	end
 	debug.profileend()
@@ -251,7 +251,7 @@ function Class:UpdateBoundingBox()
 	local CenterOfMass = (BottomCorner + TopCorner) * 0.5
 
 	self.BoundingBoxCFrame = CFrame.new(CenterOfMass)
-	self.BoundingBoxSize = self.RootPartSize:Max(TopCorner - BottomCorner)
+	self.BoundingBoxSize = vector.max(self.RootPartSize, TopCorner - BottomCorner)
 
 	debug.profileend()
 end
