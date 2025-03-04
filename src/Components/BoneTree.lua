@@ -294,6 +294,28 @@ function Class:PreUpdate(Delta: number)
 	debug.profileend()
 end
 
+local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
+local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
+local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
+
+if Lighting:GetAttribute("WindDirection") then
+	Lighting:GetAttributeChangedSignal("WindDirection"):Connect(function()
+		WindDirection = Lighting:GetAttribute("WindDirection")
+	end)
+end
+
+if Lighting:GetAttribute("WindSpeed") then
+	Lighting:GetAttributeChangedSignal("WindSpeed"):Connect(function()
+		WindDirection = Lighting:GetAttribute("WindSpeed")
+	end)
+end
+
+if Lighting:GetAttribute("WindStrength") then
+	Lighting:GetAttributeChangedSignal("WindStrength"):Connect(function()
+		WindDirection = Lighting:GetAttribute("WindStrength")
+	end)
+end
+
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates forces and updates wind. Also calls Bone:StepPhysics()
@@ -307,14 +329,9 @@ function Class:StepPhysics(Delta: number)
 		Settings.WindDirection = SafeUnit(GlobalWind)
 		Settings.WindSpeed = GlobalWind.Magnitude
 	else
-		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
-		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
-
 		Settings.WindDirection = SafeUnit(WindDirection)
 		Settings.WindSpeed = WindSpeed
 	end
-
-	local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
 
 	Settings.WindStrength = WindStrength
 
