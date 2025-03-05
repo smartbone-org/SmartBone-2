@@ -212,8 +212,9 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 
 	if Settings.MatchWorkspaceWind then
 		self.GlobalWindConnection = workspace:GetPropertyChangedSignal("GlobalWind"):Connect(function()
-			Settings.WindDirection = SafeUnit(workspace.GlobalWind)
-			Settings.WindSpeed = workspace.GlobalWind.Magnitude
+			local GlobalWind = workspace.GlobalWind
+			Settings.WindDirection = SafeUnit(GlobalWind)
+			Settings.WindSpeed = GlobalWind.Magnitude
 		end)
 	else
 		self.WindDirectionConnection = Lighting:GetAttributeChangedSignal("WindDirection"):ConnectParallel(function()
