@@ -192,6 +192,8 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
 
+	local Settings = self.Settings
+
 	self.InWorkspace = RootPart:IsDescendantOf(workspace)
 
 	-- TODO: Revisit optimising :IsDescendantOf calls
@@ -205,8 +207,27 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 
 	self.AttributeConnection = RootPart.AttributeChanged:ConnectParallel(function(Attribute)
 		-- No need validating
-		self.Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
+		Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
+
+	if Settings.MatchWorkspaceWind then
+		self.GlobalWindConnection = workspace:GetPropertyChangedSignal("GlobalWind"):Connect(function()
+			Settings.WindDirection = SafeUnit(workspace.GlobalWind)
+			Settings.WindSpeed = workspace.GlobalWind.Magnitude
+		end)
+	else
+		self.WindDirectionConnection = Lighting:GetAttributeChangedSignal("WindDirection"):ConnectParallel(function()
+			Settings.WindDirection = Lighting:GetAttribute("WindDirection")
+		end)
+	
+		self.WindSpeedConnnection = Lighting:GetAttributeChangedSignal("WindSpeed"):ConnectParallel(function()
+			Settings.WindSpeed = Lighting:GetAttribute("WindSpeed")
+		end)
+	
+		self.WindStrengthConnection = Lighting:GetAttributeChangedSignal("WindStrength"):ConnectParallel(function()
+			Settings.WindStrength = Lighting:GetAttribute("WindStrength")
+		end)
+	end
 
 	return self :: IBoneTree
 end
@@ -294,28 +315,6 @@ function Class:PreUpdate(Delta: number)
 	debug.profileend()
 end
 
-local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
-local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
-local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
-
-if Lighting:GetAttribute("WindDirection") then
-	Lighting:GetAttributeChangedSignal("WindDirection"):Connect(function()
-		WindDirection = Lighting:GetAttribute("WindDirection")
-	end)
-end
-
-if Lighting:GetAttribute("WindSpeed") then
-	Lighting:GetAttributeChangedSignal("WindSpeed"):Connect(function()
-		WindDirection = Lighting:GetAttribute("WindSpeed")
-	end)
-end
-
-if Lighting:GetAttribute("WindStrength") then
-	Lighting:GetAttributeChangedSignal("WindStrength"):Connect(function()
-		WindDirection = Lighting:GetAttribute("WindStrength")
-	end)
-end
-
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates forces and updates wind. Also calls Bone:StepPhysics()
@@ -323,17 +322,6 @@ function Class:StepPhysics(Delta: number)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
 	local Force = (Settings.Gravity + Settings.Force) * Delta
-
-	if Settings.MatchWorkspaceWind == true then
-		local GlobalWind = workspace.GlobalWind
-		Settings.WindDirection = SafeUnit(GlobalWind)
-		Settings.WindSpeed = GlobalWind.Magnitude
-	else
-		Settings.WindDirection = SafeUnit(WindDirection)
-		Settings.WindSpeed = WindSpeed
-	end
-
-	Settings.WindStrength = WindStrength
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force, Delta)
@@ -503,6 +491,14 @@ function Class:Destroy()
 	task.synchronize()
 	self.DestroyConnection:Disconnect()
 	self.AttributeConnection:Disconnect()
+
+	if self.Settings.MatchWorkspaceWind then
+		self.GlobalWindConnection:Disconnect()
+	else
+		self.WindDirectionConnection:Disconnect()
+		self.WindSpeedConnection:Disconnect()
+		self.WindStrengthConnection:Disconnect()
+	end
 
 	for _, Bone in self.Bones do
 		Bone:Destroy()
