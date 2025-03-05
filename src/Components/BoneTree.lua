@@ -166,15 +166,16 @@ Class.__index = Class
 --- @within BoneTree
 --- @param RootBone Bone
 --- @param RootPart BasePart
+--- @param Settings {any}
 --- @return BoneTree
-function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
+function Class.new(RootBone: Bone, RootPart: BasePart, Settings: {any}): IBoneTree
 	local self = setmetatable({
 		WindOffset = WIND_RNG:NextNumber(0, 1e6),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
 		RootPartSize = RootPart.Size,
 		Bones = {},
-		Settings = {},
+		Settings = Settings,
 		UpdateRate = 0,
 		InView = true,
 		AccumulatedDelta = 0,
@@ -191,8 +192,6 @@ function Class.new(RootBone: Bone, RootPart: BasePart): IBoneTree
 		ObjectAcceleration = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
 	}, Class)
-
-	local Settings = self.Settings
 
 	self.InWorkspace = RootPart:IsDescendantOf(workspace)
 
