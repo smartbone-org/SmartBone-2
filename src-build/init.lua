@@ -133,10 +133,7 @@ end
 --- :::
 --- Creates a bone tree from the RootPart and RootBone and then adds all child bones via m_AppendBone
 function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
-	local Settings = Utilities.GatherObjectSettings(RootPart)
-	local BoneTree = BoneTreeClass.new(RootBone, RootPart)
-
-	BoneTree.Settings = Settings
+	local BoneTree = BoneTreeClass.new(RootBone, RootPart, Utilities.GatherObjectSettings(RootPart))
 
 	SB_VERBOSE_LOG(`Creating bone tree {RootPart.Name}; {RootBone.Name}`)
 	SB_INDENT_LOG()
