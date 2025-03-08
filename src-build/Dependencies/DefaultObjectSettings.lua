@@ -1,6 +1,6 @@
 local FORCE_MULTIPLIER = 0.2
 
-return {
+return table.freeze({
 	Damping = 0.1,
 	Stiffness = 0.2,
 	Inertia = 0,
@@ -23,4 +23,4 @@ return {
 	UpdateRate = 60,
 	ActivationDistance = 45,
 	ThrottleDistance = 15,
-}
+})
