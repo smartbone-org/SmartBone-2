@@ -120,7 +120,7 @@ function ImOverlay:Text(Text: string, BackgroundColor: Color3?, TextColor: Color
 end
 
 function ImOverlay:m_Pool()
-do end
+
 	
 for _, Obj in self.BackFrame:GetChildren() do
 		if Obj:IsA("UIListLayout") or not Obj.Visible then
@@ -131,19 +131,19 @@ for _, Obj in self.BackFrame:GetChildren() do
 		Obj.Visible = false
 		table.insert(self.m_ItemPool, Obj)
 	end
-do end
+
 end
 
 function ImOverlay:m_Cleanup()
-do end	
+	
 self.m_State = ""
 	self.m_Indent = 0
 	self.m_RenderGroup = {}
-do end
+
 end
 
 function ImOverlay:m_CreateLabel(Text: string, TextColor: Color3, BackgroundColor: Color3, Indent: number): Frame
-do end	
+	
 local background = Instance.new("Frame")
 	background.Name = "Background"
 	background.AutomaticSize = Enum.AutomaticSize.XY
@@ -175,18 +175,18 @@ local background = Instance.new("Frame")
 	uIPadding.PaddingRight = UDim.new(0, 5)
 	uIPadding.PaddingLeft = UDim.new(0, 5)
 	uIPadding.Parent = background
-do end	
+	
 return background
 end
 
 function ImOverlay:Render()
-do end	-- We arent doing anything this frame
+	-- We arent doing anything this frame
 	
 if self.m_State == "" then
 		self:m_Pool()
 		self:m_Cleanup()
 		self.DidUpdate = false
-do end		
+		
 return
 	end
 
@@ -195,7 +195,7 @@ return
 	if self.m_State == self.m_PreviousState then
 		self:m_Cleanup()
 		self.DidUpdate = false
-do end		
+		
 return
 	else
 		self:m_Pool()
@@ -205,15 +205,15 @@ return
 	self.DidUpdate = true
 
 	for i, Render in self.m_RenderGroup do
-do end		
+		
 if #self.m_ItemPool == 0 then
 			local Label = self:m_CreateLabel(Render.Text, Render.TextColor, Render.BackgroundColor, Render.Indent)
 			Label.LayoutOrder = i
 			Label.Parent = self.BackFrame
-do end			
+			
 continue
 		end
-do end		
+		
 
 local Label = table.remove(self.m_ItemPool, #self.m_ItemPool)
 		local TaskText = Label.TaskText
@@ -226,13 +226,13 @@ local Label = table.remove(self.m_ItemPool, #self.m_ItemPool)
 
 		Label.Visible = true
 		Label.Parent = self.BackFrame
-do end do end	
+	
 
 
 end
 
 	self:m_Cleanup()
-do end
+
 
 end
 

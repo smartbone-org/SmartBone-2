@@ -17,6 +17,9 @@ local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 --local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
+-- HACK
+local MAX_SPEED = 50
+
 local function SafeUnit(Vector: Vector3): Vector3
 	if Vector.Magnitude == 0 then
 		return Vector3.zero
@@ -90,7 +93,7 @@ local SolvedTransformedCFrames = {}
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
-do end	
+	
 local Solved = SolvedTransformedCFrames[OriginBone]
 	if Solved then
 		if Solved.Frame == shared.FrameCounter then
@@ -110,21 +113,21 @@ local Solved = SolvedTransformedCFrames[OriginBone]
 	local Result = ParentCFrame * OriginBone.TransformedCFrame
 
 	SolvedTransformedCFrames[OriginBone] = { Frame = shared.FrameCounter, CFrame = Result }
-do end	
+	
 
 return Result
 end
 
 -- Gets transformedworldcframe using the parents animatedcframe instead of traversing the tree of bones for each bone, increases performance a ton
 local function QueryTransformedWorldCFrame(BoneTree, Bone: IBone): CFrame
-do end	
+	
 Bone.SolvedAnimatedCFrame = true
 
 	local ParentIndex = Bone.ParentIndex
 	local BoneObject = Bone.Bone
 
 	if ParentIndex < 1 then -- We are no longer in the smartbone tree
-do end		
+		
 return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	end
 
@@ -133,7 +136,7 @@ return QueryTransformedWorldCFrameNonSmartbone(BoneObject)
 	if not ParentBone.SolvedAnimatedCFrame then
 		ParentBone.AnimatedWorldCFrame = QueryTransformedWorldCFrame(BoneTree, ParentBone)
 	end
-do end	
+	
 
 return ParentBone.AnimatedWorldCFrame * BoneObject.TransformedCFrame
 end
@@ -158,13 +161,13 @@ local function GetFriction(Object0: BasePart, Object1: BasePart): number
 end
 
 local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
-do end	
+	
 local Settings = BoneTree.Settings
 	local WindType = Settings.WindType
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
-do end		
-return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
+		
+return Vector3.zero -- If the wind type the user inputted doesn't exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	local TimeModifier = BoneTree.WindOffset
@@ -176,15 +179,21 @@ return Vector3.zero -- If the wind type the user inputted doesnt exist, I would 
 	local WindSpeed = Settings.WindSpeed
 	local WindStrength = Settings.WindStrength
 
-	if WindSpeed == Vector3.zero or WindStrength == 0 then
-do end		
+	if WindSpeed <= 1e-6 or WindStrength <= 1e-6 then
+		
 return Vector3.zero
 	end
+
+	local a_0 = WindSpeed
+	local a_1 = WindStrength
 
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
-do end	
+
+	local b_0 = WindDirection
+	local b_1 = VelocityDirection
+	
 
 
 local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
@@ -201,7 +210,7 @@ local WindDamper = 1 - math.abs(VelocityDirection:Dot(WindDirection))
 			WindDamper *= SpeedMatch
 		end
 	end
-do end
+
 	
 WindSpeed *= WindDamper
 
@@ -210,8 +219,11 @@ WindSpeed *= WindDamper
 	end
 
 	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
-	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
+	local SpeedMultiplier = math.min(EaseInExpo(SpeedAlpha), 100)
 	TimeModifier *= math.max(SpeedMultiplier, 1)
+
+	local c_0 = SpeedAlpha
+	local c_1 = SpeedMultiplier
 
 	if WindSpeed < 1 then
 		WindSpeed *= SpeedMultiplier
@@ -223,14 +235,14 @@ WindSpeed *= WindDamper
 	local WindMove
 
 	local function GetNoise(X, Y, Z, Map) -- Returns noise between 0, 1
-do end		
+		
 local Value = math.noise(X, Y, Z)
 		Value = math.clamp(Value, -1, 1)
 
 		if Map then
 			Value ^= 2
 		end
-do end		
+		
 return Value
 	end
 
@@ -241,7 +253,7 @@ return Value
 	end
 
 	local function SampleSin()
-do end		
+		
 local Freq = WindStrength ^ 0.8
 		local Power = WindSpeed * 2
 
@@ -254,12 +266,12 @@ local Freq = WindStrength ^ 0.8
 		local ScaledWave = Wave * 0.5 + 0.5
 		Wave *= Power
 		ScaledWave *= Power
-do end		
+		
 return WindDirection * (ScaledWave > Wave and ScaledWave or Wave)
 	end
 
 	local function SampleNoise(CustomAmp, Map)
-do end		
+		
 CustomAmp = CustomAmp or 0
 
 		local Freq = WindStrength ^ 0.8
@@ -269,32 +281,38 @@ CustomAmp = CustomAmp or 0
 		local X = GetNoise(Freq, 0, Seed, Map) * (Power + CustomAmp)
 		local Y = GetNoise(0, Freq, Seed, Map) * (Power + CustomAmp)
 		local Z = GetNoise(Seed, 0, Freq, Map) * (Power + CustomAmp)
-do end		
+		
 return WindDirection * Vector3.new(X, Y, Z)
 	end
-do end	
+	
 
 if Settings.WindType == "Sine" then
-do end		
+		
 WindMove = SampleSin() * SampleGust()
-do end	
+	
 elseif Settings.WindType == "Noise" then
-do end		
+		
 WindMove = SampleNoise(0, true) * SampleGust()
-do end	
+	
 elseif Settings.WindType == "Hybrid" then
-do end		
+		
 WindMove = SampleSin() * SampleGust()
 		WindMove += SampleNoise(0.5, true) * SampleGust()
 		WindMove *= 0.5
-do end	
+	
 end
-do end
+
 	
 WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
 	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
-do end	
+
+	if WindMove ~= WindMove then
+		print(self, a_0, a_1, b_0, b_1, c_0, c_1)
+		-- Debug break
+		pcall(error)
+	end
+	
 
 return WindMove
 end
@@ -511,7 +529,7 @@ end
 --- @within Bone
 --- @param BoneTree BoneTree
 function Class:PreUpdate(BoneTree) -- Parallel safe
-do end	
+	
 local Root = BoneTree.Bones[1]
 	local Parent = BoneTree.Bones[self.ParentIndex]
 
@@ -561,7 +579,7 @@ local Root = BoneTree.Bones[1]
 	end
 
 	self.LocalTransformOffset = Root.Bone.CFrame * self.LocalTransform
-do end
+
 end
 
 --- @within Bone
@@ -570,56 +588,55 @@ end
 --- @param Delta number -- Δt
 --- Force passed in via BoneTree:StepPhysics()
 function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel safe
-do end	
+	
 if self.Anchored then
 		self.LastPosition = self.AnimatedWorldCFrame.Position
 		self.Position = self.AnimatedWorldCFrame.Position
-do end		
+		
 
 return
 	end
 
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
-do end		
+		
 Force = (self.Gravity or BoneTree.Settings.Gravity)
 
-		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
-do end	
+		Force = (Force + (self.Force or BoneTree.Settings.Force))
+	
 end
-do end	
+	
 
 local Settings = BoneTree.Settings
 
-	local Velocity = (self.Position - self.LastPosition)
-	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
+	local Velocity = (self.Position - self.LastPosition) / Delta
+	Velocity = (Velocity.Magnitude > MAX_SPEED and Velocity.Unit * MAX_SPEED or Velocity)
+
+	local Move = BoneTree.ObjectAcceleration * Settings.Inertia
 	local WindMove = SolveWind(self, BoneTree, Velocity)
 
 	self.LastPosition = self.Position
-	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
-do end do end
+	--self.Position += (Velocity * (1 - Settings.Damping) + Force + Move) * Delta + WindMove
+	local Acceleration = Force + Move
+	self.Position += Velocity * (1 - Settings.Damping) * Delta + Acceleration * Delta * Delta + WindMove
+
 
 end
 
 --- @within Bone
 --- @param BoneTree BoneTree
---- @param ColliderObjects Vector3
+--- @param ColliderObjects { ColliderObject }
 --- @param Delta number -- Δt
 function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel safe
-do end	
+	
 if self.Anchored then
-do end		
+		
 return
 	end
 
 	local Position = self.Position
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
-
-	if (Position.Magnitude > 1e6 or Position ~= Position) and shared.FrameCounter > 20 then
-		-- Debug break
-		pcall(error)
-	end
 
 	-- Friction must be first
 	Position = FrictionConstraint(self, Position, self.LastPosition)
@@ -640,6 +657,7 @@ return
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+
 	Position = RotationConstraint(self, Position, BoneTree)
 
 	if self.ActiveWeld then
@@ -660,7 +678,7 @@ return
 	end
 
 	self.Position = Position
-do end
+
 end
 
 --- @within Bone
@@ -681,9 +699,9 @@ end
 --- @param Delta number -- Δt
 --- Solves the cframe of the bones
 function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
-do end	
+	
 if self.ParentIndex < 1 then
-do end		
+		
 return
 	end
 
@@ -713,19 +731,19 @@ return
 
 		SB_ASSERT_CB(not IsNaN(ParentBone.CalculatedWorldCFrame.Position), warn, "If you see this report this as a bug, (NaN Calc world cframe)")
 	end
-do end
+
 end
 
 --- @within Bone
 --- @param BoneTree BoneTree
 --- Sets the world cframes of the bones to the calculated world cframe (solved in Bone:SolveTransform())
 function Class:ApplyTransform(BoneTree)
-do end
+
 	
 self.SolvedAnimatedCFrame = false
 
 	if self.ParentIndex < 1 then
-do end		
+		
 return
 	end
 
@@ -749,7 +767,7 @@ return
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
 	end
-do end
+
 end
 
 --- @client
@@ -761,7 +779,7 @@ end
 --- @param DRAW_AXIS_LIMITS boolean
 --- @param DRAW_ROTATION_LIMIT boolean
 function Class:DrawDebug(BoneTree, DRAW_CONTACTS: bool, DRAW_PHYSICAL_BONE: bool, DRAW_BONE: bool, DRAW_AXIS_LIMITS: bool, DRAW_ROTATION_LIMIT: bool)
-do end	
+	
 local BONE_POSITION_COLOR = Color3.fromRGB(255, 0, 0)
 	local BONE_LAST_POSITION_COLOR = Color3.fromRGB(255, 94, 0)
 	local BONE_POSITION_RAY_COLOR = Color3.fromRGB(234, 1, 255)
@@ -945,7 +963,7 @@ ConeRadius = ROTATION_CONE_LENGTH * math.tan(math.rad(180 - self.RotationLimit))
 		Gizmo.PushProperty("Color3", ROTATION_CONE_COLOR)
 		Gizmo.Cone:Draw(NewBoneCFrame, ConeRadius, ROTATION_CONE_LENGTH, 8 + ConeRadius * 2)
 	end
-do end
+
 
 end
 

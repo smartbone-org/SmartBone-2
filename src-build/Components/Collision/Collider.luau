@@ -104,7 +104,7 @@ end
 
 --- @within Collider
 function Class:UpdateTransform()
-do end	
+	
 local Object = self.m_Object
 	local ObjectCFrame = Object.CFrame
 	local ObjectSize = Object.Size
@@ -121,7 +121,7 @@ local Object = self.m_Object
 	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 	self.Size = ScaledSize
 	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
-do end
+
 end
 
 --- @within Collider
@@ -141,7 +141,7 @@ function Class:GetClosestPoint(Point, Radius)
 	if PointDistance > self.Radius then
 		return
 	end
-do end
+
 	
 
 self.InNarrowphase = true
@@ -166,7 +166,7 @@ self.InNarrowphase = true
 	if Type == "Cylinder" then
 		IsInside, ClosestPoint, Normal = CylinderSolver(self.Transform, self.Size, Point, Radius)
 	end
-do end
+
 	
 
 return IsInside, ClosestPoint, Normal
@@ -174,9 +174,9 @@ end
 
 --- @within Collider
 function Class:Step()
-do end	
+	
 self:UpdateTransform()
-do end
+
 end
 
 --- @within Collider

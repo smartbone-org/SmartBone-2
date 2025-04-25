@@ -1,6 +1,6 @@
 --!native
 return function(self, Position, RestPosition, BoneTree, Delta)
-do end
+
 	
 local Settings = BoneTree.Settings
 	local Stiffness = Settings.Stiffness
@@ -34,7 +34,7 @@ local Settings = BoneTree.Settings
 			Position += Difference * ((Length - RestLength) / Length)
 		end
 	end
-do end
+
 	
 return Position
 end

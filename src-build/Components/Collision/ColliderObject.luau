@@ -114,17 +114,17 @@ end
 --- @param Radius number -- Radius of bone
 --- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
 function Class:GetCollisions(Point, Radius)
-do end	
+	
 if not self.m_Object then
-do end		
+		
 return {}
 	end
 
 	if #self.Colliders == 0 then
-do end		
+		
 return {}
 	end
-do end	
+	
 
 if os.clock() - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep conditions every 5th of a second
 		self.m_LastSleepCycle = os.clock()
@@ -135,26 +135,26 @@ if os.clock() - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep co
 			self.m_Awake = false
 		end
 	end
-do end
+
 	
 if not self.m_Awake then
-do end		
+		
 return {}
 	end
 
 	local Collisions = {}
-do end	
+	
 
 for _, Collider in self.Colliders do
-do end		
+		
 local IsInside, ClosestPoint, Normal = Collider:GetClosestPoint(Point, Radius)
-do end
+
 		
 if IsInside then
 			table.insert(Collisions, { ClosestPoint = ClosestPoint, Normal = Normal })
 		end
 	end
-do end do end
+
 	
 
 return Collisions
@@ -162,11 +162,11 @@ end
 
 --- @within ColliderObject
 function Class:Step()
-do end	
+	
 for _, Collider in self.Colliders do
 		Collider:Step()
 	end
-do end
+
 end
 
 --- @within ColliderObject

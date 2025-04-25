@@ -7,7 +7,7 @@ local function SafeUnit(v3)
 end
 
 return function(self, Position, BoneTree)
-do end	
+	
 local ParentBone = BoneTree.Bones[self.ParentIndex]
 
 	if ParentBone then
@@ -17,11 +17,11 @@ local ParentBone = BoneTree.Bones[self.ParentIndex]
 		local BoneDistance = BoneSub.Magnitude < RestLength and BoneSub.Magnitude or RestLength
 
 		local RestPosition = ParentBone.Position + (BoneDirection * BoneDistance)
-do end		
+		
 
 return RestPosition
 	end
-do end	
+	
 
 return
 end

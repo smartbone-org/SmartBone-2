@@ -68,7 +68,7 @@ local function ClosestPointFunc(cframe, size, point)
 end
 
 return function(CylinderCFrame, CylinderSize, Point, Radius) -- IsInside, PushPosition, PushNormal
-do end	
+	
 local IsInside, PushPosition, PushNormal = ClosestPointFunc(CylinderCFrame, CylinderSize, Point)
 
 	if IsInside then
@@ -78,6 +78,6 @@ local IsInside, PushPosition, PushNormal = ClosestPointFunc(CylinderCFrame, Cyli
 	local PointDistance = (PushPosition - Point).Magnitude
 
 	IsInside = PointDistance < Radius
-do end	
+	
 return IsInside, PushPosition, PushNormal
 end

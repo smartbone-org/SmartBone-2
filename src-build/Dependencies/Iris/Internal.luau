@@ -49,9 +49,9 @@ return function(Iris: Types.Iris): Types.Internal
 	Internal._cycleCoroutine = coroutine.create(function()
 		while true do
 			for _, callback: () -> string in Internal._connectedFunctions do
-do end				
+				
 local status: boolean, _error: string = pcall(callback)
-do end				
+				
 if not status then
 					-- any error reserts the _stackIndex for the next frame and yeilds the error.
 					Internal._stackIndex = 1

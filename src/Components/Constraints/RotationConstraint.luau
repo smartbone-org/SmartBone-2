@@ -52,6 +52,10 @@ return function(self, Position, BoneTree)
 		LimitedVector = DirectionToSelf
 	end
 
+	if LimitedVector ~= LimitedVector then -- Somewhat hacky fix
+		LimitedVector = DefaultDirection
+	end
+
 	Position = ParentBonePosition + LimitedVector * DistanceToParent
 
 	debug.profileend()

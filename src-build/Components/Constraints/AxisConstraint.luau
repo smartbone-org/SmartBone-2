@@ -9,7 +9,7 @@ end
 local inf = math.huge
 
 return function(self, Position, LastPosition, RootCFrame)
-do end	
+	
 local RootOffset = RootCFrame:Inverse() * Position
 
 	local X = RootOffset.X
@@ -27,7 +27,7 @@ local RootOffset = RootCFrame:Inverse() * Position
 	-- Most bones probably wont have an axis limit, this allows us to skip all the other stuff
 	if XLimit.Min == -inf and XLimit.Max == inf and YLimit.Min == -inf and YLimit.Max == inf and ZLimit.Min == -inf and ZLimit.Max == inf then
 		if XLock == 1 and YLock == 1 and ZLock == 1 then
-do end			
+			
 return Position
 		else
 			return RootCFrame * Vector3.new(X * XLock, Y * YLock, Z * ZLock)
@@ -78,7 +78,7 @@ return Position
 		local Normal = ZAxis:Dot(DifferenceDirection) > 0 and -ZAxis or ZAxis
 		self:ClipVelocity(Position, Normal)
 	end
-do end
+
 	
 return Position
 end

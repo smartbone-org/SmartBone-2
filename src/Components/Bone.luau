@@ -17,6 +17,9 @@ local SpringConstraint = require(Constraints:WaitForChild("SpringConstraint"))
 local SB_ASSERT_CB = Utilities.SB_ASSERT_CB
 --local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
+-- HACK
+local MAX_SPEED = 50
+
 local function SafeUnit(Vector: Vector3): Vector3
 	if Vector.Magnitude == 0 then
 		return Vector3.zero
@@ -164,7 +167,7 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 
 	if WindType ~= "Sine" and WindType ~= "Noise" and WindType ~= "Hybrid" then
 		debug.profileend()
-		return Vector3.zero -- If the wind type the user inputted doesnt exist, I would throw an error / warn but that would crash studio :(
+		return Vector3.zero -- If the wind type the user inputted doesn't exist, I would throw an error / warn but that would crash studio :(
 	end
 
 	local TimeModifier = BoneTree.WindOffset
@@ -176,14 +179,20 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local WindSpeed = Settings.WindSpeed
 	local WindStrength = Settings.WindStrength
 
-	if WindSpeed == Vector3.zero or WindStrength == 0 then
+	if WindSpeed <= 1e-6 or WindStrength <= 1e-6 then
 		debug.profileend()
 		return Vector3.zero
 	end
 
+	local a_0 = WindSpeed
+	local a_1 = WindStrength
+
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
+
+	local b_0 = WindDirection
+	local b_1 = VelocityDirection
 
 	-- If we are going the same direction as the wind
 	debug.profilebegin("Solve WindDamper")
@@ -210,8 +219,11 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	end
 
 	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
-	local SpeedMultiplier = EaseInExpo(SpeedAlpha)
+	local SpeedMultiplier = math.min(EaseInExpo(SpeedAlpha), 100)
 	TimeModifier *= math.max(SpeedMultiplier, 1)
+
+	local c_0 = SpeedAlpha
+	local c_1 = SpeedMultiplier
 
 	if WindSpeed < 1 then
 		WindSpeed *= SpeedMultiplier
@@ -294,6 +306,12 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
 	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
+
+	if WindMove ~= WindMove then
+		print(self, a_0, a_1, b_0, b_1, c_0, c_1)
+		-- Debug break
+		pcall(error)
+	end
 
 	debug.profileend()
 	return WindMove
@@ -584,26 +602,30 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 		debug.profilebegin("Solve Force")
 		Force = (self.Gravity or BoneTree.Settings.Gravity)
 
-		Force = (Force + (self.Force or BoneTree.Settings.Force)) * Delta
+		Force = (Force + (self.Force or BoneTree.Settings.Force))
 		debug.profileend()
 	end
 
 	debug.profilebegin("Update")
 	local Settings = BoneTree.Settings
 
-	local Velocity = (self.Position - self.LastPosition)
-	local Move = (BoneTree.ObjectAcceleration * Settings.Inertia)
+	local Velocity = (self.Position - self.LastPosition) / Delta
+	Velocity = (Velocity.Magnitude > MAX_SPEED and Velocity.Unit * MAX_SPEED or Velocity)
+
+	local Move = BoneTree.ObjectAcceleration * Settings.Inertia
 	local WindMove = SolveWind(self, BoneTree, Velocity)
 
 	self.LastPosition = self.Position
-	self.Position += Velocity * (1 - Settings.Damping) + Force + Move + WindMove
+	--self.Position += (Velocity * (1 - Settings.Damping) + Force + Move) * Delta + WindMove
+	local Acceleration = Force + Move
+	self.Position += Velocity * (1 - Settings.Damping) * Delta + Acceleration * Delta * Delta + WindMove
 	debug.profileend()
 	debug.profileend()
 end
 
 --- @within Bone
 --- @param BoneTree BoneTree
---- @param ColliderObjects Vector3
+--- @param ColliderObjects { ColliderObject }
 --- @param Delta number -- Δt
 function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel safe
 	debug.profilebegin("Bone::Constrain")
@@ -615,11 +637,6 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 	local Position = self.Position
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
-
-	if (Position.Magnitude > 1e6 or Position ~= Position) and shared.FrameCounter > 20 then
-		-- Debug break
-		pcall(error)
-	end
 
 	-- Friction must be first
 	Position = FrictionConstraint(self, Position, self.LastPosition)
@@ -640,6 +657,7 @@ function Class:Constrain(BoneTree, ColliderObjects, Delta: number) -- Parallel s
 	end
 
 	Position = AxisConstraint(self, Position, self.LastPosition, RootCFrame)
+
 	Position = RotationConstraint(self, Position, BoneTree)
 
 	if self.ActiveWeld then

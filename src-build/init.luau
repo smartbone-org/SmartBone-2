@@ -192,24 +192,24 @@ function Class:m_UpdateViewFrustum()
 	if shared.FrameCounter % Config.FRUSTUM_FREQ ~= 0 then
 		return
 	end
-do end	
+	
 
 local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
 	for _, BoneTree in self.BoneTrees do
-do end		
+		
 local FakeObject = {
 			CFrame = BoneTree.BoundingBoxCFrame,
 			Size = BoneTree.BoundingBoxSize,
 		}
 		BoneTree.InView = Frustum.ObjectInFrustum(FakeObject, a, b, c, d, e, f, g, h, i)
-do end	
+	
 end
-do end
+
 end
 
 function Class:m_CleanColliders()
-do end	
+	
 local DidDestroy = false
 
 	if #self.ColliderObjects ~= 0 then -- Micro optimizations
@@ -227,7 +227,7 @@ local DidDestroy = false
 	end
 
 	if not DidDestroy then -- Prevent warning because we left parallel
-do end	
+	
 end
 end
 
@@ -241,7 +241,7 @@ end
 --- :::
 --- Updates the provided bone tree with all optimizations
 function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
-do end
+
 	
 if BoneTree.Destroyed then
 		BoneTree:Destroy()
@@ -258,7 +258,7 @@ if BoneTree.Destroyed then
 		BoneTree:SkipUpdate()
 
 		if not AlreadySkipped then
-do end
+
 			
 task.synchronize()
 			BoneTree:ApplyTransform()
@@ -270,12 +270,12 @@ task.synchronize()
 
 		return
 	end
-do end	
+	
 
 for _, ColliderObject in self.ColliderObjects do
 		ColliderObject:Step()
 	end
-do end
+
 	
 local UpdateHz = 1 / BoneTree.UpdateRate
 	local DidUpdate = false
@@ -290,7 +290,7 @@ local UpdateHz = 1 / BoneTree.UpdateRate
 		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
 		BoneTree:SolveTransform(UpdateHz)
 	end
-do end
+
 	
 if DidUpdate then
 		task.synchronize()
@@ -386,11 +386,11 @@ end
 --- @within SmartBone
 --- Resets all bone trees to their rest position
 function Class:SkipUpdate()
-do end	
+	
 for _, BoneTree in self.BoneTrees do
 		BoneTree:SkipUpdate()
 	end
-do end
+
 end
 
 --- @within SmartBone

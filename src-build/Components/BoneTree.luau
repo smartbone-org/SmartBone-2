@@ -204,25 +204,26 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Settings: { any }): IBone
 		Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
 
-	if Settings.MatchWorkspaceWind then
-		self.GlobalWindConnection = workspace:GetPropertyChangedSignal("GlobalWind"):Connect(function()
-			local GlobalWind = workspace.GlobalWind
-			Settings.WindDirection = SafeUnit(GlobalWind)
-			Settings.WindSpeed = GlobalWind.Magnitude
-		end)
-	else
-		self.WindDirectionConnection = Lighting:GetAttributeChangedSignal("WindDirection"):ConnectParallel(function()
-			Settings.WindDirection = Lighting:GetAttribute("WindDirection")
-		end)
+	-- FIXME:
+	-- if Settings.MatchWorkspaceWind then
+	-- 	self.GlobalWindConnection = workspace:GetPropertyChangedSignal("GlobalWind"):ConnectParallel(function()
+	-- 		local GlobalWind = workspace.GlobalWind
+	-- 		Settings.WindDirection = SafeUnit(GlobalWind)
+	-- 		Settings.WindSpeed = GlobalWind.Magnitude
+	-- 	end)
+	-- else
+	-- 	self.WindDirectionConnection = Lighting:GetAttributeChangedSignal("WindDirection"):ConnectParallel(function()
+	-- 		Settings.WindDirection = Lighting:GetAttribute("WindDirection")
+	-- 	end)
 
-		self.WindSpeedConnnection = Lighting:GetAttributeChangedSignal("WindSpeed"):ConnectParallel(function()
-			Settings.WindSpeed = Lighting:GetAttribute("WindSpeed")
-		end)
+	-- 	self.WindSpeedConnection = Lighting:GetAttributeChangedSignal("WindSpeed"):ConnectParallel(function()
+	-- 		Settings.WindSpeed = Lighting:GetAttribute("WindSpeed")
+	-- 	end)
 
-		self.WindStrengthConnection = Lighting:GetAttributeChangedSignal("WindStrength"):ConnectParallel(function()
-			Settings.WindStrength = Lighting:GetAttribute("WindStrength")
-		end)
-	end
+	-- 	self.WindStrengthConnection = Lighting:GetAttributeChangedSignal("WindStrength"):ConnectParallel(function()
+	-- 		Settings.WindStrength = Lighting:GetAttribute("WindStrength")
+	-- 	end)
+	-- end
 
 	return self :: IBoneTree
 end
@@ -231,36 +232,36 @@ end
 --- Called in BoneTree:PreUpdate(),
 --- Computes the bounding box of all the bones
 function Class:UpdateBoundingBox()
-do end
+
 	
 if not self.InView then
 		self.BoundingBoxCFrame = self.RootPart.CFrame
 		self.BoundingBoxSize = self.RootPart.Size
-do end		
+		
 
 return
 	end
 
 	local BottomCorner = MaxVector
 	local TopCorner = -MaxVector
-do end	
+	
 
 for _, Bone in self.Bones do
-do end		
+		
 local Velocity = (Bone.Position - Bone.LastPosition)
 		local Position = Bone.Position + Velocity
 
 		BottomCorner = BottomCorner:Min(Position)
 		TopCorner = TopCorner:Max(Position)
-do end	
+	
 end
-do end
+
 	
 local CenterOfMass = (BottomCorner + TopCorner) * 0.5
 
 	self.BoundingBoxCFrame = CFrame.new(CenterOfMass)
 	self.BoundingBoxSize = self.RootPartSize:Max(TopCorner - BottomCorner)
-do end
+
 
 end
 
@@ -268,7 +269,7 @@ end
 --- @param RootPosition Vector3 -- Position of the root part (Micro Optimization)
 --- Called in BoneTree:PreUpdate()
 function Class:UpdateThrottling(RootPosition: Vector3)
-do end	
+	
 local Settings = self.Settings
 
 	local Camera = workspace.CurrentCamera
@@ -276,20 +277,20 @@ local Settings = self.Settings
 
 	if Distance > Settings.ActivationDistance then
 		self.UpdateRate = 0
-do end		
+		
 return
 	end
 
 	local UpdateRate = 1 - map(Distance, Settings.ThrottleDistance, Settings.ActivationDistance, 0, 1, true)
 	self.UpdateRate = Settings.UpdateRate * UpdateRate
-do end
+
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates object move, gravity and throttled update rate. Also calls Bone:PreUpdate()
 function Class:PreUpdate(Delta: number)
-do end	
+	
 local RootPartCFrame = self.RootPart.CFrame
 	local RootPartPosition = RootPartCFrame.Position
 
@@ -307,66 +308,82 @@ local RootPartCFrame = self.RootPart.CFrame
 	for _, Bone in self.Bones do
 		Bone:PreUpdate(self)
 	end
-do end
+
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 --- Calculates forces and updates wind. Also calls Bone:StepPhysics()
 function Class:StepPhysics(Delta: number)
-do end	
+	
 local Settings = self.Settings
-	local Force = (Settings.Gravity + Settings.Force) * Delta
+	local Force = (Settings.Gravity + Settings.Force)
+
+	if Settings.MatchWorkspaceWind == true then
+		local GlobalWind = workspace.GlobalWind
+		Settings.WindDirection = SafeUnit(GlobalWind)
+		Settings.WindSpeed = GlobalWind.Magnitude
+	else
+		local WindDirection = Lighting:GetAttribute("WindDirection") or DefaultObjectSettings.WindDirection
+		local WindSpeed = Lighting:GetAttribute("WindSpeed") or DefaultObjectSettings.WindSpeed
+
+		Settings.WindDirection = SafeUnit(WindDirection)
+		Settings.WindSpeed = WindSpeed
+	end
+
+	local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
+
+	Settings.WindStrength = WindStrength
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force, Delta)
 	end
-do end
+
 end
 
 --- @within BoneTree
 --- @param ColliderObjects table
 --- @param Delta number -- Δt
 function Class:Constrain(ColliderObjects, Delta: number)
-do end	
+	
 for _, Bone in self.Bones do
 		Bone:Constrain(self, ColliderObjects, Delta)
 	end
-do end
+
 end
 
 --- @within BoneTree
 --- Resets all bones to their rest positions.
 function Class:SkipUpdate()
-do end	
+	
 for _, Bone in self.Bones do
 		Bone:SkipUpdate()
 	end
 
 	self.IsSkippingUpdates = true
-do end
+
 end
 
 --- @within BoneTree
 --- @param Delta number -- Δt
 function Class:SolveTransform(Delta: number)
-do end	
+	
 for _, Bone in self.Bones do
 		Bone:SolveTransform(self, Delta)
 	end
 
 	self.IsSkippingUpdates = false
-do end
+
 end
 
 --- @within BoneTree
 --- Applys all the transforms to bones in serial context.
 function Class:ApplyTransform()
-do end	
+	
 for _, Bone in self.Bones do
 		Bone:ApplyTransform(self)
 	end
-do end
+
 end
 
 --- @client
@@ -389,7 +406,7 @@ function Class:DrawDebug(
 	DRAW_ROTATION_LIMITS: bool,
 	DRAW_ACCELERATION_INFO: bool
 )
-do end	
+	
 local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 	local ROOT_PART_BOUNDING_BOX_COLOR = Color3.fromRGB(76, 208, 223)
 	local ROOT_PART_FILL_COLOR = Color3.fromRGB(255, 89, 89)
@@ -438,7 +455,7 @@ local LINE_CONNECTING_COLOR = Color3.fromRGB(248, 168, 20)
 			Gizmo.Ray:Draw(ParentBone.Bone.TransformedWorldCFrame.Position, BonePosition)
 		end
 	end
-do end
+
 end
 
 --- @client
@@ -487,13 +504,13 @@ function Class:Destroy()
 	self.DestroyConnection:Disconnect()
 	self.AttributeConnection:Disconnect()
 
-	if self.Settings.MatchWorkspaceWind then
-		self.GlobalWindConnection:Disconnect()
-	else
-		self.WindDirectionConnection:Disconnect()
-		self.WindSpeedConnection:Disconnect()
-		self.WindStrengthConnection:Disconnect()
-	end
+	-- if self.Settings.MatchWorkspaceWind then
+	-- 	self.GlobalWindConnection:Disconnect()
+	-- else
+	-- 	self.WindDirectionConnection:Disconnect()
+	-- 	self.WindSpeedConnection:Disconnect()
+	-- 	self.WindStrengthConnection:Disconnect()
+	-- end
 
 	for _, Bone in self.Bones do
 		Bone:Destroy()

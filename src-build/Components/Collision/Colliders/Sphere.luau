@@ -16,7 +16,7 @@ local function ClosestPointFunc(position, radius, point)
 end
 
 return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
-do end	
+	
 Sphere0Point = Sphere0Point.Position
 	Sphere0Radius = math.min(Sphere0Radius.X, Sphere0Radius.Y, Sphere0Radius.Z) * 0.5
 
@@ -29,6 +29,6 @@ Sphere0Point = Sphere0Point.Position
 	local DistanceToCp = (ClosestPoint - Sphere1Point).Magnitude
 
 	IsInside = (DistanceToCp < Sphere1Radius)
-do end	
+	
 return IsInside, ClosestPoint, Normal
 end

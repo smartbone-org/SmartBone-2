@@ -1,5 +1,5 @@
 return function(self, Position, Colliders)
-do end	
+	
 local Collisions = {}
 	local HitParts = {}
 
@@ -22,7 +22,7 @@ local Collisions = {}
 
 	self.CollisionsData = Collisions
 	self.CollisionHits = HitParts
-do end
+
 	
 return Position
 end
