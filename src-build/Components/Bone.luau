@@ -2,13 +2,8 @@
 --!native
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local Config = require(Dependencies:WaitForChild("Config"))
-local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
+local Gizmo = require(Dependencies:WaitForChild("Debug"):WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
-local IsStudio = game:GetService("RunService"):IsStudio()
-
-if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
-	Gizmo.Init()
-end
 
 local Constraints = script.Parent:WaitForChild("Constraints")
 local AxisConstraint = require(Constraints:WaitForChild("AxisConstraint"))
@@ -621,6 +616,11 @@ return
 	local RootPart = self.RootPart
 	local RootCFrame: CFrame = RootPart.CFrame
 
+	if (Position.Magnitude > 1e6 or Position ~= Position) and shared.FrameCounter > 20 then
+		-- Debug break
+		pcall(error)
+	end
+
 	-- Friction must be first
 	Position = FrictionConstraint(self, Position, self.LastPosition)
 
@@ -741,10 +741,10 @@ return
 	-- end
 
 	if ParentBone and BoneParent then
-		if ParentBone.Anchored and BoneTree.Settings.AnchorsRotate == false then -- Anchored and anchors do not rotate
+		if ParentBone.Anchored and not BoneTree.Settings.AnchorsRotate then -- Anchored and anchors do not rotate
 			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		--elseif ParentBone.Anchored then -- Anchored and anchors rotate
-		--	BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		elseif ParentBone.Anchored then -- Anchored and anchors rotate
+			BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
 		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end

@@ -1,5 +1,26 @@
+-- -------------------------------------------------------------------------- --
+--                      Iris runtime editor for SmartBone                     --
+-- -------------------------------------------------------------------------- --
+
 local EditingBones = {}
 local EditingColliders = {}
+
+-- Title, Description, Flag
+local DebugFlags = {
+	{ "Draw Internal Bone", "Draws a sphere with the specified radius of the bone around where SmartBone believes the bone is.", "DRAW_BONE" },
+	{ "Draw Physical Bone", "Draws the actual bone objects CFrame with axis arrows.", "DRAW_PHYSICAL_BONE" },
+	{ "Draw Root Part", "Draws a bounding box and fills in the root part.", "DRAW_ROOT_PART" },
+	{ "Draw Bounding Box", "Draws the bounding box used for frustum culling.", "DRAW_BOUNDING_BOX" },
+	{ "Draw Axis Limits", "Draws the axis limits for each bone.", "DRAW_AXIS_LIMITS" },
+	{ "Draw Rotation Limits", "Draws the rotation limits for each bone.", "DRAW_ROTATION_LIMITS" },
+	{ "Draw Acceleration Info", "Draws the acceleration and the required values to derive it.", "DRAW_ACCELERATION_INFO" },
+	{ "Draw Colliders", "Draws all the colliders this root object can collide with.", "DRAW_COLLIDERS" },
+	{ "Draw Collider Influence", "Shows the sphere of influence around each collider.", "DRAW_COLLIDER_INFLUENCE" },
+	{ "Draw Collider Awake", "Shows if a collider is awake or asleep.", "DRAW_COLLIDER_AWAKE" },
+	{ "Draw Collider BroadPhase", "Shows if a collider isn't reaching NarrowPhase.", "DRAW_COLLIDER_BROADPHASE" },
+	{ "Draw Fill Colliders", "Fills all colliders this root object can collide with.", "DRAW_FILL_COLLIDERS" },
+	{ "Draw Contacts", "Draws the position and normal of the points which bones collide with colliders.", "DRAW_CONTACTS" },
+}
 
 local function infoText(Iris, text)
 	Iris.PushConfig({ TextColor = Iris._config.TextDisabledColor })
@@ -147,70 +168,12 @@ return function(Iris, RootObject, DebugState)
 
 	Iris.Tree({ "Debug Gizmos", true }, { isUncollapsed = true })
 
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Internal Bone" }, { isChecked = DebugState.DRAW_BONE })
-	helpMarker(Iris, "Draws a sphere with the specified radius of the bone around where SmartBone believes the bone is.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Physical Bone" }, { isChecked = DebugState.DRAW_PHYSICAL_BONE })
-	helpMarker(Iris, "Draws the actual bone objects CFrame with axis arrows.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Root Part" }, { isChecked = DebugState.DRAW_ROOT_PART })
-	helpMarker(Iris, "Draws a bounding box and fills in the root part.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Bounding Box" }, { isChecked = DebugState.DRAW_BOUNDING_BOX })
-	helpMarker(Iris, "Draws the bounding box used for frustum culling")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Axis Limits" }, { isChecked = DebugState.DRAW_AXIS_LIMITS })
-	helpMarker(Iris, "Draws the axis limits for each bone.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Rotation Limits" }, { isChecked = DebugState.DRAW_ROTATION_LIMITS })
-	helpMarker(Iris, "Draws the rotation limits for each bone.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Acceleration Info" }, { isChecked = DebugState.DRAW_ACCELERATION_INFO })
-	helpMarker(Iris, "Draws the acceleration and the required values to derive it.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Colliders" }, { isChecked = DebugState.DRAW_COLLIDERS })
-	helpMarker(Iris, "Draws all the colliders this root object can collide with.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Collider Influence" }, { isChecked = DebugState.DRAW_COLLIDER_INFLUENCE })
-	helpMarker(Iris, "Shows the sphere of influence around each collider.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Collider Awake" }, { isChecked = DebugState.DRAW_COLLIDER_AWAKE })
-	helpMarker(Iris, "Shows if a collider is awake or asleep.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Collider Broadphase" }, { isChecked = DebugState.DRAW_COLLIDER_BROADPHASE })
-	helpMarker(Iris, "Shows if a collider isn't reaching narrowphase.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Fill Colliders" }, { isChecked = DebugState.DRAW_FILL_COLLIDERS })
-	helpMarker(Iris, "Fills all colliders this root object can collide with.")
-	Iris.End()
-
-	Iris.SameLine()
-	Iris.Checkbox({ "Draw Contacts" }, { isChecked = DebugState.DRAW_CONTACTS })
-	helpMarker(Iris, "Draws the position and normal of the points which bones collide with colliders.")
-	Iris.End()
+	for _, Flag in DebugFlags do
+		Iris.SameLine()
+		Iris.Checkbox({ Flag[1] }, { isChecked = DebugState[Flag[3]] })
+		helpMarker(Iris, Flag[2])
+		Iris.End()
+	end
 
 	Iris.End()
 

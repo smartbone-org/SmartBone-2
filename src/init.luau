@@ -7,7 +7,7 @@ local RunService = game:GetService("RunService")
 local Components = script:WaitForChild("Components")
 local Dependencies = script:WaitForChild("Dependencies")
 
-local CeiveImOverlay = require(Dependencies:WaitForChild("CeiveImOverlay"))
+local CeiveImOverlay = require(Dependencies:WaitForChild("Debug"):WaitForChild("ImOverlay"))
 local Config = require(Dependencies:WaitForChild("Config"))
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))

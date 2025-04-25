@@ -15,7 +15,6 @@ local RULES = {
 	"compute_expression",
 	"remove_unused_if_branch",
 	"remove_unused_while",
-	"remove_empty_do",
 	"remove_nil_declaration",
 	"filter_after_early_return",
 }
@@ -23,6 +22,8 @@ local RULES = {
 if not DEBUG_PROFILING then
 	table.insert(RULES, "remove_debug_profiling")
 end
+
+table.insert(RULES, "remove_empty_do")
 
 local REQUIRE_ALIASES = {}
 

@@ -11,8 +11,8 @@ local ColliderTranslations = {
 	Cylinder = "Cylinder",
 }
 
-local function SafeUnit(Vector: Vector3): Vector3
-	if Vector.Magnitude == 0 then
+local function YAxisSafeUnit(Vector: Vector3): Vector3
+	if Vector.Magnitude <= 1e-6 then
 		return -Vector3.yAxis
 	end
 
@@ -26,7 +26,17 @@ function module.GetRotationBetween(U: Vector3, V: Vector3)
 	local Cos = U:Dot(V)
 	local Sin = U:Cross(V).Magnitude
 	local Angle = math.atan2(Sin, Cos)
-	local W = SafeUnit(U:Cross(V))
+	local W = YAxisSafeUnit(U:Cross(V))
+
+	-- Handle the case where U and V are parallel or anti-parallel
+	if Sin < 1e-6 then
+		if Cos > 0 then
+			return CFrame.new()
+		else
+			local Perpendicular = (math.abs(U.X) > math.abs(U.Z)) and Vector3.new(-U.Y, U.X, 0) or Vector3.new(0, -U.Z, U.Y)
+			return CFrame.fromAxisAngle(Perpendicular.Unit, math.pi)
+		end
+	end
 
 	return CFrame.fromAxisAngle(W, Angle)
 end

@@ -1,22 +1,17 @@
 --!nocheck
 --!native
 
-local WIND_SEED = 1029410295159813
-local WIND_RNG = Random.new(WIND_SEED)
 local Lighting = game:GetService("Lighting")
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local BoneClass = require(script.Parent:WaitForChild("Bone"))
 local Config = require(Dependencies:WaitForChild("Config"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
-local Gizmo = require(Dependencies:WaitForChild("Gizmo"))
+local Gizmo = require(Dependencies:WaitForChild("Debug"):WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 local MaxVector = Vector3.new(math.huge, math.huge, math.huge)
-local IsStudio = game:GetService("RunService"):IsStudio()
 
-if IsStudio or Config.ALLOW_LIVE_GAME_DEBUG then
-	Gizmo.Init()
-end
-
+local WIND_SEED = 1029410295159813
+local WIND_RNG = Random.new(WIND_SEED)
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
 export type IBoneTree = {
@@ -168,14 +163,14 @@ Class.__index = Class
 --- @param RootPart BasePart
 --- @param Settings {any}
 --- @return BoneTree
-function Class.new(RootBone: Bone, RootPart: BasePart, Settings: {any}): IBoneTree
+function Class.new(RootBone: Bone, RootPart: BasePart, Settings: { any }): IBoneTree
 	local self = setmetatable({
 		WindOffset = WIND_RNG:NextNumber(0, 1e6),
 		Root = RootBone:IsA("Bone") and RootBone or nil,
 		RootPart = RootPart,
 		RootPartSize = RootPart.Size,
 		Bones = {},
-		Settings = {},
+		Settings = Settings,
 		UpdateRate = 0,
 		InView = true,
 		AccumulatedDelta = 0,
@@ -219,11 +214,11 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Settings: {any}): IBoneTr
 		self.WindDirectionConnection = Lighting:GetAttributeChangedSignal("WindDirection"):ConnectParallel(function()
 			Settings.WindDirection = Lighting:GetAttribute("WindDirection")
 		end)
-	
+
 		self.WindSpeedConnnection = Lighting:GetAttributeChangedSignal("WindSpeed"):ConnectParallel(function()
 			Settings.WindSpeed = Lighting:GetAttribute("WindSpeed")
 		end)
-	
+
 		self.WindStrengthConnection = Lighting:GetAttributeChangedSignal("WindStrength"):ConnectParallel(function()
 			Settings.WindStrength = Lighting:GetAttribute("WindStrength")
 		end)

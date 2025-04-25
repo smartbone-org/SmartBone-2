@@ -38,7 +38,7 @@ local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 local BonePhysics = SmartboneClass.new()
 local Dependencies = SmartboneModule.Dependencies
-local DebugUi = require(Dependencies.DebugUi)
+local DebugUi = require(Dependencies.Debug.DebugUi)
 local Iris
 local Config = require(Dependencies.Config)
 local Utilities = require(Dependencies.Utilities)

@@ -32,7 +32,7 @@ if not WireframeHandle then
 	WireframeHandle.Parent = TargetParent
 end
 
-local Gizmos = script:WaitForChild("Gizmos")
+local Gizmos = script.Parent:WaitForChild("Gizmos")
 
 local ActiveObjects = {}
 local RetainObjects = {}
@@ -100,7 +100,7 @@ type IRay = {
 		self: IRay,
 		Origin: Vector3,
 		End: Vector3
-	) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number },
+	) -> { Origin: Vector3, End: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number }
 }
 
 type IBox = {
@@ -118,8 +118,8 @@ type IBox = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IPlane = {
@@ -138,8 +138,8 @@ type IPlane = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IWedge = {
@@ -157,8 +157,8 @@ type IWedge = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ICircle = {
@@ -179,8 +179,8 @@ type ICircle = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ISphere = {
@@ -200,8 +200,8 @@ type ISphere = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ICylinder = {
@@ -221,8 +221,8 @@ type ICylinder = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ICapsule = {
@@ -242,8 +242,8 @@ type ICapsule = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ICone = {
@@ -263,8 +263,8 @@ type ICone = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IArrow = {
@@ -286,8 +286,8 @@ type IArrow = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IMesh = {
@@ -307,8 +307,8 @@ type IMesh = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type ILine = {
@@ -317,7 +317,7 @@ type ILine = {
 		self: ILine,
 		Transform: CFrame,
 		Length: number
-	) -> { Transform: CFrame, Length: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
+	) -> { Transform: CFrame, Length: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean }
 }
 
 type IVolumeCone = {
@@ -335,8 +335,8 @@ type IVolumeCone = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IVolumeBox = {
@@ -345,7 +345,7 @@ type IVolumeBox = {
 		self: IVolumeBox,
 		Transform: CFrame,
 		Size: Vector3
-	) -> { Transform: CFrame, Size: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
+	) -> { Transform: CFrame, Size: Vector3, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean }
 }
 
 type IVolumeSphere = {
@@ -354,7 +354,7 @@ type IVolumeSphere = {
 		self: IVolumeSphere,
 		Transform: CFrame,
 		Radius: number
-	) -> { Transform: CFrame, Radius: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean },
+	) -> { Transform: CFrame, Radius: number, Color3: Color3, AlwaysOnTop: boolean, Transparency: number, Enabled: boolean, Destroy: boolean }
 }
 
 type IVolumeCylinder = {
@@ -376,12 +376,20 @@ type IVolumeCylinder = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IVolumeArrow = {
-	Draw: (self: IVolumeArrow, Origin: Vector3, End: Vector3, CylinderRadius: number, ConeRadius: number, Length: number, UseCylinder: boolean?) -> (),
+	Draw: (
+		self: IVolumeArrow,
+		Origin: Vector3,
+		End: Vector3,
+		CylinderRadius: number,
+		ConeRadius: number,
+		Length: number,
+		UseCylinder: boolean?
+	) -> (),
 	Create: (
 		self: IVolumeArrow,
 		Origin: Vector3,
@@ -401,8 +409,8 @@ type IVolumeArrow = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IText = {
@@ -420,19 +428,19 @@ type IText = {
 		AlwaysOnTop: boolean,
 		Transparency: number,
 		Enabled: boolean,
-		Destroy: boolean,
-	},
+		Destroy: boolean	
+}
 }
 
 type IStyles = {
 	Color: string,
 	Transparency: number,
-	AlwaysOnTop: boolean,
+	AlwaysOnTop: boolean
 }
 
 type IStyle = "Color3" | "Transparency" | "AlwaysOnTop"
 
-type ICeive = {
+export type ICeive = {
 	ActiveRays: number,
 	ActiveInstances: number,
 
@@ -467,7 +475,7 @@ type ICeive = {
 	VolumeBox: IVolumeBox,
 	VolumeSphere: IVolumeSphere,
 	VolumeCylinder: IVolumeCylinder,
-	VolumeArrow: IVolumeArrow,
+	VolumeArrow: IVolumeArrow
 }
 
 -- Ceive
@@ -636,7 +644,7 @@ end
 --- @function Init
 function Ceive.Init()
 	RunService.RenderStepped:Connect(function(dt)
-    	if Ceive.Enabled then
+		if Ceive.Enabled then
 			-- Add our gizmos if they were removed for whatever reasons
 			if not TargetParent:FindFirstChild("AOTGizmoAdornment") then
 				AOTWireframeHandle = Instance.new("WireframeHandleAdornment")
