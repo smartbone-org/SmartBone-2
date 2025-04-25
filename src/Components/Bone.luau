@@ -184,15 +184,9 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 		return Vector3.zero
 	end
 
-	local a_0 = WindSpeed
-	local a_1 = WindStrength
-
 	-- Velocity multiplier
 	local WindDirection = Settings.WindDirection
 	local VelocityDirection = SafeUnit(Velocity)
-
-	local b_0 = WindDirection
-	local b_1 = VelocityDirection
 
 	-- If we are going the same direction as the wind
 	debug.profilebegin("Solve WindDamper")
@@ -221,9 +215,6 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	local SpeedAlpha = Velocity.Magnitude < 100 and Velocity.Magnitude or 100
 	local SpeedMultiplier = math.min(EaseInExpo(SpeedAlpha), 100)
 	TimeModifier *= math.max(SpeedMultiplier, 1)
-
-	local c_0 = SpeedAlpha
-	local c_1 = SpeedMultiplier
 
 	if WindSpeed < 1 then
 		WindSpeed *= SpeedMultiplier
@@ -306,12 +297,6 @@ local function SolveWind(self: IBone, BoneTree: any, Velocity: Vector3): Vector3
 	WindMove /= self.FreeLength < 0.01 and 0.01 or self.FreeLength
 	WindMove *= (Settings.WindInfluence * (WindStrength * 0.01)) * (math.clamp(self.HeirarchyLength, 1, 10) * 0.1)
 	WindMove *= self.Weight
-
-	if WindMove ~= WindMove then
-		print(self, a_0, a_1, b_0, b_1, c_0, c_1)
-		-- Debug break
-		pcall(error)
-	end
 
 	debug.profileend()
 	return WindMove
@@ -614,10 +599,10 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 
 	local Move = BoneTree.ObjectAcceleration * Settings.Inertia
 	local WindMove = SolveWind(self, BoneTree, Velocity)
+	local Acceleration = Force + Move
 
 	self.LastPosition = self.Position
 	--self.Position += (Velocity * (1 - Settings.Damping) + Force + Move) * Delta + WindMove
-	local Acceleration = Force + Move
 	self.Position += Velocity * (1 - Settings.Damping) * Delta + Acceleration * Delta * Delta + WindMove
 	debug.profileend()
 	debug.profileend()
