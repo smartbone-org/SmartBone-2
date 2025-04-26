@@ -639,7 +639,7 @@ function Class.Start(): { Stop: () -> () }
 		SB_UNINDENT_LOG()
 	end
 
-	CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)
+	connection = CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)
 
 	for _, Object in CollectionService:GetTagged("SmartBone") do
 		SetupObject(Object)
@@ -674,6 +674,11 @@ function Class.Start(): { Stop: () -> () }
 
 			for _, Actor: Actor in ActorFolder:GetChildren() do
 				Actor:SendMessage("Destroy")
+			end
+
+			if connection then
+				connection:Disconnect()
+				connection = nil
 			end
 		end,
 	}
