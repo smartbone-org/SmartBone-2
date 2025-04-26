@@ -152,7 +152,13 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 				HasBoneChild = true
 			end
 		end
-
+		
+		if string.sub(Bone.Name,#Bone.Name-3,#Bone.Name) == "_end"
+		or string.sub(Bone.Name,#Bone.Name-4,#Bone.Name) == "_Tail"
+		then
+			HasBoneChild = true
+		end
+		
 		if not HasBoneChild then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Parent = Bone.Parent
