@@ -339,11 +339,7 @@ function Class:LoadObject(Object: BasePart)
 	local Bones = {}
 
 	-- Gather bones into table indexed with name
-	for _, Descendant in Object:GetDescendants() do
-		if not Descendant:IsA("Bone") then
-			continue
-		end
-
+	for _, Descendant in Object:QueryDescendants("Bone") do
 		if Bones[Descendant.Name] then
 			warn(`[SmartBone2::LoadObject] Duplicate bones of name: {Descendant.Name} in RootPart: {Object.Name}`)
 			continue
