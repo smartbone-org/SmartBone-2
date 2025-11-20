@@ -152,13 +152,11 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 				HasBoneChild = true
 			end
 		end
-		
-		if string.sub(Bone.Name,#Bone.Name-3,#Bone.Name) == "_end"
-		or string.sub(Bone.Name,#Bone.Name-4,#Bone.Name) == "_Tail"
-		then
+
+		if string.sub(Bone.Name, #Bone.Name - 3, #Bone.Name) == "_end" or string.sub(Bone.Name, #Bone.Name - 4, #Bone.Name) == "_Tail" then
 			HasBoneChild = true
 		end
-		
+
 		if not HasBoneChild then -- Add tail bone for transform calculations
 			SB_VERBOSE_LOG(`Adding tail bone`)
 			local Parent = Bone.Parent
@@ -566,6 +564,27 @@ function Class.Start(): { Stop: () -> () }
 		end
 	end)
 
+	local ObjectToActor: { [BasePart]: Actor } = {}
+	local ActorPool: { Actor } = {}
+
+	local function GetActor(): Actor
+		return table.remove(ActorPool) or Instance.new("Actor")
+	end
+
+	-- Called when an object is "freed", in this case, it's actor needs to be returned to the actor pool
+	local function OnObjectFreed(Object: BasePart)
+		local Actor = ObjectToActor[Object]
+		ObjectToActor[Object] = nil
+
+		if not Actor then
+			return
+		end
+
+		Actor.Name = "Pooled Actor"
+
+		table.insert(ActorPool, Actor)
+	end
+
 	local function GatherColliders()
 		local ColliderObjects = {
 			Key = {},
@@ -624,7 +643,7 @@ function Class.Start(): { Stop: () -> () }
 			table.insert(ColliderDescriptions, { Utilities.GetCollider(ColliderObject), ColliderObject })
 		end
 
-		local Actor = Instance.new("Actor")
+		local Actor = GetActor()
 		local Runtime = ActorRuntime:Clone()
 
 		Runtime.Parent = Actor
@@ -632,16 +651,29 @@ function Class.Start(): { Stop: () -> () }
 
 		Actor.Parent = ActorFolder
 
+		ObjectToActor[Object] = Actor
+
 		-- If we dont yield here a bug happens on occasion where the actor doesn't bind quick enough and misses the setup message
 		task.wait()
 
 		Actor:SendMessage("Setup", Object, ColliderDescriptions, script)
 
+		-- Don't have to cleanup this connection since it's tied to the instance
+		-- Here we handle freeing up the actor attached to the object when it's destroyed
+		Object:GetPropertyChangedSignal("Parent"):Connect(function()
+			if Object.Parent ~= nil then
+				return
+			end
+
+			OnObjectFreed(Object)
+		end)
+
 		SB_VERBOSE_LOG(`Runtime Started`)
 		SB_UNINDENT_LOG()
 	end
 
-	connection = CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)
+	local TagAddedConnection = CollectionService:GetInstanceAddedSignal("SmartBone"):Connect(SetupObject)
+	local TagRemovedConnection = CollectionService:GetInstanceRemovedSignal("SmartBone"):Connect(OnObjectFreed)
 
 	for _, Object in CollectionService:GetTagged("SmartBone") do
 		SetupObject(Object)
@@ -678,9 +710,12 @@ function Class.Start(): { Stop: () -> () }
 				Actor:SendMessage("Destroy")
 			end
 
-			if connection then
-				connection:Disconnect()
-				connection = nil
+			if TagAddedConnection then
+				TagAddedConnection:Disconnect()
+			end
+
+			if TagRemovedConnection then
+				TagRemovedConnection:Disconnect()
 			end
 		end,
 	}

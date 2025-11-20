@@ -14,6 +14,8 @@ local WIND_SEED = 1029410295159813
 local WIND_RNG = Random.new(WIND_SEED)
 local SB_VERBOSE_LOG = Utilities.SB_VERBOSE_LOG
 
+local CollectionService = game:GetService("CollectionService")
+
 export type IBoneTree = {
 	WindOffset: number,
 	Root: Bone,
@@ -204,6 +206,14 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Settings: { any }): IBone
 		Settings[Attribute] = RootPart:GetAttribute(Attribute) or DefaultObjectSettings[Attribute]
 	end)
 
+	self.TagConnection = CollectionService:GetInstanceRemovedSignal("SmartBone"):Connect(function(Object)
+		if Object ~= RootPart then
+			return
+		end
+
+		self.Destroyed = true
+	end)
+
 	-- FIXME:
 	-- if Settings.MatchWorkspaceWind then
 	-- 	self.GlobalWindConnection = workspace:GetPropertyChangedSignal("GlobalWind"):ConnectParallel(function()
@@ -353,7 +363,7 @@ for _, Bone in self.Bones do
 end
 
 --- @within BoneTree
---- Resets all bones to their rest positions.
+--- Resets all bones to their rest positions, and sets skipping updates to true,
 function Class:SkipUpdate()
 	
 for _, Bone in self.Bones do
@@ -503,6 +513,7 @@ function Class:Destroy()
 	task.synchronize()
 	self.DestroyConnection:Disconnect()
 	self.AttributeConnection:Disconnect()
+	self.TagConnection:Disconnect()
 
 	-- if self.Settings.MatchWorkspaceWind then
 	-- 	self.GlobalWindConnection:Disconnect()

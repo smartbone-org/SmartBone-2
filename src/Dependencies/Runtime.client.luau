@@ -143,7 +143,6 @@ c(RunService.Heartbeat:ConnectParallel(function(deltaTime)
 
 		task.synchronize()
 		cleanup()
-		Actor:Destroy()
 		return
 	end
 
