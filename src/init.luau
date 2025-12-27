@@ -358,6 +358,7 @@ function Class:LoadObject(Object: BasePart)
 		for Name, _ in RootBonesNotLoaded do
 			local Bone = Object:WaitForChild(Name, Config.ROOT_BONE_WAIT_TIME or 5)
 			if Bone and Bone:IsA("Bone") then
+				RootBonesNotLoaded[Bone.Name] = nil
 				Bones[Bone.Name] = Bone
 			end
 		end
