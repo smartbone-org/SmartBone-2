@@ -334,7 +334,13 @@ function Class:LoadObject(Object: BasePart)
 	end
 
 	local RootNames = RootAttribute:split(",")
+	local RootBonesNotLoaded = {}
 	local Bones = {}
+
+	-- Gather pre-recorded bones into table
+	for _, Name in RootNames do
+		RootBonesNotLoaded[Name] = true
+	end
 
 	-- Gather bones into table indexed with name
 	for _, Descendant in Object:QueryDescendants("Bone") do
@@ -343,7 +349,23 @@ function Class:LoadObject(Object: BasePart)
 			continue
 		end
 
+		RootBonesNotLoaded[Descendant.Name] = nil
 		Bones[Descendant.Name] = Descendant
+	end
+
+	-- Check for any missing bones
+	if next(RootBonesNotLoaded) then
+		for Name, _ in RootBonesNotLoaded do
+			local Bone = Object:WaitForChild(Name, Config.ROOT_BONE_WAIT_TIME or 5)
+			if Bone and Bone:IsA("Bone") then
+				RootBonesNotLoaded[Bone.Name] = nil
+				Bones[Bone.Name] = Bone
+			end
+		end
+
+		if next(RootBonesNotLoaded) then
+			warn(`[SmartBone2::LoadObject] Couldn't find all roots defined {Object.Name}`)
+		end
 	end
 
 	-- Create bone trees
