@@ -12,6 +12,7 @@ return table.freeze({
 	Constraint = "Spring",
 	Force = Vector3.yAxis * FORCE_MULTIPLIER,
 	Gravity = -Vector3.yAxis * 25,
+	GravityFalloff = 0,
 
 	WindType = "Hybrid",
 	MatchWorkspaceWind = true,

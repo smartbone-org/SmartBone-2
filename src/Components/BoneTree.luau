@@ -38,6 +38,7 @@ export type IBoneTree = {
 	ObjectVelocity: Vector3,
 	ObjectAcceleration: Vector3,
 	ObjectPreviousPosition: Vector3,
+	DefaultRootOrientation: CFrame,
 }
 
 type ImOverlay = {
@@ -157,6 +158,10 @@ end
 --- @prop ObjectPreviousPosition Vector3
 --- Root parts previous position
 
+--- @within BoneTree
+--- @prop DefaultRootOrientation
+--- The Default WorldSpace Orientation of the Root Bone
+
 local Class = {}
 Class.__index = Class
 
@@ -188,6 +193,7 @@ function Class.new(RootBone: Bone, RootPart: BasePart, Settings: { any }): IBone
 		ObjectVelocity = Vector3.zero,
 		ObjectAcceleration = Vector3.zero,
 		ObjectPreviousPosition = RootPart.Position,
+		DefaultRootOrientation = (RootBone:IsA("Bone") and RootBone.WorldCFrame or CFrame.identity).Rotation,
 	}, Class)
 
 	self.InWorkspace = RootPart:IsDescendantOf(workspace)
@@ -327,7 +333,20 @@ end
 function Class:StepPhysics(Delta: number)
 	debug.profilebegin("BoneTree::StepPhysics")
 	local Settings = self.Settings
-	local Force = (Settings.Gravity + Settings.Force)
+
+	-- Calculate the effect of Gravity given deviation from the resting 'Skyward' UpVector and clamped by GravityFalloff Setting
+
+	local DefaultRot, NewRot = self.DefaultRootOrientation.Rotation, self.Root.WorldCFrame.Rotation
+	local Transform = NewRot:ToWorldSpace(DefaultRot)
+
+	local RelativeDotProduct = Transform.UpVector:Dot(Vector3.yAxis)
+
+	local DistanceFromWorldUp = math.clamp(1 - RelativeDotProduct, 0, 1)
+
+	local Gravity = Settings.Gravity
+	Gravity = Gravity * math.lerp((1 - Settings.GravityFalloff), 1, DistanceFromWorldUp)
+
+	local Force = (Gravity + Settings.Force)
 
 	if Settings.MatchWorkspaceWind == true then
 		local GlobalWind = workspace.GlobalWind

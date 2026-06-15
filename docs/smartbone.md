@@ -68,6 +68,8 @@ For example if you wanted more flowy wind you would have a medium wind speed wit
 
 - \[*Vector3*\] Gravity – Direction and Magnitude of Gravity in World Space.
 
+- \[*Number*\] GravityFalloff – Gravity will dampen based on how close the mesh's UpVector is to it's resting state. 0 being no damping and 1 being full damping.
+
 - \[*Vector3*\] Force – Additional Force applied to Bones in World Space. Supplementary to Gravity.
 
 - \[*String*\] Constraint - Option between Spring, Distance and Rope.

@@ -453,8 +453,9 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		Radius = 0,
 		Friction = 0,
 		RotationLimit = 0,
-		Force = nil,
-		Gravity = nil,
+		Force = Vector3.zero,
+		Gravity = Vector3.zero,
+		GravityFalloff = 0,
 
 		SolvedAnimatedCFrame = false,
 		HasChild = false,
@@ -585,9 +586,10 @@ function Class:StepPhysics(BoneTree, Force: Vector3, Delta: number) -- Parallel 
 	-- Custom forces per bone
 	if self.Force or self.Gravity then
 		debug.profilebegin("Solve Force")
-		Force = (self.Gravity or BoneTree.Settings.Gravity)
 
-		Force = (Force + (self.Force or BoneTree.Settings.Force))
+		Force = (self.Gravity or BoneTree.Settings.Gravity)
+		Force += (self.Force or BoneTree.Settings.Force)
+
 		debug.profileend()
 	end
 
@@ -710,7 +712,7 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		--elseif ShouldAverage then
 		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
 		else
-			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			ParentBone.CalculatedWorldCFrame = ReferenceCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			--ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
 		end
 
@@ -744,10 +746,13 @@ function Class:ApplyTransform(BoneTree)
 	-- end
 
 	if ParentBone and BoneParent then
-		if ParentBone.Anchored and not BoneTree.Settings.AnchorsRotate then -- Anchored and anchors do not rotate
-			BoneParent.WorldCFrame = ParentBone.TransformOffset
-		elseif ParentBone.Anchored then -- Anchored and anchors rotate
-			BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+		if ParentBone.Anchored then -- Anchored and anchors do not rotate
+			
+			if BoneTree.Settings.AnchorsRotate and not self.Anchored then
+				BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
+			else
+				BoneParent.WorldCFrame = ParentBone.TransformOffset
+			end			
 		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
