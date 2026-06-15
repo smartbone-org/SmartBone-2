@@ -4,5 +4,4 @@ build
 node_modules
 sourcemap.json
 package-lock.json
-package.json
 .darklua.json

@@ -12,6 +12,8 @@ return {
 	FAR_PLANE = 500,
 	-- Frequency of which we do frustum checks, 1 being every frame, 2 being every other frame, 3 being every 3rd frame and so on.
 	FRUSTUM_FREQ = 2,
+	-- Wait time for root bones that may of not replicated to the client yet.
+	ROOT_BONE_WAIT_TIME = 5,
 	-- Debug info in output, can lag the game.
 	LOG_VERBOSE = false,
 	-- Controls if we should reset bone positions when .Stop() is called

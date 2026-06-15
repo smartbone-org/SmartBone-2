@@ -133,7 +133,7 @@ function module.GatherBoneSettings(Bone: Bone)
 		RotationLimit = RotationLimit,
 		Radius = Radius,
 		Force = Force,
-		Gravity = Gravity,
+		Gravity = Gravity
 	}
 
 	return Settings
