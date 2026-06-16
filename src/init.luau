@@ -141,16 +141,14 @@ function Class:m_CreateBoneTree(RootPart: BasePart, RootBone: Bone)
 	local function AddChildren(Bone, ParentIndex, HeirarchyLength)
 		SB_VERBOSE_LOG(`Adding bone: {Bone.Name}; {ParentIndex}; {HeirarchyLength}`)
 		SB_INDENT_LOG()
-		local Children = Bone:GetChildren()
+		local Children = Bone:QueryDescendants("> Bone")
 		local HasBoneChild = false
 
 		for _, Child in Children do
-			if Child:IsA("Bone") then
-				self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
+			self:m_AppendBone(BoneTree, Child, ParentIndex, HeirarchyLength)
 
-				AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
-				HasBoneChild = true
-			end
+			AddChildren(Child, #BoneTree.Bones, HeirarchyLength + 1)
+			HasBoneChild = true
 		end
 
 		if string.sub(Bone.Name, #Bone.Name - 3, #Bone.Name) == "_end" or string.sub(Bone.Name, #Bone.Name - 4, #Bone.Name) == "_Tail" then

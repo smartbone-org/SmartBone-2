@@ -122,16 +122,11 @@ end
 function ImOverlay:m_Pool()
 
 	
-for _, Obj in self.BackFrame:GetChildren() do
-		if Obj:IsA("UIListLayout") or not Obj.Visible then
-			continue
-		end
-
+for _, Obj in self.BackFrame:QueryDescendants("> :not(UIListLayout, [Visible = false])") do
 		-- Quicker to change visibility than to re-parent
 		Obj.Visible = false
 		table.insert(self.m_ItemPool, Obj)
 	end
-
 end
 
 function ImOverlay:m_Cleanup()
