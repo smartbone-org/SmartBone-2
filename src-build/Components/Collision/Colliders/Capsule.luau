@@ -25,7 +25,7 @@ local function ClosestPointFunc(cframe, length, radius, point)
 end
 
 return function(CapsuleCFrame, CapsuleSize, Point, Radius)
-	
+do end	
 local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or CapsuleSize.Z) * 0.5
 	local CapsuleLength = CapsuleSize.X
 
@@ -34,12 +34,13 @@ local CapsuleRadius = (CapsuleSize.Y < CapsuleSize.Z and CapsuleSize.Y or Capsul
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(CapsuleCFrame, CapsuleLength, CapsuleRadius, Point)
 
 	if IsInside then
-		return IsInside, ClosestPoint, Normal
+do end		
+return IsInside, ClosestPoint, Normal
 	end
 
 	local DistanceToCp = (ClosestPoint - Point).Magnitude
 
 	IsInside = (DistanceToCp < Radius)
-	
+do end	
 return IsInside, ClosestPoint, Normal
 end

@@ -1,6 +1,7 @@
 local HttpService = game:GetService("HttpService")
-local Config = require(script.Parent:WaitForChild("Config"))
+local Config = require(script.Parent.Parent:WaitForChild("Config"))
 local DefaultObjectSettings = require(script.Parent:WaitForChild("DefaultObjectSettings"))
+local Profiles = require(script.Parent.Parent:WaitForChild("Profiles"))
 
 local ColliderTranslations = {
 	Block = "Box",
@@ -55,6 +56,7 @@ end
 
 function module.GatherObjectSettings(Object: BasePart)
 	local Settings = {}
+	local Attributes = Object:GetAttributes()
 
 	local function Expect(Value: any, Type: string, Name: string): boolean
 		if typeof(Value) ~= Type then
@@ -65,8 +67,23 @@ function module.GatherObjectSettings(Object: BasePart)
 		return true
 	end
 
+	-- A profile supplies the base values, individual attributes still override it
+	local Base = DefaultObjectSettings
+
+	local ProfileName = Attributes.Profile
+
+	if ProfileName ~= nil then
+		local Profile = Profiles[ProfileName]
+
+		if Profile then
+			Base = Profile
+		else
+			warn(`[SmartBone][Object] Unknown Profile "{ProfileName}" on {Object.Name}`)
+		end
+	end
+
 	for k, v in DefaultObjectSettings do
-		local Attrib = Object:GetAttribute(k)
+		local Attrib = Attributes[k]
 
 		if Attrib ~= nil then
 			if not Expect(Attrib, typeof(v), k) then
@@ -74,15 +91,22 @@ function module.GatherObjectSettings(Object: BasePart)
 			end
 		end
 
-		Settings[k] = Attrib == nil and v or Attrib
+		if Attrib == nil then
+			local Fallback = Base[k]
+			Attrib = Fallback == nil and v or Fallback
+		end
+
+		Settings[k] = Attrib
 	end
 
 	return Settings
 end
 
 function module.GatherBoneSettings(Bone: Bone)
+	local Attributes = Bone:GetAttributes()
+
 	local function Attrib(Name: string): any?
-		return Bone:GetAttribute(Name)
+		return Attributes[Name]
 	end
 
 	local function Expect(Value: any, Type: string, Name: string)
@@ -121,7 +145,7 @@ function module.GatherBoneSettings(Bone: Bone)
 		Expect(Force, "Vector3", "Force")
 	end
 
-	if Force ~= "¬" then
+	if Gravity ~= "¬" then
 		Expect(Gravity, "Vector3", "Gravity")
 	end
 
@@ -133,7 +157,7 @@ function module.GatherBoneSettings(Bone: Bone)
 		RotationLimit = RotationLimit,
 		Radius = Radius,
 		Force = Force,
-		Gravity = Gravity
+		Gravity = Gravity,
 	}
 
 	return Settings
@@ -149,7 +173,7 @@ end
 -- IsInside, ClosestPoint, Normal
 function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3): (boolean, Vector3, Vector3)
 	local rel = cframe:PointToObjectSpace(point)
-	local sx, sy, sz = size.X, size.X, size.Z
+	local sx, sy, sz = size.X, size.Y, size.Z
 	local rx, ry, rz = rel.X, rel.Y, rel.Z
 
 	if rel ~= rel or size ~= size then -- NaN
@@ -202,8 +226,18 @@ function module.ClosestPointInBox(cframe: CFrame, size: Vector3, point: Vector3)
 	return false, Vector3.zero, Vector3.yAxis
 end
 
+local ColliderDescriptionCache = setmetatable({}, { __mode = "k" })
+
 function module.GetCollider(Object: BasePart)
 	-- Any shapes which arent defined in the translation table are defaulted to box
+
+	if Config.CACHE_COLLIDER_DESCRIPTIONS then
+		local Cached = ColliderDescriptionCache[Object]
+
+		if Cached then
+			return Cached
+		end
+	end
 
 	local ColliderModule = Object:FindFirstChild("self.Collider")
 	local ColliderDescription
@@ -219,6 +253,10 @@ function module.GetCollider(Object: BasePart)
 	end
 
 	if ColliderDescription then
+		if Config.CACHE_COLLIDER_DESCRIPTIONS then
+			ColliderDescriptionCache[Object] = ColliderDescription
+		end
+
 		return ColliderDescription
 	end
 
@@ -254,6 +292,10 @@ function module.GetCollider(Object: BasePart)
 			RotationZ = 0,
 		},
 	}
+
+	if Config.CACHE_COLLIDER_DESCRIPTIONS then
+		ColliderDescriptionCache[Object] = ColliderDescription
+	end
 
 	return ColliderDescription
 end

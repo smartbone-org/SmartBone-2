@@ -51,12 +51,39 @@ WindSpeed controls the amplitude of the wind,
 
 For example if you wanted more flowy wind you would have a medium wind speed with a lower wind strength.
 
+### Profiles
+
+Profiles are named sets of settings you can share between objects instead of setting the same attributes over and over again.
+
+- Open the "Profiles" module inside the SmartBone module and add an entry, the name is up to you.
+
+- Add a string attribute called "Profile" to the SmartBone object and set it to that name.
+
+A profile only needs to list the settings you want to change, anything it leaves out falls back to the default. Attributes on the object are applied after the profile, so you can treat one as a starting point and still override individual settings per object.
+
+An example profile would look like this:
+
+```lua
+Curtain = {
+	Damping = 0.2,
+	Stiffness = 0.5,
+	Constraint = "Rope",
+	AnchorDepth = 1,
+},
+```
+
+The keys are the same names as the attributes listed below.
+
+Note: If the name isn't found in the Profiles module a warning is output and the object falls back to the defaults.
+
 ---
 ### Attributes
 
 **All attributes listed here are optional and not required to get a SmartBone object working.**
 
 - \[*Any*\] Debug - If this attribute exists in a SmartBone object then the SmartBone Runtime Editor will appear allowing you to change attributes and visualise certain things in real time.
+
+- \[*String*\] Profile - The name of an entry in the Profiles module, used as the base settings for this object. Any attribute set on the object overrides it.
 
 - \[*Number*\] Damping – How slowed down the calculated motion of the SmartBone(s) will be.
 

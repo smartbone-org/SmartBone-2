@@ -23,6 +23,7 @@ return function(Sphere0Point, Sphere0Radius, Sphere1Point, Sphere1Radius)
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(Sphere0Point, Sphere0Radius, Sphere1Point)
 
 	if IsInside then
+		debug.profileend()
 		return IsInside, ClosestPoint, Normal
 	end
 

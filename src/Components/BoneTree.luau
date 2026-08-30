@@ -4,7 +4,7 @@
 local Lighting = game:GetService("Lighting")
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
 local BoneClass = require(script.Parent:WaitForChild("Bone"))
-local Config = require(Dependencies:WaitForChild("Config"))
+local Config = require(script.Parent.Parent:WaitForChild("Config"))
 local DefaultObjectSettings = require(Dependencies:WaitForChild("DefaultObjectSettings"))
 local Gizmo = require(Dependencies:WaitForChild("Debug"):WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
@@ -258,6 +258,14 @@ function Class:UpdateBoundingBox()
 		return
 	end
 
+	if #self.Bones == 0 then
+		self.BoundingBoxCFrame = self.RootPart.CFrame
+		self.BoundingBoxSize = self.RootPartSize
+
+		debug.profileend()
+		return
+	end
+
 	local BottomCorner = MaxVector
 	local TopCorner = -MaxVector
 
@@ -320,6 +328,7 @@ function Class:PreUpdate(Delta: number)
 
 	self:UpdateThrottling(RootPartPosition)
 	self:UpdateBoundingBox()
+	self:UpdateWind()
 
 	for _, Bone in self.Bones do
 		Bone:PreUpdate(self)
@@ -328,25 +337,10 @@ function Class:PreUpdate(Delta: number)
 end
 
 --- @within BoneTree
---- @param Delta number -- Δt
---- Calculates forces and updates wind. Also calls Bone:StepPhysics()
-function Class:StepPhysics(Delta: number)
-	debug.profilebegin("BoneTree::StepPhysics")
+--- Samples the wind settings, called in BoneTree:PreUpdate()
+function Class:UpdateWind()
+	debug.profilebegin("BoneTree::UpdateWind")
 	local Settings = self.Settings
-
-	-- Calculate the effect of Gravity given deviation from the resting 'Skyward' UpVector and clamped by GravityFalloff Setting
-
-	local DefaultRot, NewRot = self.DefaultRootOrientation.Rotation, self.Root.WorldCFrame.Rotation
-	local Transform = NewRot:ToWorldSpace(DefaultRot)
-
-	local RelativeDotProduct = Transform.UpVector:Dot(Vector3.yAxis)
-
-	local DistanceFromWorldUp = math.clamp(1 - RelativeDotProduct, 0, 1)
-
-	local Gravity = Settings.Gravity
-	Gravity = Gravity * math.lerp((1 - Settings.GravityFalloff), 1, DistanceFromWorldUp)
-
-	local Force = (Gravity + Settings.Force)
 
 	if Settings.MatchWorkspaceWind == true then
 		local GlobalWind = workspace.GlobalWind
@@ -360,9 +354,32 @@ function Class:StepPhysics(Delta: number)
 		Settings.WindSpeed = WindSpeed
 	end
 
-	local WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
+	Settings.WindStrength = Lighting:GetAttribute("WindStrength") or DefaultObjectSettings.WindStrength
+	debug.profileend()
+end
 
-	Settings.WindStrength = WindStrength
+--- @within BoneTree
+--- @param Delta number -- Δt
+--- Calculates forces and updates wind. Also calls Bone:StepPhysics()
+function Class:StepPhysics(Delta: number)
+	debug.profilebegin("BoneTree::StepPhysics")
+	local Settings = self.Settings
+
+	-- Calculate the effect of Gravity given deviation from the resting 'Skyward' UpVector and clamped by GravityFalloff Setting
+
+	local DefaultRot, NewRot = self.DefaultRootOrientation, self.Root.WorldCFrame.Rotation
+	local Transform = DefaultRot:ToObjectSpace(NewRot)
+
+	local RelativeDotProduct = Transform.UpVector:Dot(Vector3.yAxis)
+
+	local DistanceFromWorldUp = math.clamp(1 - RelativeDotProduct, 0, 1)
+
+	local Gravity = Settings.Gravity
+	Gravity = Gravity * math.lerp((1 - Settings.GravityFalloff), 1, DistanceFromWorldUp)
+
+	local Force = (Gravity + Settings.Force)
+
+	self.Force = Force
 
 	for _, Bone in self.Bones do
 		Bone:StepPhysics(self, Force, Delta)
@@ -526,10 +543,9 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	end
 end
 
-function Class:Destroy()
+function Class:Destroy() -- Must be called from serial context
 	SB_VERBOSE_LOG("Destroy BoneTree")
 
-	task.synchronize()
 	self.DestroyConnection:Disconnect()
 	self.AttributeConnection:Disconnect()
 	self.TagConnection:Disconnect()
@@ -547,7 +563,6 @@ function Class:Destroy()
 	end
 
 	setmetatable(self, nil)
-	task.desynchronize()
 end
 
 return Class

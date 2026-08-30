@@ -72,6 +72,7 @@ return function(CylinderCFrame, CylinderSize, Point, Radius) -- IsInside, PushPo
 	local IsInside, PushPosition, PushNormal = ClosestPointFunc(CylinderCFrame, CylinderSize, Point)
 
 	if IsInside then
+		debug.profileend()
 		return IsInside, PushPosition, PushNormal
 	end
 

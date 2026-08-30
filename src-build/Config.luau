@@ -1,7 +1,7 @@
 -- Configuration
 
 return {
-	VERSION = "0.5.2",
+	VERSION = "0.6.0-rc",
 	-- Controls if when an object is out of activation distance / fov if its bones should be sent back to their rest location.
 	RESET_TRANSFORM_ON_SKIP = true,
 	-- Wouldn't recommend enabling, controls if we should wait after each collider setup.
@@ -12,8 +12,17 @@ return {
 	FAR_PLANE = 500,
 	-- Frequency of which we do frustum checks, 1 being every frame, 2 being every other frame, 3 being every 3rd frame and so on.
 	FRUSTUM_FREQ = 2,
+	-- Maximum physics substeps a single frame may run, stops a frame hitch from spiralling.
+	MAX_SUBSTEPS = 8,
 	-- Wait time for root bones that may of not replicated to the client yet.
 	ROOT_BONE_WAIT_TIME = 5,
+	-- Memoize collider descriptions per collider instance, within a single Luau VM. Actors cannot
+	-- share plain tables, so each actor keeps its own cache and SendMessage still copies per actor.
+	--
+	-- Only effective when actors are limited, otherwise each actor gets it's own cache.
+	CACHE_COLLIDER_DESCRIPTIONS = true,
+	-- Maximum number of actors that can be created, 0 for infinite.
+	MAX_ACTORS = 0,
 	-- Debug info in output, can lag the game.
 	LOG_VERBOSE = false,
 	-- Controls if we should reset bone positions when .Stop() is called

@@ -1,6 +1,6 @@
 --!native
 local Dependencies = script.Parent
-local Config = require(Dependencies:WaitForChild("Config"))
+local Config = require(script.Parent.Parent:WaitForChild("Config"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 
 local Class = {}

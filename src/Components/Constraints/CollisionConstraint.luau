@@ -1,17 +1,14 @@
 return function(self, Position, Colliders)
 	debug.profilebegin("Collision Constraint")
-	local Collisions = {}
-	local HitParts = {}
+	local Collisions = self.CollisionsData
+	local HitParts = self.CollisionHits
+
+	table.clear(Collisions)
+	table.clear(HitParts)
 
 	for _, Collider in Colliders do
-		local ColliderCollisions = Collider:GetCollisions(Position, self.Radius)
-
-		if #ColliderCollisions > 0 then
+		if Collider:GetCollisions(Position, self.Radius, Collisions) then
 			table.insert(HitParts, Collider:GetObject())
-		end
-
-		for _, Collision in ColliderCollisions do
-			table.insert(Collisions, Collision)
 		end
 	end
 
@@ -19,9 +16,6 @@ return function(self, Position, Colliders)
 		Position = Collision.ClosestPoint + (Collision.Normal * self.Radius)
 		-- self:ClipVelocity(Position, Collision.Normal) -- This causes some weird glitching issues, not sure why tbh
 	end
-
-	self.CollisionsData = Collisions
-	self.CollisionHits = HitParts
 	debug.profileend()
 
 	return Position

@@ -34,6 +34,7 @@ return function(CapsuleCFrame, CapsuleSize, Point, Radius)
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(CapsuleCFrame, CapsuleLength, CapsuleRadius, Point)
 
 	if IsInside then
+		debug.profileend()
 		return IsInside, ClosestPoint, Normal
 	end
 

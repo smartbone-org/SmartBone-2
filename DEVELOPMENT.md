@@ -19,7 +19,7 @@ Build the darklua config via this:
 
 You can edit the darklua rules via the `build-darkluaconfig.luau` file.
 
-Run `dev.bat` and close the terminal when your finished developing.
+Run `lune run scripts/start-dev` and close the terminal when your finished developing.
 
 You should serve dev.project.json not default.project.json
 

@@ -16,7 +16,7 @@ return function(self, Position, RestPosition, BoneTree, Delta)
 			RestPosition = RestPosition or (ParentBoneCFrame * CFrame.new(self.LocalTransformOffset.Position)).Position
 
 			local ElasticDifference = RestPosition - Position
-			Position += ElasticDifference * (Elasticity * Delta)
+			Position += ElasticDifference * math.min(Elasticity * Delta, 1)
 
 			if Stiffness > 0 then
 				local StiffDifference = RestPosition - Position

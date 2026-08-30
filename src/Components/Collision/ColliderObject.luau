@@ -112,22 +112,24 @@ end
 --- @within ColliderObject
 --- @param Point Vector3
 --- @param Radius number -- Radius of bone
---- @return {[number]: {ClosestPoint: Vector3, Normal: Vector3}}
-function Class:GetCollisions(Point, Radius)
+--- @param Collisions {[number]: {ClosestPoint: Vector3, Normal: Vector3}} -- Appended to in place
+--- @return boolean
+function Class:GetCollisions(Point, Radius, Collisions)
 	debug.profilebegin("ColliderObject::GetCollisions")
 	if not self.m_Object then
 		debug.profileend()
-		return {}
+		return false
 	end
 
 	if #self.Colliders == 0 then
 		debug.profileend()
-		return {}
+		return false
 	end
 
 	debug.profilebegin("Sleep Cycle")
-	if os.clock() - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep conditions every 5th of a second
-		self.m_LastSleepCycle = os.clock()
+	local Clock = os.clock()
+	if Clock - self.m_LastSleepCycle >= SleepCycleInterval then -- Run sleep conditions every 5th of a second
+		self.m_LastSleepCycle = Clock
 
 		if self.m_Object:IsDescendantOf(workspace) then -- If our object is not a descendant of workspace put it to sleep
 			self.m_Awake = true
@@ -139,10 +141,10 @@ function Class:GetCollisions(Point, Radius)
 
 	if not self.m_Awake then
 		debug.profileend()
-		return {}
+		return false
 	end
 
-	local Collisions = {}
+	local DidCollide = false
 
 	debug.profilebegin("Determine Collisions")
 	for _, Collider in self.Colliders do
@@ -151,13 +153,14 @@ function Class:GetCollisions(Point, Radius)
 		debug.profileend()
 
 		if IsInside then
+			DidCollide = true
 			table.insert(Collisions, { ClosestPoint = ClosestPoint, Normal = Normal })
 		end
 	end
 	debug.profileend()
 	debug.profileend()
 
-	return Collisions
+	return DidCollide
 end
 
 --- @within ColliderObject
@@ -182,8 +185,7 @@ function Class:DrawDebug(FILL_COLLIDERS, SHOW_INFLUENCE, SHOW_AWAKE, SHOW_BROADP
 end
 
 --- @within ColliderObject
-function Class:Destroy()
-	task.synchronize()
+function Class:Destroy() -- Must be called from serial context
 	SB_VERBOSE_LOG(`Collider object destroying, object: {self.m_Object}`)
 
 	self.DestroyConnection:Disconnect()
@@ -195,7 +197,6 @@ function Class:Destroy()
 	end
 
 	setmetatable(self, nil)
-	task.desynchronize()
 end
 
 return Class

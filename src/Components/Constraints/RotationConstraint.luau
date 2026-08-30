@@ -41,7 +41,7 @@ return function(self, Position, BoneTree)
 		return ParentBonePosition + DefaultDirection * DistanceToParent
 	end
 
-	local RotationLimit = math.rad(self.RotationLimit)
+	local RotationLimit = math.rad(ParentBoneLimit)
 	local VectorAngle = math.acos(DefaultDirection:Dot(DirectionToSelf))
 	local LimitedVector
 

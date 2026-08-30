@@ -58,16 +58,17 @@ local function ClosestPointFunc(cframe, size, point)
 end
 
 return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
-	
+do end	
 local IsInside, ClosestPoint, Normal = ClosestPointFunc(BoxCFrame, BoxSize, Point)
 
 	if IsInside then
-		return IsInside, ClosestPoint, Normal
+do end		
+return IsInside, ClosestPoint, Normal
 	end
 
 	local DistanceToCp = (ClosestPoint - Point).Magnitude
 
 	IsInside = (DistanceToCp < Radius)
-	
+do end	
 return IsInside, ClosestPoint, Normal
 end

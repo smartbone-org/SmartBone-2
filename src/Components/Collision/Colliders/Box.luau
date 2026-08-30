@@ -62,6 +62,7 @@ return function(BoxCFrame, BoxSize, Point, Radius) -- Sphere vs Box
 	local IsInside, ClosestPoint, Normal = ClosestPointFunc(BoxCFrame, BoxSize, Point)
 
 	if IsInside then
+		debug.profileend()
 		return IsInside, ClosestPoint, Normal
 	end
 

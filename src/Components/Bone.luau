@@ -1,7 +1,7 @@
 --!nocheck
 --!native
 local Dependencies = script.Parent.Parent:WaitForChild("Dependencies")
-local Config = require(Dependencies:WaitForChild("Config"))
+local Config = require(script.Parent.Parent:WaitForChild("Config"))
 local Gizmo = require(Dependencies:WaitForChild("Debug"):WaitForChild("Gizmo"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 
@@ -89,7 +89,7 @@ local function IsNaN(Value: any): bool
 	return false
 end
 
-local SolvedTransformedCFrames = {}
+local SolvedTransformedCFrames = setmetatable({}, { __mode = "k" })
 
 -- I beg roblox to make TransformedWorldCFrame parallel safe
 local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
@@ -97,6 +97,7 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 	local Solved = SolvedTransformedCFrames[OriginBone]
 	if Solved then
 		if Solved.Frame == shared.FrameCounter then
+			debug.profileend()
 			return Solved.CFrame
 		end
 	end
@@ -112,7 +113,12 @@ local function QueryTransformedWorldCFrameNonSmartbone(OriginBone: Bone): CFrame
 
 	local Result = ParentCFrame * OriginBone.TransformedCFrame
 
-	SolvedTransformedCFrames[OriginBone] = { Frame = shared.FrameCounter, CFrame = Result }
+	if Solved then
+		Solved.Frame = shared.FrameCounter
+		Solved.CFrame = Result
+	else
+		SolvedTransformedCFrames[OriginBone] = { Frame = shared.FrameCounter, CFrame = Result }
+	end
 
 	debug.profileend()
 	return Result
@@ -453,8 +459,8 @@ function Class.new(Bone: Bone, RootBone: Bone, RootPart: BasePart): IBone
 		Radius = 0,
 		Friction = 0,
 		RotationLimit = 0,
-		Force = Vector3.zero,
-		Gravity = Vector3.zero,
+		Force = nil,
+		Gravity = nil,
 		GravityFalloff = 0,
 
 		SolvedAnimatedCFrame = false,
@@ -695,9 +701,9 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 	self.IsSkippingUpdates = false
 
 	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
-	local BoneParent = ParentBone.Bone
 
-	if ParentBone and BoneParent then
+	if ParentBone and ParentBone.Bone then
+		local BoneParent = ParentBone.Bone
 		local ReferenceCFrame = ParentBone.TransformOffset
 		local v1 = self.Position - ParentBone.Position
 		local Rotation = Utilities.GetRotationBetween(ReferenceCFrame.UpVector, v1).Rotation * ReferenceCFrame.Rotation
@@ -712,7 +718,7 @@ function Class:SolveTransform(BoneTree, Delta: number) -- Parallel safe
 		--elseif ShouldAverage then
 		--	ParentBone.RotationSum += Vector3.new(Rotation:ToEulerAnglesXYZ())
 		else
-			ParentBone.CalculatedWorldCFrame = ReferenceCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
+			ParentBone.CalculatedWorldCFrame = BoneParent.WorldCFrame:Lerp(CFrame.new(ParentBone.Position) * Rotation, alpha)
 			--ParentBone.CalculatedWorldCFrame = CFrame.new(ParentBone.Position) * Rotation
 		end
 
@@ -735,7 +741,6 @@ function Class:ApplyTransform(BoneTree)
 	end
 
 	local ParentBone: IBone = BoneTree.Bones[self.ParentIndex]
-	local BoneParent = ParentBone.Bone
 
 	-- We check if the magnitude of rotation sum is zero because that tells us if it has already been averaged by another bone.
 	-- if ParentBone.NumberOfChildren > 1 and ParentBone.RotationSum.Magnitude ~= 0 then
@@ -745,14 +750,15 @@ function Class:ApplyTransform(BoneTree)
 	-- 	ParentBone.RotationSum = Vector3.zero
 	-- end
 
-	if ParentBone and BoneParent then
+	if ParentBone and ParentBone.Bone then
+		local BoneParent = ParentBone.Bone
+
 		if ParentBone.Anchored then -- Anchored and anchors do not rotate
-			
 			if BoneTree.Settings.AnchorsRotate and not self.Anchored then
 				BoneParent.WorldCFrame = CFrame.new(ParentBone.Position) * ParentBone.CalculatedWorldCFrame.Rotation
 			else
 				BoneParent.WorldCFrame = ParentBone.TransformOffset
-			end			
+			end
 		else -- Not anchored
 			BoneParent.WorldCFrame = ParentBone.CalculatedWorldCFrame
 		end
@@ -995,9 +1001,8 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 	end
 end
 
-function Class:Destroy()
+function Class:Destroy() -- Must be called from serial context
 	if Config.RESET_BONE_ON_DESTROY then
-		task.synchronize()
 		self.Bone.CFrame = self.StartingCFrame
 	end
 

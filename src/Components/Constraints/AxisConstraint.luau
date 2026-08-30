@@ -10,7 +10,7 @@ local inf = math.huge
 
 return function(self, Position, LastPosition, RootCFrame)
 	debug.profilebegin("Axis Constraint")
-	local RootOffset = RootCFrame:Inverse() * Position
+	local RootOffset = RootCFrame:PointToObjectSpace(Position)
 
 	local X = RootOffset.X
 	local Y = RootOffset.Y
@@ -30,6 +30,7 @@ return function(self, Position, LastPosition, RootCFrame)
 			debug.profileend()
 			return Position
 		else
+			debug.profileend()
 			return RootCFrame * Vector3.new(X * XLock, Y * YLock, Z * ZLock)
 		end
 	end
@@ -75,7 +76,7 @@ return function(self, Position, LastPosition, RootCFrame)
 	end
 
 	if Z ~= RootOffset.Z then
-		local Normal = ZAxis:Dot(DifferenceDirection) > 0 and -ZAxis or ZAxis
+		local Normal = ZAxis:Dot(DifferenceDirection) < 0 and -ZAxis or ZAxis
 		self:ClipVelocity(Position, Normal)
 	end
 	debug.profileend()

@@ -6,7 +6,7 @@
 
 local Dependencies = script.Parent.Parent
 
-local Config = require(Dependencies:WaitForChild("Config"))
+local Config = require(script.Parent.Parent.Parent:WaitForChild("Config"))
 local Gizmo = require(script:WaitForChild("Gizmo"))
 
 local IsStudio = game:GetService("RunService"):IsStudio()

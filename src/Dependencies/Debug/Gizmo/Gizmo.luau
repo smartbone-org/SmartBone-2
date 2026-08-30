@@ -739,6 +739,7 @@ function Ceive.Init()
 
 			if GizmoPropertys.Destroy then
 				table.remove(RetainObjects, i)
+				continue
 			end
 
 			Gizmo[1]:Update(GizmoPropertys)

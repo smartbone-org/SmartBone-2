@@ -120,7 +120,7 @@ function Class:UpdateTransform()
 
 	self.Transform = ObjectCFrame * CFrame.new(ScaledOffset) * RotationCFrame
 	self.Size = ScaledSize
-	self.Radius = math.sqrt((math.max(ScaledSize.X, ScaledSize.Y, ScaledSize.Z) * 0.5) ^ 2 * 2)
+	self.Radius = ScaledSize.Magnitude * 0.5
 	debug.profileend()
 end
 
@@ -153,17 +153,11 @@ function Class:GetClosestPoint(Point, Radius)
 
 	if Type == "Box" then
 		IsInside, ClosestPoint, Normal = BoxSolver(self.Transform, self.Size, Point, Radius)
-	end
-
-	if Type == "Capsule" then
+	elseif Type == "Capsule" then
 		IsInside, ClosestPoint, Normal = CapsuleSolver(self.Transform, self.Size, Point, Radius)
-	end
-
-	if Type == "Sphere" then
+	elseif Type == "Sphere" then
 		IsInside, ClosestPoint, Normal = SphereSolver(self.Transform, self.Size, Point, Radius)
-	end
-
-	if Type == "Cylinder" then
+	elseif Type == "Cylinder" then
 		IsInside, ClosestPoint, Normal = CylinderSolver(self.Transform, self.Size, Point, Radius)
 	end
 

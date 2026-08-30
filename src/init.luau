@@ -8,7 +8,7 @@ local Components = script:WaitForChild("Components")
 local Dependencies = script:WaitForChild("Dependencies")
 
 local CeiveImOverlay = require(Dependencies:WaitForChild("Debug"):WaitForChild("ImOverlay"))
-local Config = require(Dependencies:WaitForChild("Config"))
+local Config = require(script:WaitForChild("Config"))
 local Frustum = require(Dependencies:WaitForChild("Frustum"))
 local Utilities = require(Dependencies:WaitForChild("Utilities"))
 local ImOverlay
@@ -76,6 +76,11 @@ function Class.new()
 		BoneTrees = {},
 		ColliderObjects = {},
 		ShouldDestroy = false,
+
+		m_SteppedColliders = false,
+		m_FrustumObject = { CFrame = CFrame.identity, Size = Vector3.zero },
+		m_PendingApply = {},
+		m_PendingDestroy = {},
 	}, Class)
 
 	return self
@@ -200,59 +205,103 @@ function Class:m_UpdateViewFrustum()
 	debug.profilebegin("SmartBone2::m_UpdateViewFrustum")
 	local a, b, c, d, e, f, g, h, i = Frustum.GetCFrames(workspace.CurrentCamera, Config.FAR_PLANE) -- Hard coded stud limit on any object
 
+	local FrustumObject = self.m_FrustumObject
+
 	for _, BoneTree in self.BoneTrees do
 		debug.profilebegin("BoneTree::m_UpdateViewFrustum")
-		local FakeObject = {
-			CFrame = BoneTree.BoundingBoxCFrame,
-			Size = BoneTree.BoundingBoxSize,
-		}
-		BoneTree.InView = Frustum.ObjectInFrustum(FakeObject, a, b, c, d, e, f, g, h, i)
+		FrustumObject.CFrame = BoneTree.BoundingBoxCFrame
+		FrustumObject.Size = BoneTree.BoundingBoxSize
+
+		BoneTree.InView = Frustum.ObjectInFrustum(FrustumObject, a, b, c, d, e, f, g, h, i)
 		debug.profileend()
 	end
 	debug.profileend()
 end
 
-function Class:m_CleanColliders()
-	debug.profilebegin("Clean Colliders")
-	local DidDestroy = false
+--- @private
+--- @within SmartBone
+--- :::caution Caution:
+--- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
+--- :::
+--- Detaches dead colliders and bone trees from the live lists. Parallel safe, the detached
+--- objects are torn down later by m_FlushPending once we are back in serial.
+function Class:m_DetachDead()
+	debug.profilebegin("SmartBone2::m_DetachDead")
+	local Pending = self.m_PendingDestroy
 
-	if #self.ColliderObjects ~= 0 then -- Micro optimizations
-		for i, ColliderObject in self.ColliderObjects do
-			if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
-				SB_VERBOSE_WARN(`Deleting Collider Object`)
-				SB_INDENT_LOG()
-				ColliderObject:Destroy()
-				SB_UNINDENT_LOG()
-				table.remove(self.ColliderObjects, i)
+	for i = #self.ColliderObjects, 1, -1 do
+		local ColliderObject = self.ColliderObjects[i]
 
-				DidDestroy = true
-			end
+		if #ColliderObject.Colliders == 0 or ColliderObject.Destroyed == true then
+			table.insert(Pending, ColliderObject)
+			table.remove(self.ColliderObjects, i)
 		end
 	end
 
-	if not DidDestroy then -- Prevent warning because we left parallel
-		debug.profileend()
+	for i = #self.BoneTrees, 1, -1 do
+		local BoneTree = self.BoneTrees[i]
+
+		if BoneTree.Destroyed then
+			table.insert(Pending, BoneTree)
+			table.remove(self.BoneTrees, i)
+		end
 	end
+	debug.profileend()
+end
+
+--- @private
+--- @within SmartBone
+--- :::caution Caution:
+--- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
+--- :::
+--- Destroys everything m_DetachDead pulled out. MUST be called from serial context.
+function Class:m_FlushPending()
+	local Pending = self.m_PendingDestroy
+
+	if #Pending == 0 then
+		return
+	end
+
+	debug.profilebegin("SmartBone2::m_FlushPending")
+	for _, Object in Pending do
+		Object:Destroy()
+	end
+
+	table.clear(Pending)
+	debug.profileend()
+end
+
+--- @private
+--- @within SmartBone
+--- :::caution Caution:
+--- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
+--- :::
+--- Steps every collider once per frame, no matter how many bone trees consume them
+function Class:m_StepColliders()
+	if self.m_SteppedColliders then
+		return
+	end
+
+	self.m_SteppedColliders = true
+
+	debug.profilebegin("Step Colliders")
+	for _, ColliderObject in self.ColliderObjects do
+		ColliderObject:Step()
+	end
+	debug.profileend()
 end
 
 --- @private
 --- @within SmartBone
 --- @param BoneTree table
---- @param Index number
 --- @param Delta number
+--- @return boolean -- True if the tree needs its transform applied in the serial phase
 --- :::caution Caution:
 --- Private Functions can change syntax at any time without warning. Only use these if you're prepared to fix any issues that arise.
 --- :::
---- Updates the provided bone tree with all optimizations
-function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: number)
+--- Runs the parallel half of a bone tree update. Applying the result is deferred to StepBoneTrees.
+function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Delta: number): boolean
 	debug.profilebegin("SmartBone2::m_UpdateBoneTree")
-
-	if BoneTree.Destroyed then
-		BoneTree:Destroy()
-		table.remove(self.BoneTrees, Index)
-
-		return
-	end
 
 	BoneTree:PreUpdate(Delta) -- Pre update MUST be called before we call SkipUpdate!
 
@@ -260,33 +309,29 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		local AlreadySkipped = BoneTree.IsSkippingUpdates
 
 		BoneTree:SkipUpdate()
+		debug.profileend()
 
 		if not AlreadySkipped then
-			debug.profileend()
-
-			task.synchronize()
-			BoneTree:ApplyTransform()
-
 			SB_VERBOSE_LOG(
 				`Skipping BoneTree, InView: {BoneTree.InView}, Update Rate == 0: {math.floor(BoneTree.UpdateRate) == 0}, InWorkspace: {BoneTree.InWorkspace}`
 			)
+
+			return true
 		end
 
-		return
+		return false
 	end
 
-	debug.profilebegin("Step Colliders")
-	for _, ColliderObject in self.ColliderObjects do
-		ColliderObject:Step()
-	end
-	debug.profileend()
+	self:m_StepColliders()
 
 	local UpdateHz = 1 / BoneTree.UpdateRate
 	local DidUpdate = false
+	local Steps = 0
 
 	BoneTree.AccumulatedDelta += Delta
-	while BoneTree.AccumulatedDelta > UpdateHz do
+	while BoneTree.AccumulatedDelta > UpdateHz and Steps < Config.MAX_SUBSTEPS do
 		BoneTree.AccumulatedDelta -= UpdateHz
+		Steps += 1
 
 		DidUpdate = true
 
@@ -294,12 +339,13 @@ function Class:m_UpdateBoneTree(BoneTree: IBoneTree, Index: number, Delta: numbe
 		BoneTree:Constrain(self.ColliderObjects, UpdateHz)
 		BoneTree:SolveTransform(UpdateHz)
 	end
+
+	if BoneTree.AccumulatedDelta > UpdateHz then -- Hitched hard enough to exceed the substep budget, drop the backlog
+		BoneTree.AccumulatedDelta = 0
+	end
 	debug.profileend()
 
-	if DidUpdate then
-		task.synchronize()
-		BoneTree:ApplyTransform()
-	end
+	return DidUpdate
 end
 
 --- @private
@@ -418,21 +464,66 @@ end
 --- @within SmartBone
 --- @param Delta number
 --- Updates all bone trees
-function Class:StepBoneTrees(Delta: number)
+--- @within SmartBone
+--- @param Delta number
+--- @return boolean -- True if ApplyPending has work to do
+--- Runs every parallel safe stage of the update. Callers hosting several roots should run this for
+--- all of them before synchronizing once and calling ApplyPending on each.
+function Class:StepParallel(Delta: number): boolean
 	if self:m_CheckDestroy() then
-		return
+		return false
 	end
 
 	if Delta <= 0 then
 		SB_VERBOSE_WARN("DeltaTime is zero or sub zero, not updating.")
+		return false
+	end
+
+	self.m_SteppedColliders = false
+
+	local PendingApply = self.m_PendingApply
+	table.clear(PendingApply)
+
+	self:m_DetachDead()
+	self:m_UpdateViewFrustum()
+
+	for _, BoneTree in self.BoneTrees do
+		if self:m_UpdateBoneTree(BoneTree, Delta) then
+			table.insert(PendingApply, BoneTree)
+		end
+	end
+
+	return #PendingApply > 0 or #self.m_PendingDestroy > 0
+end
+
+--- @within SmartBone
+--- Writes everything StepParallel solved back onto the bones. Must be called from serial context.
+function Class:ApplyPending()
+	local PendingApply = self.m_PendingApply
+
+	if #PendingApply ~= 0 then
+		debug.profilebegin("SmartBone2::ApplyTransforms")
+		for _, BoneTree in PendingApply do
+			BoneTree:ApplyTransform()
+		end
+		debug.profileend()
+
+		table.clear(PendingApply)
+	end
+
+	self:m_FlushPending()
+end
+
+--- @within SmartBone
+--- @param Delta number
+--- Updates all bone trees. Convenience wrapper for a single root, synchronizes internally.
+function Class:StepBoneTrees(Delta: number)
+	if not self:StepParallel(Delta) then
 		return
 	end
 
-	self:m_CleanColliders()
-	self:m_UpdateViewFrustum()
-	for i, BoneTree in self.BoneTrees do
-		self:m_UpdateBoneTree(BoneTree, i, Delta)
-	end
+	task.synchronize()
+	self:ApplyPending()
 end
 
 --- @client
@@ -525,9 +616,11 @@ function Class:DrawOverlay(Overlay: ImOverlay)
 end
 
 --- @within SmartBone
---- Destroys the root and all its children
+--- Destroys the root and all its children. Must be called from serial context.
 function Class:Destroy()
 	SB_VERBOSE_LOG("Deleting SmartBone Object")
+
+	self:m_FlushPending()
 
 	for _, BoneTree in self.BoneTrees do
 		BoneTree:Destroy()
@@ -586,28 +679,78 @@ function Class.Start(): { Stop: () -> () }
 		end
 	end)
 
-	local ObjectToActor: { [BasePart]: Actor } = {}
-	local ActorPool: { Actor } = {}
+	local ObjectToWorker: { [BasePart]: Actor } = {}
+	local Workers: { Actor } = {}
+	local WorkerLoad: { [Actor]: number } = {}
+	local WorkerReady: { [Actor]: boolean } = {}
 
-	local function GetActor(): Actor
-		return table.remove(ActorPool) or Instance.new("Actor")
+	local function CreateWorker(): Actor
+		local Worker = Instance.new("Actor")
+		local Runtime = ActorRuntime:Clone()
+
+		Runtime.Parent = Worker
+		Runtime.Enabled = true
+
+		Worker.Name = `SmartBone Worker {#Workers + 1}`
+
+		-- Registered before yielding so a concurrent SetupObject sees the updated worker count
+		table.insert(Workers, Worker)
+		WorkerLoad[Worker] = 0
+		WorkerReady[Worker] = false
+
+		Worker.Parent = ActorFolder
+
+		-- The runtime needs a frame to bind its handlers or it misses the first message
+		task.wait()
+
+		WorkerReady[Worker] = true
+
+		return Worker
 	end
 
-	-- Called when an object is "freed", in this case, it's actor needs to be returned to the actor pool
-	local function OnObjectFreed(Object: BasePart)
-		local Actor = ObjectToActor[Object]
-		ObjectToActor[Object] = nil
+	local function GetWorker(): Actor
+		local MaxActors = Config.MAX_ACTORS
 
-		if not Actor then
+		if MaxActors <= 0 or #Workers < MaxActors then
+			return CreateWorker()
+		end
+
+		local Best = Workers[1]
+
+		for _, Worker in Workers do
+			if WorkerLoad[Worker] < WorkerLoad[Best] then
+				Best = Worker
+			end
+		end
+
+		while not WorkerReady[Best] do
+			task.wait()
+		end
+
+		return Best
+	end
+
+	-- Called when an object is "freed", the worker hosting it drops that root but stays alive
+	local function OnObjectFreed(Object: BasePart)
+		local Worker = ObjectToWorker[Object]
+		ObjectToWorker[Object] = nil
+
+		if not Worker then
 			return
 		end
 
-		Actor.Name = "Pooled Actor"
+		WorkerLoad[Worker] = math.max(WorkerLoad[Worker] - 1, 0)
 
-		table.insert(ActorPool, Actor)
+		Worker:SendMessage("Free", Object)
 	end
 
+	local CachedColliders
+
 	local function GatherColliders()
+		if CachedColliders then
+			return CachedColliders
+		end
+
 		local ColliderObjects = {
 			Key = {},
 			Raw = {},
@@ -638,8 +781,17 @@ function Class.Start(): { Stop: () -> () }
 			end
 		end
 
+		CachedColliders = ColliderObjects
+
 		return ColliderObjects
 	end
+
+	local function InvalidateColliders()
+		CachedColliders = nil
+	end
+
+	local ColliderAddedConnection = CollectionService:GetInstanceAddedSignal("SmartCollider"):Connect(InvalidateColliders)
+	local ColliderRemovedConnection = CollectionService:GetInstanceRemovedSignal("SmartCollider"):Connect(InvalidateColliders)
 
 	local function SetupObject(Object: BasePart)
 		if not Object:IsA("BasePart") then
@@ -665,20 +817,12 @@ function Class.Start(): { Stop: () -> () }
 			table.insert(ColliderDescriptions, { Utilities.GetCollider(ColliderObject), ColliderObject })
 		end
 
-		local Actor = GetActor()
-		local Runtime = ActorRuntime:Clone()
+		local Worker = GetWorker()
 
-		Runtime.Parent = Actor
-		Runtime.Enabled = true
+		ObjectToWorker[Object] = Worker
+		WorkerLoad[Worker] += 1
 
-		Actor.Parent = ActorFolder
-
-		ObjectToActor[Object] = Actor
-
-		-- If we dont yield here a bug happens on occasion where the actor doesn't bind quick enough and misses the setup message
-		task.wait()
-
-		Actor:SendMessage("Setup", Object, ColliderDescriptions, script)
+		Worker:SendMessage("Setup", Object, ColliderDescriptions, script)
 
 		-- Don't have to cleanup this connection since it's tied to the instance
 		-- Here we handle freeing up the actor attached to the object when it's destroyed
@@ -723,6 +867,17 @@ function Class.Start(): { Stop: () -> () }
 		Stop = function()
 			Class.Running = false
 
+			if TagAddedConnection then
+				TagAddedConnection:Disconnect()
+			end
+
+			if TagRemovedConnection then
+				TagRemovedConnection:Disconnect()
+			end
+
+			ColliderAddedConnection:Disconnect()
+			ColliderRemovedConnection:Disconnect()
+
 			if not Config.RESET_BONE_ON_DESTROY then
 				ActorFolder:Destroy()
 				return
@@ -730,14 +885,6 @@ function Class.Start(): { Stop: () -> () }
 
 			for _, Actor: Actor in ActorFolder:GetChildren() do
 				Actor:SendMessage("Destroy")
-			end
-
-			if TagAddedConnection then
-				TagAddedConnection:Disconnect()
-			end
-
-			if TagRemovedConnection then
-				TagRemovedConnection:Disconnect()
 			end
 		end,
 	}

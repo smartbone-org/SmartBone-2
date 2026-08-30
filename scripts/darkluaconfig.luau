@@ -2,40 +2,45 @@
 
 Builds .darklua.json run via lune. If you wish to build this into a different json location specify that as a command line arg
 
-e.g. lune run build-darkluaconfig
-e.g. lune run build-darkluaconfig otherconfig.json
+e.g. lune run scripts/darkluaconfig
+e.g. lune run scripts/darkluaconfig otherconfig.json
 
 ]]
 
--- Globals injected into _G
 local DEBUG_PROFILING = false
+local HAS_COMMENT_FILE = false
+
+-- Globals injected into _G
 local MACROS = {}
 
 local RULES = {
 	"compute_expression",
 	"remove_unused_if_branch",
 	"remove_unused_while",
+	"remove_empty_do",
 	"remove_nil_declaration",
 	"filter_after_early_return",
+	-- "remove_comments" is deliberately absent, it strips --!native and --!nocheck along with
+	-- everything else, which would silently disable native codegen on the hot components.
 }
 
 if not DEBUG_PROFILING then
 	table.insert(RULES, "remove_debug_profiling")
 end
 
-table.insert(RULES, "remove_empty_do")
-
-local REQUIRE_ALIASES = {}
-
 -- !! DO NOT EDIT BELOW THIS LINE !!
 
 local REQUIRE_RULE =
-	'{"rule": "convert_require", "current": {"name": "path", "sources": {%s}}, "target": {"name": "roblox", "rojo_sourcemap": "sourcemap.json", "indexing_style": "wait_for_child"}}'
+	'{"rule": "convert_require", "current": {"name": "path", "sources": {}}, "target": {"name": "roblox", "rojo_sourcemap": "sourcemap.json", "indexing_style": "wait_for_child"}}'
 local MACRO_RULE = '{"rule": "inject_global_value", "identifier": "%s","value": %s}'
-local COMMENT_RULE = ""
+local COMMENT_RULE = HAS_COMMENT_FILE and '{"rule": "append_text_comment", "location": "start", "file": "COMMENT"}' or ""
 
 local fs = require("@lune/fs")
 local process = require("@lune/process")
+
+-- Put git hash in macros so we can see it in-code
+local GitHash = process.exec("git", { "log", "-1", "--format=%H" })
+MACROS["GIT_HASH"] = GitHash.stdout:sub(1, 8)
 
 local function Build()
 	local tout = {}
@@ -55,15 +60,11 @@ local function Build()
 		table.insert(tout, `"{Rule}"`)
 	end
 
-	-- Add in require rule
-	local aliases = {}
-	for alias, location in REQUIRE_ALIASES do
-		table.insert(aliases, `"{alias}": "{location}"`)
-	end
-
 	-- Extra rules
-	table.insert(tout, REQUIRE_RULE:format(table.concat(aliases, ", ")))
-	table.insert(tout, COMMENT_RULE)
+	table.insert(tout, REQUIRE_RULE)
+	if #COMMENT_RULE > 0 then
+		table.insert(tout, COMMENT_RULE)
+	end
 
 	return `\{"rules": [{table.concat(tout, ", ")}]\}`
 end
